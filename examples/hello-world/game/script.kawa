@@ -12,10 +12,10 @@ label start:
     show yumia happy at left
     show kaori normal at right
 
-    yumia "Welcome to the Game Development Club! I'm Yumia, the lead writer and designer."
-    kaori "And I'm Kaori. I oversee the engine architecture and Web Audio pipeline."
+    yumia "Welcome to the {b}Game Development Club{/b}! I'm Yumia, the lead writer and designer."
+    kaori "And I'm Kaori. I oversee the {color=#38bdf8}engine architecture{/color} and Web Audio pipeline."
 
-    yumia "We're building our next visual novel using Kawaijs — a modern, web-native scripting engine."
+    yumia "We're building our next visual novel using {b}Kawaijs{/b} — a modern, web-native scripting engine."
     kaori "It compiles human-friendly .kawa scripts directly into deterministic bytecode that runs smoothly in any browser."
 
     play sound sfx_sparkle
@@ -97,7 +97,7 @@ label ending_tech:
     scene bg rooftop
     show kaori smug at center
     kaori "You have proven your engineering mastery. Our next release will be revolutionary."
-    narrator "🏆 Ending 1/3: The Master Architect — High Performance & Flawless Code."
+    narrator "{b}Ending 1/3: The Master Architect{/b} — High Performance & Flawless Code."
     stop music fade 2
     return
 
@@ -105,7 +105,7 @@ label ending_creative:
     scene bg sunset_courtyard
     show yumia excited at center
     yumia "Our visual novel is going to touch millions of hearts around the world!"
-    narrator "🌸 Ending 2/3: The Renowned Storyteller — Emotion, Art & Unforgettable Characters."
+    narrator "{b}Ending 2/3: The Renowned Storyteller{/b} — Emotion, Art & Unforgettable Characters."
     stop music fade 2
     return
 
@@ -115,6 +115,6 @@ label ending_master:
     show kaori happy at right
     yumia "Code, art, music, and story in perfect harmony!"
     kaori "You have unlocked the full power of Kawaijs."
-    narrator "✨ Ending 3/3: The Renaissance Visionary — A True Master of Interactive Fiction."
+    narrator "{b}Ending 3/3: The Renaissance Visionary{/b} — A True Master of Interactive Fiction."
     stop music fade 2
     return
