@@ -6,12 +6,7 @@
     "composite": true
   },
   "references": [
-    { "path": "../ast" },
-    { "path": "../parser" },
-    { "path": "../runtime" },
-    { "path": "../renderer-dom" },
-    { "path": "../audio" },
-    { "path": "../vite-plugin" }
+    { "path": "../runtime" }
   ],
   "include": ["src/**/*"]
 }

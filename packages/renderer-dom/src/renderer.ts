@@ -1,4 +1,4 @@
-import type { StoryState, StoryVM } from '@kawaijs/runtime';
+import type { StoryState, StoryVM, SaveSlot } from '@kawaijs/runtime';
 
 export type AssetType = 'background' | 'character' | 'audio';
 
@@ -43,6 +43,7 @@ export class DOMRenderer {
   private readonly assetResolver: (path: string, type: AssetType) => string;
 
   private rootEl!: HTMLDivElement;
+  private stageEl!: HTMLDivElement;
   private backgroundEl!: HTMLDivElement;
   private charactersEl!: HTMLDivElement;
   private dialogueBoxEl!: HTMLDivElement;
@@ -54,6 +55,7 @@ export class DOMRenderer {
   private currentTypewriterInterval: number | null = null;
   private isTypewriting = false;
   private fullCurrentText = '';
+  private isChoicePending = false;
   private unsubscribeVMState?: () => void;
 
   constructor(vm: StoryVM, options: DOMRendererOptions) {
@@ -83,14 +85,33 @@ export class DOMRenderer {
     this.container.innerHTML = '';
   }
 
+  public shakeScreen(): void {
+    if (!this.stageEl) return;
+    this.stageEl.classList.remove('kawa-shake');
+    // Trigger reflow to restart animation
+    void this.stageEl.offsetWidth;
+    this.stageEl.classList.add('kawa-shake');
+  }
+
+  public flashScreen(): void {
+    if (!this.stageEl) return;
+    const existing = this.stageEl.querySelector('.kawa-flash-overlay');
+    if (existing) existing.remove();
+
+    const flash = document.createElement('div');
+    flash.className = 'kawa-flash-overlay';
+    this.stageEl.appendChild(flash);
+    setTimeout(() => flash.remove(), 600);
+  }
+
   private buildDOM(): void {
     this.container.innerHTML = '';
 
     this.rootEl = document.createElement('div');
     this.rootEl.className = 'kawa-root';
 
-    const stageEl = document.createElement('div');
-    stageEl.className = 'kawa-stage';
+    this.stageEl = document.createElement('div');
+    this.stageEl.className = 'kawa-stage';
 
     this.backgroundEl = document.createElement('div');
     this.backgroundEl.className = 'kawa-background';
@@ -143,23 +164,17 @@ export class DOMRenderer {
     const saveBtn = document.createElement('button');
     saveBtn.className = 'kawa-btn';
     saveBtn.textContent = 'Save';
-    saveBtn.addEventListener('click', async (e) => {
+    saveBtn.addEventListener('click', (e) => {
       e.stopPropagation();
-      await this.vm.save('1');
-      alert('Game saved to Slot 1!');
+      this.showSaveLoadModal('save');
     });
 
     const loadBtn = document.createElement('button');
     loadBtn.className = 'kawa-btn';
     loadBtn.textContent = 'Load';
-    loadBtn.addEventListener('click', async (e) => {
+    loadBtn.addEventListener('click', (e) => {
       e.stopPropagation();
-      const loaded = await this.vm.load('1');
-      if (loaded) {
-        alert('Game loaded from Slot 1!');
-      } else {
-        alert('No save found in Slot 1.');
-      }
+      this.showSaveLoadModal('load');
     });
 
     quickMenuEl.appendChild(this.backBtnEl);
@@ -171,11 +186,11 @@ export class DOMRenderer {
     uiLayerEl.appendChild(this.dialogueBoxEl);
     uiLayerEl.appendChild(quickMenuEl);
 
-    stageEl.appendChild(this.backgroundEl);
-    stageEl.appendChild(this.charactersEl);
-    stageEl.appendChild(uiLayerEl);
+    this.stageEl.appendChild(this.backgroundEl);
+    this.stageEl.appendChild(this.charactersEl);
+    this.stageEl.appendChild(uiLayerEl);
 
-    this.rootEl.appendChild(stageEl);
+    this.rootEl.appendChild(this.stageEl);
     this.container.appendChild(this.rootEl);
   }
 
@@ -192,19 +207,31 @@ export class DOMRenderer {
 
     // Keyboard controls
     window.addEventListener('keydown', (e) => {
+      // If modal is open, let Escape close it
+      const modal = this.rootEl.querySelector('.kawa-modal-overlay');
+      if (modal) {
+        if (e.key === 'Escape') modal.remove();
+        return;
+      }
+
       if (e.code === 'Space' || e.code === 'Enter') {
         e.preventDefault();
         this.handleUserAdvance();
       } else if (e.code === 'Backspace') {
         e.preventDefault();
         this.vm.rollback();
+      } else if (e.key === 's' || e.key === 'S') {
+        this.showSaveLoadModal('save');
+      } else if (e.key === 'l' || e.key === 'L') {
+        this.showSaveLoadModal('load');
+      } else if (e.key === 'h' || e.key === 'H') {
+        this.showHistoryModal();
       }
     });
   }
 
   private handleUserAdvance(): void {
     if (this.isTypewriting) {
-      // Instantly finish text
       this.finishTypewriter();
     } else {
       this.vm.next();
@@ -212,7 +239,7 @@ export class DOMRenderer {
   }
 
   private render(state: StoryState): void {
-    // Update rollback button state
+    this.isChoicePending = false;
     this.backBtnEl.disabled = !this.vm.canRollback();
 
     // Render background
@@ -239,27 +266,35 @@ export class DOMRenderer {
       const charAssetKey = charState.expression ? `${charId}/${charState.expression}` : charId;
       img.src = this.assetResolver(charAssetKey, 'character');
       img.alt = `${charId} ${charState.expression ?? ''}`;
+      
+      let fallbackStep = 0;
       img.onerror = () => {
-        // Try flat filename e.g. yumia_happy.png if yumia/happy.png fails
-        if (charState.expression && !img.dataset.fallbackTried) {
-          img.dataset.fallbackTried = 'true';
+        fallbackStep++;
+        if (fallbackStep === 1) {
+          // Try .svg extension
+          img.src = this.assetResolver(`${charAssetKey}.svg`, 'character');
+        } else if (fallbackStep === 2 && charState.expression) {
+          // Try flat filename e.g. yumia_happy.png
           img.src = this.assetResolver(`${charId}_${charState.expression}`, 'character');
-          return;
+        } else if (fallbackStep === 3 && charState.expression) {
+          // Try flat filename with svg e.g. yumia_happy.svg
+          img.src = this.assetResolver(`${charId}_${charState.expression}.svg`, 'character');
+        } else {
+          // Fallback placeholder sprite if image is missing
+          img.style.display = 'none';
+          spriteDiv.style.width = '220px';
+          spriteDiv.style.height = '420px';
+          spriteDiv.style.background = 'rgba(244, 63, 94, 0.25)';
+          spriteDiv.style.border = '2px dashed #f43f5e';
+          spriteDiv.style.borderRadius = '16px';
+          spriteDiv.style.display = 'flex';
+          spriteDiv.style.alignItems = 'center';
+          spriteDiv.style.justifyContent = 'center';
+          spriteDiv.style.color = '#ffffff';
+          spriteDiv.style.fontWeight = '600';
+          spriteDiv.style.fontSize = '1.1rem';
+          spriteDiv.textContent = `${charId}\n(${charState.expression ?? 'normal'})`;
         }
-        // Fallback placeholder sprite if image is missing
-        img.style.display = 'none';
-        spriteDiv.style.width = '220px';
-        spriteDiv.style.height = '420px';
-        spriteDiv.style.background = 'rgba(244, 63, 94, 0.25)';
-        spriteDiv.style.border = '2px dashed #f43f5e';
-        spriteDiv.style.borderRadius = '16px';
-        spriteDiv.style.display = 'flex';
-        spriteDiv.style.alignItems = 'center';
-        spriteDiv.style.justifyContent = 'center';
-        spriteDiv.style.color = '#ffffff';
-        spriteDiv.style.fontWeight = '600';
-        spriteDiv.style.fontSize = '1.1rem';
-        spriteDiv.textContent = `${charId}\n(${charState.expression ?? 'normal'})`;
       };
 
       spriteDiv.appendChild(img);
@@ -289,6 +324,8 @@ export class DOMRenderer {
     if (state.choices && state.choices.length > 0) {
       this.choiceContainerEl.innerHTML = '';
       this.choiceContainerEl.style.display = 'flex';
+      this.choiceContainerEl.style.pointerEvents = 'auto';
+      this.choiceContainerEl.style.opacity = '1';
 
       state.choices.forEach((choice, index) => {
         const btn = document.createElement('button');
@@ -296,6 +333,10 @@ export class DOMRenderer {
         btn.textContent = choice.text;
         btn.addEventListener('click', (e) => {
           e.stopPropagation();
+          if (this.isChoicePending) return;
+          this.isChoicePending = true;
+          this.choiceContainerEl.style.pointerEvents = 'none';
+          this.choiceContainerEl.style.opacity = '0.5';
           this.vm.choose(index);
         });
         this.choiceContainerEl.appendChild(btn);
@@ -340,7 +381,7 @@ export class DOMRenderer {
     this.isTypewriting = false;
   }
 
-  private showHistoryModal(): void {
+  public async showSaveLoadModal(mode: 'save' | 'load'): Promise<void> {
     const existing = this.rootEl.querySelector('.kawa-modal-overlay');
     if (existing) existing.remove();
 
@@ -355,7 +396,123 @@ export class DOMRenderer {
 
     const title = document.createElement('div');
     title.className = 'kawa-modal-title';
-    title.textContent = 'Dialogue History';
+    title.textContent = mode === 'save' ? '💾 Save Game' : '📂 Load Game';
+
+    const closeBtn = document.createElement('button');
+    closeBtn.className = 'kawa-btn';
+    closeBtn.textContent = '✕ Close';
+    closeBtn.addEventListener('click', () => overlay.remove());
+
+    header.appendChild(title);
+    header.appendChild(closeBtn);
+
+    const body = document.createElement('div');
+    body.className = 'kawa-modal-body';
+
+    const grid = document.createElement('div');
+    grid.className = 'kawa-slots-grid';
+
+    const saveManager = this.vm.getSaveManager();
+    const slots = await saveManager.listSlots(6);
+
+    slots.forEach((slot: SaveSlot | null, idx: number) => {
+      const slotNum = String(idx + 1);
+      const slotCard = document.createElement('div');
+      slotCard.className = 'kawa-slot-card';
+
+      const slotHeader = document.createElement('div');
+      slotHeader.className = 'kawa-slot-header';
+
+      const badge = document.createElement('span');
+      badge.className = 'kawa-slot-badge';
+      badge.textContent = `Slot ${slotNum}`;
+
+      const timeSpan = document.createElement('span');
+      timeSpan.className = 'kawa-slot-time';
+      timeSpan.textContent = slot ? new Date(slot.timestamp).toLocaleString() : 'Empty';
+
+      slotHeader.appendChild(badge);
+      slotHeader.appendChild(timeSpan);
+      slotCard.appendChild(slotHeader);
+
+      if (slot) {
+        const preview = document.createElement('div');
+        preview.className = 'kawa-slot-preview';
+        preview.textContent = slot.previewText || `Label: ${slot.snapshot.state.currentLabel}`;
+        slotCard.appendChild(preview);
+      } else {
+        const emptyText = document.createElement('div');
+        emptyText.className = 'kawa-slot-empty-text';
+        emptyText.textContent = 'No save data';
+        slotCard.appendChild(emptyText);
+      }
+
+      const actions = document.createElement('div');
+      actions.className = 'kawa-slot-actions';
+
+      if (mode === 'save') {
+        const saveActionBtn = document.createElement('button');
+        saveActionBtn.className = 'kawa-slot-btn kawa-slot-btn-save';
+        saveActionBtn.textContent = 'Save Here';
+        saveActionBtn.addEventListener('click', async () => {
+          await this.vm.save(slotNum);
+          overlay.remove();
+          this.showSaveLoadModal('save');
+        });
+        actions.appendChild(saveActionBtn);
+      } else {
+        if (slot) {
+          const loadActionBtn = document.createElement('button');
+          loadActionBtn.className = 'kawa-slot-btn kawa-slot-btn-load';
+          loadActionBtn.textContent = 'Load';
+          loadActionBtn.addEventListener('click', async () => {
+            const ok = await this.vm.load(slotNum);
+            if (ok) overlay.remove();
+          });
+          actions.appendChild(loadActionBtn);
+        }
+      }
+
+      if (slot) {
+        const delBtn = document.createElement('button');
+        delBtn.className = 'kawa-slot-btn kawa-slot-btn-del';
+        delBtn.textContent = '🗑';
+        delBtn.title = 'Delete Save';
+        delBtn.addEventListener('click', async () => {
+          await saveManager.deleteSlot(slotNum);
+          overlay.remove();
+          this.showSaveLoadModal(mode);
+        });
+        actions.appendChild(delBtn);
+      }
+
+      slotCard.appendChild(actions);
+      grid.appendChild(slotCard);
+    });
+
+    body.appendChild(grid);
+    card.appendChild(header);
+    card.appendChild(body);
+    overlay.appendChild(card);
+    this.rootEl.appendChild(overlay);
+  }
+
+  public showHistoryModal(): void {
+    const existing = this.rootEl.querySelector('.kawa-modal-overlay');
+    if (existing) existing.remove();
+
+    const overlay = document.createElement('div');
+    overlay.className = 'kawa-modal-overlay';
+
+    const card = document.createElement('div');
+    card.className = 'kawa-modal-card';
+
+    const header = document.createElement('div');
+    header.className = 'kawa-modal-header';
+
+    const title = document.createElement('div');
+    title.className = 'kawa-modal-title';
+    title.textContent = '📜 Dialogue History';
 
     const closeBtn = document.createElement('button');
     closeBtn.className = 'kawa-btn';

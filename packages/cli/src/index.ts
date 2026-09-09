@@ -2,6 +2,8 @@ export * from '@kawaijs/ast';
 export * from '@kawaijs/parser';
 export * from '@kawaijs/runtime';
 export * from '@kawaijs/renderer-dom';
+export * from '@kawaijs/audio';
+export * from '@kawaijs/vite-plugin';
 
 import { createProject } from './commands/create.js';
 import { validateProject } from './commands/validate.js';
@@ -47,7 +49,7 @@ export function runCLI(args: string[]): void {
     case 'version':
     case '-v':
     case '--version': {
-      console.log('Kawaijs v0.1.1');
+      console.log('Kawaijs v0.1.2');
       break;
     }
 
@@ -69,6 +71,14 @@ Commands:
   validate [path]   Validate Kawa Script syntax, labels, and links
   help              Show this help message
   version           Show version information
+
+Keyboard Shortcuts in Game:
+  Space / Enter     Advance dialogue
+  Backspace         Rollback (step back)
+  S                 Open Save Game menu
+  L                 Open Load Game menu
+  H                 Open Dialogue History
+  Escape            Close active modal
 
 Example:
   kawa create my-novel

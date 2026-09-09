@@ -52,6 +52,37 @@
   box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8);
 }
 
+/* Screen Shake Effect */
+@keyframes kawa-screen-shake {
+  0%, 100% { transform: translate(0, 0); }
+  15% { transform: translate(-12px, 8px); }
+  30% { transform: translate(12px, -8px); }
+  45% { transform: translate(-8px, -6px); }
+  60% { transform: translate(8px, 6px); }
+  75% { transform: translate(-4px, 2px); }
+  90% { transform: translate(4px, -2px); }
+}
+
+.kawa-shake {
+  animation: kawa-screen-shake 0.45s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+}
+
+/* Screen Flash Effect */
+@keyframes kawa-screen-flash {
+  0% { opacity: 0; }
+  30% { opacity: 0.95; }
+  100% { opacity: 0; }
+}
+
+.kawa-flash-overlay {
+  position: absolute;
+  inset: 0;
+  background: #ffffff;
+  pointer-events: none;
+  z-index: 50;
+  animation: kawa-screen-flash 0.5s ease-out forwards;
+}
+
 /* Background Scene Layer */
 .kawa-background {
   position: absolute;
@@ -77,7 +108,7 @@
   position: absolute;
   bottom: 0;
   height: 85%;
-  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease;
+  transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.35s ease;
   display: flex;
   align-items: flex-end;
   justify-content: center;
@@ -247,40 +278,50 @@
 .kawa-modal-overlay {
   position: absolute;
   inset: 0;
-  background: rgba(0, 0, 0, 0.8);
-  backdrop-filter: blur(6px);
+  background: rgba(0, 0, 0, 0.82);
+  backdrop-filter: blur(8px);
   z-index: 100;
   display: flex;
   align-items: center;
   justify-content: center;
   pointer-events: auto;
+  animation: kawa-modal-fade 0.2s ease-out;
+}
+
+@keyframes kawa-modal-fade {
+  from { opacity: 0; transform: scale(0.98); }
+  to { opacity: 1; transform: scale(1); }
 }
 
 .kawa-modal-card {
   background: #1e293b;
   border: 1px solid rgba(255, 255, 255, 0.15);
-  border-radius: 12px;
+  border-radius: 14px;
   width: 90%;
-  max-width: 600px;
-  max-height: 80%;
+  max-width: 750px;
+  max-height: 85%;
   display: flex;
   flex-direction: column;
-  padding: 24px;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+  padding: 24px 28px;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8);
 }
 
 .kawa-modal-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 16px;
+  margin-bottom: 20px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-  padding-bottom: 10px;
+  padding-bottom: 12px;
 }
 
 .kawa-modal-title {
-  font-size: 1.25rem;
+  font-size: 1.35rem;
   font-weight: 700;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .kawa-modal-body {
@@ -289,18 +330,118 @@
   display: flex;
   flex-direction: column;
   gap: 12px;
-  padding-right: 8px;
+  padding-right: 6px;
 }
 
+/* Slots Grid for Save/Load UI */
+.kawa-slots-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 16px;
+  padding: 4px 0;
+}
+
+.kawa-slot-card {
+  background: rgba(15, 23, 42, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 130px;
+  transition: all 0.2s ease;
+}
+
+.kawa-slot-card:hover {
+  border-color: var(--kawa-primary-accent);
+  background: rgba(15, 23, 42, 0.9);
+  transform: translateY(-2px);
+}
+
+.kawa-slot-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.kawa-slot-badge {
+  font-size: 0.8rem;
+  font-weight: 700;
+  background: var(--kawa-primary-accent);
+  color: #fff;
+  padding: 2px 8px;
+  border-radius: 4px;
+}
+
+.kawa-slot-time {
+  font-size: 0.75rem;
+  color: #94a3b8;
+}
+
+.kawa-slot-preview {
+  font-size: 0.85rem;
+  color: #cbd5e1;
+  line-height: 1.4;
+  margin-bottom: 12px;
+  word-break: break-word;
+  max-height: 48px;
+  overflow: hidden;
+}
+
+.kawa-slot-empty-text {
+  color: #64748b;
+  font-style: italic;
+  font-size: 0.85rem;
+  margin: auto 0;
+}
+
+.kawa-slot-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.kawa-slot-btn {
+  flex: 1;
+  padding: 6px 10px;
+  border-radius: 4px;
+  border: none;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.kawa-slot-btn-save {
+  background: #3b82f6;
+  color: #ffffff;
+}
+.kawa-slot-btn-save:hover { background: #2563eb; }
+
+.kawa-slot-btn-load {
+  background: var(--kawa-primary-accent);
+  color: #ffffff;
+}
+.kawa-slot-btn-load:hover { background: #e11d48; }
+
+.kawa-slot-btn-del {
+  background: rgba(239, 68, 68, 0.2);
+  color: #f87171;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+.kawa-slot-btn-del:hover { background: rgba(239, 68, 68, 0.4); }
+
 .kawa-history-item {
-  padding: 8px 12px;
-  border-radius: 6px;
-  background: rgba(15, 23, 42, 0.6);
+  padding: 10px 14px;
+  border-radius: 8px;
+  background: rgba(15, 23, 42, 0.65);
   font-size: 0.95rem;
+  border-left: 3px solid var(--kawa-primary-accent);
 }
 
 .kawa-history-speaker {
   font-weight: 700;
   color: var(--kawa-primary-accent);
-  margin-bottom: 2px;
+  margin-bottom: 4px;
 }

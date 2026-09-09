@@ -33,7 +33,14 @@ function bumpVersion(version, type) {
 const nextVersion = bumpVersion(currentVersion, releaseType);
 console.log(`\n2️⃣ Bumping version: ${currentVersion} ➔ \x1b[32m${nextVersion}\x1b[0m\n`);
 
-// Update package.json for all workspace packages
+// Update package.json for root and all workspace packages
+const rootPkgPath = path.resolve(process.cwd(), 'package.json');
+if (fs.existsSync(rootPkgPath)) {
+  const rootPkg = JSON.parse(fs.readFileSync(rootPkgPath, 'utf-8'));
+  rootPkg.version = nextVersion;
+  fs.writeFileSync(rootPkgPath, JSON.stringify(rootPkg, null, 2) + '\n', 'utf-8');
+}
+
 for (const dir of packageDirs) {
   const pkgPath = path.join(dir, 'package.json');
   if (fs.existsSync(pkgPath)) {

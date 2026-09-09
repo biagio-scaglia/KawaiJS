@@ -1,17 +1,12 @@
 {
-  "name": "kawaijs",
+  "name": "@kawaijs/vite-plugin",
   "version": "0.1.2",
-  "description": "Web-native visual novel engine and toolchain inspired by Ren'Py",
+  "description": "Official Vite/Rollup plugin to import and hot-reload .kawa visual novel scripts directly",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "type": "module",
-  "bin": {
-    "kawa": "bin/kawa.js",
-    "kawaijs": "bin/kawa.js"
-  },
   "files": [
     "dist",
-    "bin",
     "README.md"
   ],
   "publishConfig": {
@@ -20,7 +15,7 @@
   "repository": {
     "type": "git",
     "url": "git+https://github.com/biagio-scaglia/KawaiJS.git",
-    "directory": "packages/cli"
+    "directory": "packages/vite-plugin"
   },
   "bugs": {
     "url": "https://github.com/biagio-scaglia/KawaiJS/issues"
@@ -32,20 +27,22 @@
   },
   "dependencies": {
     "@kawaijs/ast": "^0.1.2",
-    "@kawaijs/parser": "^0.1.2",
-    "@kawaijs/runtime": "^0.1.2",
-    "@kawaijs/renderer-dom": "^0.1.2",
-    "@kawaijs/audio": "^0.1.2",
-    "@kawaijs/vite-plugin": "^0.1.2"
+    "@kawaijs/parser": "^0.1.2"
+  },
+  "peerDependencies": {
+    "vite": ">=4.0.0"
+  },
+  "peerDependenciesMeta": {
+    "vite": {
+      "optional": true
+    }
   },
   "keywords": [
     "kawaijs",
-    "visual-novel",
-    "renpy",
-    "game-engine",
-    "web-native",
-    "cli",
-    "typescript"
+    "vite-plugin",
+    "vite",
+    "rollup",
+    "visual-novel"
   ],
   "author": "Biagio Scaglia",
   "license": "MIT"

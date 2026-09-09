@@ -228,6 +228,16 @@ function getInlineRuntimeScript(): string {
         const raw = this.storage.getItem('kawaijs_save_' + id);
         return raw ? JSON.parse(raw) : null;
       }
+      async deleteSlot(id) {
+        this.storage.removeItem('kawaijs_save_' + id);
+      }
+      async listSlots(total = 6) {
+        const slots = [];
+        for (let i = 1; i <= total; i++) {
+          slots.push(await this.loadSlot(String(i)));
+        }
+        return slots;
+      }
     }
     function evaluateCondition(cond, vars) {
       const t = (cond || '').trim();
@@ -282,19 +292,22 @@ function getInlineRuntimeScript(): string {
         };
         this.snapshotStack = [];
         this.listeners = new Set();
+        this.audioListeners = new Set();
         this.history = [];
         this.saveManager = new SaveManager();
+        this.isExecuting = false;
       }
       getState() { return this.state; }
       onStateChange(cb) { this.listeners.add(cb); return () => this.listeners.delete(cb); }
+      onAudioEvent(cb) { this.audioListeners.add(cb); return () => this.audioListeners.delete(cb); }
       start() { this.execute(); }
       next() {
-        if (this.state.isFinished || (this.state.choices && this.state.choices.length > 0)) return;
+        if (this.state.isFinished || this.isExecuting || (this.state.choices && this.state.choices.length > 0)) return;
         this.state.isWaitingForInput = false;
         this.execute();
       }
       choose(idx) {
-        if (!this.state.choices || !this.state.choices[idx]) return;
+        if (this.isExecuting || !this.state.choices || !this.state.choices[idx]) return;
         const choice = this.state.choices[idx];
         this.state.choices = null;
         this.state.isWaitingForInput = false;
@@ -315,71 +328,77 @@ function getInlineRuntimeScript(): string {
       }
       canRollback() { return this.snapshotStack.length > 1; }
       async save(slot) {
-        await this.saveManager.saveSlot(slot, this.state, this.state.dialogue ? this.state.dialogue.text : '');
+        await this.saveManager.saveSlot(slot, JSON.parse(JSON.stringify(this.state)), this.state.dialogue ? this.state.dialogue.text : '');
       }
       async load(slot) {
         const data = await this.saveManager.loadSlot(slot);
         if (data && data.snapshot) {
-          this.state = JSON.parse(JSON.stringify(data.snapshot));
-          this.snapshotStack = [this.state];
+          this.state = JSON.parse(JSON.stringify(data.snapshot.state || data.snapshot));
+          this.snapshotStack = [JSON.parse(JSON.stringify(this.state))];
           this.notify();
           return true;
         }
         return false;
       }
       execute() {
-        while (!this.state.isWaitingForInput && !this.state.isFinished) {
-          const list = this.story.labels[this.state.currentLabel];
-          if (!list || this.state.instructionPointer >= list.length) {
-            if (this.state.callStack.length > 0) {
-              const frame = this.state.callStack.pop();
-              this.state.currentLabel = frame.returnLabel;
-              this.state.instructionPointer = frame.returnPointer;
-              continue;
+        if (this.isExecuting) return;
+        this.isExecuting = true;
+        try {
+          while (!this.state.isWaitingForInput && !this.state.isFinished) {
+            const list = this.story.labels[this.state.currentLabel];
+            if (!list || this.state.instructionPointer >= list.length) {
+              if (this.state.callStack.length > 0) {
+                const frame = this.state.callStack.pop();
+                this.state.currentLabel = frame.returnLabel;
+                this.state.instructionPointer = frame.returnPointer;
+                continue;
+              }
+              this.state.isFinished = true;
+              break;
             }
-            this.state.isFinished = true;
-            break;
+            const inst = list[this.state.instructionPointer++];
+            if (inst.type === 'scene') {
+              this.state.visual.background = inst.background;
+              this.state.visual.characters = {};
+            } else if (inst.type === 'show') {
+              this.state.visual.characters[inst.character] = {
+                expression: inst.expression,
+                position: inst.position || 'center'
+              };
+            } else if (inst.type === 'hide') {
+              delete this.state.visual.characters[inst.character];
+            } else if (inst.type === 'dialogue') {
+              const charDef = inst.speaker ? this.story.characters[inst.speaker] : null;
+              this.state.dialogue = {
+                speaker: inst.speaker,
+                speakerDisplayName: charDef ? charDef.name : inst.speaker,
+                speakerColor: charDef ? charDef.color : null,
+                text: inst.text
+              };
+              this.state.isWaitingForInput = true;
+              this.history.push(this.state.dialogue);
+            } else if (inst.type === 'choice') {
+              this.state.choices = inst.choices;
+              this.state.isWaitingForInput = true;
+            } else if (inst.type === 'jump') {
+              this.state.currentLabel = inst.targetLabel;
+              this.state.instructionPointer = 0;
+            } else if (inst.type === 'set') {
+              const curr = this.state.variables[inst.variable];
+              this.state.variables[inst.variable] = applySetOp(curr, inst.operator, inst.value, this.state.variables);
+            } else if (inst.type === 'branch') {
+              const ok = evaluateCondition(inst.condition, this.state.variables);
+              this.state.currentLabel = ok ? inst.thenLabel : (inst.elseLabel || inst.thenLabel);
+              this.state.instructionPointer = 0;
+            } else if (inst.type === 'return') {
+              this.state.isFinished = true;
+            }
           }
-          const inst = list[this.state.instructionPointer++];
-          if (inst.type === 'scene') {
-            this.state.visual.background = inst.background;
-            this.state.visual.characters = {};
-          } else if (inst.type === 'show') {
-            this.state.visual.characters[inst.character] = {
-              expression: inst.expression,
-              position: inst.position || 'center'
-            };
-          } else if (inst.type === 'hide') {
-            delete this.state.visual.characters[inst.character];
-          } else if (inst.type === 'dialogue') {
-            const charDef = inst.speaker ? this.story.characters[inst.speaker] : null;
-            this.state.dialogue = {
-              speaker: inst.speaker,
-              speakerDisplayName: charDef ? charDef.name : inst.speaker,
-              speakerColor: charDef ? charDef.color : null,
-              text: inst.text
-            };
-            this.state.isWaitingForInput = true;
-            this.history.push(this.state.dialogue);
-          } else if (inst.type === 'choice') {
-            this.state.choices = inst.choices;
-            this.state.isWaitingForInput = true;
-          } else if (inst.type === 'jump') {
-            this.state.currentLabel = inst.targetLabel;
-            this.state.instructionPointer = 0;
-          } else if (inst.type === 'set') {
-            const curr = this.state.variables[inst.variable];
-            this.state.variables[inst.variable] = applySetOp(curr, inst.operator, inst.value, this.state.variables);
-          } else if (inst.type === 'branch') {
-            const ok = evaluateCondition(inst.condition, this.state.variables);
-            this.state.currentLabel = ok ? inst.thenLabel : (inst.elseLabel || inst.thenLabel);
-            this.state.instructionPointer = 0;
-          } else if (inst.type === 'return') {
-            this.state.isFinished = true;
+          if (this.state.isWaitingForInput) {
+            this.snapshotStack.push(JSON.parse(JSON.stringify(this.state)));
           }
-        }
-        if (this.state.isWaitingForInput) {
-          this.snapshotStack.push(JSON.parse(JSON.stringify(this.state)));
+        } finally {
+          this.isExecuting = false;
         }
         this.notify();
       }
@@ -389,6 +408,7 @@ function getInlineRuntimeScript(): string {
       constructor(vm, container) {
         this.vm = vm;
         this.container = container;
+        this.isChoicePending = false;
         this.build();
         vm.onStateChange(s => this.render(s));
         this.render(vm.getState());
@@ -408,12 +428,14 @@ function getInlineRuntimeScript(): string {
                 </div>
                 <nav class="kawa-quick-menu">
                   <button class="kawa-btn kawa-back">Back</button>
+                  <button class="kawa-btn kawa-hist">History</button>
                   <button class="kawa-btn kawa-save">Save</button>
                   <button class="kawa-btn kawa-load">Load</button>
                 </nav>
               </div>
             </div>
           </div>\`;
+        this.rootEl = this.container.querySelector('.kawa-root');
         this.bgEl = this.container.querySelector('.kawa-background');
         this.charsEl = this.container.querySelector('.kawa-characters');
         this.boxEl = this.container.querySelector('.kawa-dialogue-box');
@@ -421,23 +443,34 @@ function getInlineRuntimeScript(): string {
         this.txtEl = this.container.querySelector('.kawa-dialogue-text');
         this.choiceEl = this.container.querySelector('.kawa-choice-container');
         this.backBtn = this.container.querySelector('.kawa-back');
+        this.histBtn = this.container.querySelector('.kawa-hist');
         this.saveBtn = this.container.querySelector('.kawa-save');
         this.loadBtn = this.container.querySelector('.kawa-load');
 
         this.boxEl.addEventListener('click', () => this.vm.next());
         this.backBtn.addEventListener('click', (e) => { e.stopPropagation(); this.vm.rollback(); });
-        this.saveBtn.addEventListener('click', async (e) => { e.stopPropagation(); await this.vm.save('1'); alert('Saved to Slot 1'); });
-        this.loadBtn.addEventListener('click', async (e) => { e.stopPropagation(); if (await this.vm.load('1')) alert('Loaded Slot 1'); });
+        this.histBtn.addEventListener('click', (e) => { e.stopPropagation(); this.showHistory(); });
+        this.saveBtn.addEventListener('click', (e) => { e.stopPropagation(); this.showSaveLoad('save'); });
+        this.loadBtn.addEventListener('click', (e) => { e.stopPropagation(); this.showSaveLoad('load'); });
         window.addEventListener('keydown', (e) => {
+          const modal = this.rootEl.querySelector('.kawa-modal-overlay');
+          if (modal) {
+            if (e.key === 'Escape') modal.remove();
+            return;
+          }
           if (e.code === 'Space' || e.code === 'Enter') { e.preventDefault(); this.vm.next(); }
           if (e.code === 'Backspace') { e.preventDefault(); this.vm.rollback(); }
+          if (e.key === 's' || e.key === 'S') this.showSaveLoad('save');
+          if (e.key === 'l' || e.key === 'L') this.showSaveLoad('load');
+          if (e.key === 'h' || e.key === 'H') this.showHistory();
         });
       }
       render(state) {
+        this.isChoicePending = false;
         this.backBtn.disabled = !this.vm.canRollback();
         if (state.visual.background) {
           const bg = state.visual.background.replace(/^bg\\s+/, '');
-          this.bgEl.style.backgroundImage = 'url("/assets/backgrounds/' + bg + (bg.includes('.') ? '' : '.png') + '")';
+          this.bgEl.style.backgroundImage = 'url("/assets/backgrounds/' + bg + (bg.includes('.') ? '' : '.svg') + '"), url("/assets/backgrounds/' + bg + '.png")';
           this.bgEl.style.opacity = '1';
         } else {
           this.bgEl.style.opacity = '0';
@@ -449,15 +482,22 @@ function getInlineRuntimeScript(): string {
           div.className = 'kawa-sprite kawa-pos-' + (char.position || 'center');
           const img = document.createElement('img');
           const expr = char.expression ? '/' + char.expression : '';
-          img.src = '/assets/characters/' + id + expr + '.png';
+          img.src = '/assets/characters/' + id + expr + '.svg';
           img.alt = id;
+          let fallback = 0;
           img.onerror = () => {
-            img.style.display = 'none';
-            div.style.width = '200px'; div.style.height = '400px';
-            div.style.background = 'rgba(244,63,94,0.3)'; div.style.border = '2px dashed #f43f5e';
-            div.style.borderRadius = '16px'; div.style.display = 'flex'; div.style.alignItems = 'center';
-            div.style.justifyContent = 'center'; div.style.color = '#fff';
-            div.textContent = id + (char.expression ? ' (' + char.expression + ')' : '');
+            fallback++;
+            if (fallback === 1) img.src = '/assets/characters/' + id + expr + '.png';
+            else if (fallback === 2 && char.expression) img.src = '/assets/characters/' + id + '_' + char.expression + '.svg';
+            else if (fallback === 3 && char.expression) img.src = '/assets/characters/' + id + '_' + char.expression + '.png';
+            else {
+              img.style.display = 'none';
+              div.style.width = '220px'; div.style.height = '420px';
+              div.style.background = 'rgba(244,63,94,0.25)'; div.style.border = '2px dashed #f43f5e';
+              div.style.borderRadius = '16px'; div.style.display = 'flex'; div.style.alignItems = 'center';
+              div.style.justifyContent = 'center'; div.style.color = '#fff'; div.style.fontWeight = '600';
+              div.textContent = id + (char.expression ? ' (' + char.expression + ')' : '');
+            }
           };
           div.appendChild(img);
           this.charsEl.appendChild(div);
@@ -480,16 +520,121 @@ function getInlineRuntimeScript(): string {
         if (state.choices && state.choices.length > 0) {
           this.choiceEl.innerHTML = '';
           this.choiceEl.style.display = 'flex';
+          this.choiceEl.style.pointerEvents = 'auto';
+          this.choiceEl.style.opacity = '1';
           state.choices.forEach((c, idx) => {
             const btn = document.createElement('button');
             btn.className = 'kawa-choice-btn kawa-choice';
             btn.textContent = c.text;
-            btn.addEventListener('click', (e) => { e.stopPropagation(); this.vm.choose(idx); });
+            btn.addEventListener('click', (e) => {
+              e.stopPropagation();
+              if (this.isChoicePending) return;
+              this.isChoicePending = true;
+              this.choiceEl.style.pointerEvents = 'none';
+              this.choiceEl.style.opacity = '0.5';
+              this.vm.choose(idx);
+            });
             this.choiceEl.appendChild(btn);
           });
         } else {
           this.choiceEl.style.display = 'none';
         }
+      }
+      async showSaveLoad(mode) {
+        const ex = this.rootEl.querySelector('.kawa-modal-overlay');
+        if (ex) ex.remove();
+        const ov = document.createElement('div');
+        ov.className = 'kawa-modal-overlay';
+        const card = document.createElement('div');
+        card.className = 'kawa-modal-card';
+        card.innerHTML = \`
+          <div class="kawa-modal-header">
+            <div class="kawa-modal-title">\${mode === 'save' ? '💾 Save Game' : '📂 Load Game'}</div>
+            <button class="kawa-btn kawa-close-btn">✕ Close</button>
+          </div>
+          <div class="kawa-modal-body"><div class="kawa-slots-grid"></div></div>\`;
+        card.querySelector('.kawa-close-btn').addEventListener('click', () => ov.remove());
+        const grid = card.querySelector('.kawa-slots-grid');
+        const slots = await this.vm.saveManager.listSlots(6);
+        slots.forEach((s, i) => {
+          const num = String(i + 1);
+          const c = document.createElement('div');
+          c.className = 'kawa-slot-card';
+          c.innerHTML = \`
+            <div class="kawa-slot-header">
+              <span class="kawa-slot-badge">Slot \${num}</span>
+              <span class="kawa-slot-time">\${s ? new Date(s.timestamp).toLocaleTimeString() : 'Empty'}</span>
+            </div>
+            <div class="kawa-slot-preview">\${s ? (s.previewText || 'Game in progress') : '<span class="kawa-slot-empty-text">No save data</span>'}</div>
+            <div class="kawa-slot-actions"></div>\`;
+          const act = c.querySelector('.kawa-slot-actions');
+          if (mode === 'save') {
+            const b = document.createElement('button');
+            b.className = 'kawa-slot-btn kawa-slot-btn-save';
+            b.textContent = 'Save Here';
+            b.addEventListener('click', async () => {
+              await this.vm.save(num);
+              ov.remove();
+              this.showSaveLoad('save');
+            });
+            act.appendChild(b);
+          } else if (s) {
+            const b = document.createElement('button');
+            b.className = 'kawa-slot-btn kawa-slot-btn-load';
+            b.textContent = 'Load';
+            b.addEventListener('click', async () => {
+              if (await this.vm.load(num)) ov.remove();
+            });
+            act.appendChild(b);
+          }
+          if (s) {
+            const d = document.createElement('button');
+            d.className = 'kawa-slot-btn kawa-slot-btn-del';
+            d.textContent = '🗑';
+            d.addEventListener('click', async () => {
+              await this.vm.saveManager.deleteSlot(num);
+              ov.remove();
+              this.showSaveLoad(mode);
+            });
+            act.appendChild(d);
+          }
+          grid.appendChild(c);
+        });
+        ov.appendChild(card);
+        this.rootEl.appendChild(ov);
+      }
+      showHistory() {
+        const ex = this.rootEl.querySelector('.kawa-modal-overlay');
+        if (ex) ex.remove();
+        const ov = document.createElement('div');
+        ov.className = 'kawa-modal-overlay';
+        const card = document.createElement('div');
+        card.className = 'kawa-modal-card';
+        card.innerHTML = \`
+          <div class="kawa-modal-header">
+            <div class="kawa-modal-title">📜 Dialogue History</div>
+            <button class="kawa-btn kawa-close-btn">✕ Close</button>
+          </div>
+          <div class="kawa-modal-body"></div>\`;
+        card.querySelector('.kawa-close-btn').addEventListener('click', () => ov.remove());
+        const body = card.querySelector('.kawa-modal-body');
+        if (this.vm.history.length === 0) {
+          body.innerHTML = '<div style="opacity:0.6">No dialogue history yet.</div>';
+        } else {
+          this.vm.history.forEach(h => {
+            const item = document.createElement('div');
+            item.className = 'kawa-history-item';
+            if (h.speakerDisplayName) {
+              item.innerHTML = '<div class="kawa-history-speaker">' + h.speakerDisplayName + '</div>';
+            }
+            const txt = document.createElement('div');
+            txt.textContent = h.text;
+            item.appendChild(txt);
+            body.appendChild(item);
+          });
+        }
+        ov.appendChild(card);
+        this.rootEl.appendChild(ov);
       }
     }
     function mountKawaApp(story, container) {

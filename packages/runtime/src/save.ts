@@ -87,4 +87,13 @@ export class SaveManager {
     const key = `${this.storagePrefix}${slotId}`;
     await this.storage.removeItem(key);
   }
+
+  public async listSlots(totalSlots = 6): Promise<(SaveSlot | null)[]> {
+    const slots: (SaveSlot | null)[] = [];
+    for (let i = 1; i <= totalSlots; i++) {
+      const slot = await this.loadSlot(String(i));
+      slots.push(slot);
+    }
+    return slots;
+  }
 }

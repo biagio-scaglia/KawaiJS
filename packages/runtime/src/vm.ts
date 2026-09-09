@@ -25,6 +25,8 @@ export class StoryVM {
   private stateChangeListeners = new Set<StateChangeListener>();
   private audioEventListeners = new Set<AudioEventListener>();
 
+  private isExecuting = false;
+
   constructor(story: StoryPackage, saveManager?: SaveManager) {
     this.story = story;
     const startLabel = story.meta.startLabel ?? 'start';
@@ -70,7 +72,7 @@ export class StoryVM {
    * Advances the story to the next dialogue, choice, or scene event.
    */
   public next(): void {
-    if (this.state.isFinished) return;
+    if (this.state.isFinished || this.isExecuting) return;
 
     if (this.state.choices && this.state.choices.length > 0) {
       // Must make a choice; cannot advance automatically
@@ -89,8 +91,8 @@ export class StoryVM {
    * Selects an option from the current choice menu.
    */
   public choose(choiceIndex: number): void {
-    if (!this.state.choices || !this.state.choices[choiceIndex]) {
-      throw new Error(`Invalid choice index: ${choiceIndex}`);
+    if (this.isExecuting || !this.state.choices || !this.state.choices[choiceIndex]) {
+      return;
     }
 
     const choice = this.state.choices[choiceIndex]!;
@@ -166,41 +168,48 @@ export class StoryVM {
   }
 
   private executeUntilWaiting(): void {
-    while (!this.state.isWaitingForInput && !this.state.isFinished) {
-      const labelInstructions = this.story.labels[this.state.currentLabel];
-      if (!labelInstructions || this.state.instructionPointer >= labelInstructions.length) {
-        // Handle end of label: check call stack
-        if (this.state.callStack.length > 0) {
-          const topFrame = this.state.callStack[this.state.callStack.length - 1]!;
+    if (this.isExecuting) return;
+    this.isExecuting = true;
+
+    try {
+      while (!this.state.isWaitingForInput && !this.state.isFinished) {
+        const labelInstructions = this.story.labels[this.state.currentLabel];
+        if (!labelInstructions || this.state.instructionPointer >= labelInstructions.length) {
+          // Handle end of label: check call stack
+          if (this.state.callStack.length > 0) {
+            const topFrame = this.state.callStack[this.state.callStack.length - 1]!;
+            this.state = {
+              ...this.state,
+              currentLabel: topFrame.returnLabel,
+              instructionPointer: topFrame.returnPointer,
+              callStack: this.state.callStack.slice(0, -1)
+            };
+            continue;
+          }
+
+          // Story finished
           this.state = {
             ...this.state,
-            currentLabel: topFrame.returnLabel,
-            instructionPointer: topFrame.returnPointer,
-            callStack: this.state.callStack.slice(0, -1)
+            isFinished: true,
+            isWaitingForInput: false
           };
-          continue;
+          break;
         }
 
-        // Story finished
+        const inst = labelInstructions[this.state.instructionPointer]!;
         this.state = {
           ...this.state,
-          isFinished: true,
-          isWaitingForInput: false
+          instructionPointer: this.state.instructionPointer + 1
         };
-        break;
+
+        this.executeInstruction(inst);
       }
 
-      const inst = labelInstructions[this.state.instructionPointer]!;
-      this.state = {
-        ...this.state,
-        instructionPointer: this.state.instructionPointer + 1
-      };
-
-      this.executeInstruction(inst);
-    }
-
-    if (this.state.isWaitingForInput) {
-      this.recordSnapshot();
+      if (this.state.isWaitingForInput) {
+        this.recordSnapshot();
+      }
+    } finally {
+      this.isExecuting = false;
     }
 
     this.notifyStateChanged();

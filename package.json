@@ -9,7 +9,7 @@
   ],
   "scripts": {
     "dev": "node ./packages/cli/bin/kawa.js dev ./examples/hello-world",
-    "build": "npm run --workspaces --if-present build",
+    "build": "tsc -b",
     "build:example": "node ./packages/cli/bin/kawa.js build ./examples/hello-world",
     "typecheck": "tsc -b",
     "test": "vitest run",
