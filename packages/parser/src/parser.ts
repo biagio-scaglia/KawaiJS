@@ -174,7 +174,7 @@ export class Parser {
 
     let transition: string | undefined;
     if (this.match('WITH')) {
-      transition = this.consume('IDENTIFIER', 'Expected transition name after "with"').value;
+      transition = this.parseTransitionName();
     }
 
     this.consumeOptionalNewline();
@@ -202,7 +202,7 @@ export class Parser {
 
     let transition: string | undefined;
     if (this.match('WITH')) {
-      transition = this.consume('IDENTIFIER', 'Expected transition name after "with"').value;
+      transition = this.parseTransitionName();
     }
 
     this.consumeOptionalNewline();
@@ -222,7 +222,7 @@ export class Parser {
 
     let transition: string | undefined;
     if (this.match('WITH')) {
-      transition = this.consume('IDENTIFIER', 'Expected transition name after "with"').value;
+      transition = this.parseTransitionName();
     }
 
     this.consumeOptionalNewline();
@@ -232,6 +232,13 @@ export class Parser {
       transition,
       loc: createLocation(this.file, startTok.loc.start, this.previousLocation().end)
     };
+  }
+
+  private parseTransitionName(): string {
+    if (this.check('IDENTIFIER') || this.check('FADEIN') || this.check('FADEOUT')) {
+      return this.advance().value;
+    }
+    return this.consume('IDENTIFIER', 'Expected transition name after "with"').value;
   }
 
   private parseDialogueStmt(): DialogueStmtNode {
@@ -457,7 +464,7 @@ export class Parser {
     }
 
     let fade: number | undefined;
-    if (this.match('FADEOUT')) {
+    if (this.match('FADEOUT') || this.match('FADEIN')) {
       fade = Number(this.consume('NUMBER', 'Expected number of seconds for fadeout').value);
     }
 

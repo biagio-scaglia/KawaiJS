@@ -1,5 +1,31 @@
+/* Hello World Custom Kawaijs Theme */
 :root {
+  --kawa-font-family: 'Inter', system-ui, -apple-system, sans-serif;
   --kawa-primary-accent: #f43f5e;
   --kawa-dialogue-bg: rgba(15, 23, 42, 0.88);
-  --kawa-dialogue-border: rgba(244, 63, 94, 0.4);
+  --kawa-dialogue-border: rgba(244, 63, 94, 0.45);
+  --kawa-dialogue-radius: 18px;
+  --kawa-choice-bg: rgba(30, 41, 59, 0.95);
+  --kawa-choice-hover-bg: #f43f5e;
+  --kawa-choice-radius: 12px;
+}
+
+/* Custom Dialogue Box Glassmorphism */
+.kawa-dialogue {
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+  border: 1px solid var(--kawa-dialogue-border);
+}
+
+/* Custom Choice Buttons */
+.kawa-choice {
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.kawa-choice:hover {
+  transform: translateY(-3px) scale(1.03);
+  box-shadow: 0 10px 25px rgba(244, 63, 94, 0.4);
 }

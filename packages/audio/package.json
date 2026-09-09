@@ -1,6 +1,6 @@
 {
   "name": "@kawaijs/audio",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "description": "Web Audio API sound, music crossfading, and voice management engine for Kawaijs visual novels",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -26,7 +26,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@kawaijs/runtime": "^0.1.3"
+    "@kawaijs/runtime": "^0.1.4"
   },
   "keywords": [
     "kawaijs",

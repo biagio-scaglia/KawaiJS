@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 1000" width="600" height="1000">
+  <defs>
+    <linearGradient id="kaoriHair" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#38bdf8"/>
+      <stop offset="100%" stop-color="#0284c7"/>
+    </linearGradient>
+    <linearGradient id="kaoriUniform" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#312e81"/>
+      <stop offset="100%" stop-color="#1e1b4b"/>
+    </linearGradient>
+  </defs>
+
+  <path d="M220 450 L380 450 L420 900 L180 900 Z" fill="url(#kaoriUniform)"/>
+  <polygon points="270,450 300,520 330,450 370,450 300,550 230,450" fill="#e0f2fe"/>
+  <polygon points="290,490 310,490 318,570 300,590 282,570" fill="#0284c7"/>
+
+  <rect x="275" y="380" width="50" height="80" fill="#fde68a"/>
+  <ellipse cx="300" cy="330" rx="140" ry="150" fill="url(#kaoriHair)"/>
+  <ellipse cx="300" cy="320" rx="100" ry="115" fill="#fef3c7"/>
+
+  <!-- Glasses Pushed Slightly Up / Glint -->
+  <rect x="220" y="290" width="65" height="42" rx="8" fill="rgba(255,255,255,0.4)" stroke="#0f172a" stroke-width="4"/>
+  <rect x="315" y="290" width="65" height="42" rx="8" fill="rgba(255,255,255,0.4)" stroke="#0f172a" stroke-width="4"/>
+  <line x1="285" y1="310" x2="315" y2="310" stroke="#0f172a" stroke-width="4"/>
+
+  <!-- Analytical / Looking to the side -->
+  <circle cx="260" cy="310" r="13" fill="#0369a1"/>
+  <circle cx="263" cy="307" r="4" fill="#ffffff"/>
+  <circle cx="355" cy="310" r="13" fill="#0369a1"/>
+  <circle cx="358" cy="307" r="4" fill="#ffffff"/>
+
+  <!-- Pensive Mouth -->
+  <ellipse cx="300" cy="375" rx="8" ry="6" fill="#0369a1" opacity="0.6"/>
+
+  <path d="M190 250 C210 160, 390 160, 410 250 C380 270, 350 290, 320 270 C290 300, 270 300, 250 270 C230 290, 200 270, 190 250 Z" fill="url(#kaoriHair)"/>
+  <path d="M180 250 C160 350, 180 430, 210 450 C190 390, 190 330, 195 260 Z" fill="url(#kaoriHair)"/>
+  <path d="M420 250 C440 350, 420 430, 390 450 C410 390, 410 330, 405 260 Z" fill="url(#kaoriHair)"/>
+</svg>

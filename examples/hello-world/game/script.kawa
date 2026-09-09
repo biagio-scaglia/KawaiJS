@@ -1,43 +1,120 @@
-# Kawaijs Hello World Visual Novel
+# Kawaijs Showcase Visual Novel — "Code of Hearts"
 character yumia "Yumia" #f43f5e
+character kaori "Kaori" #0284c7
 
 label start:
-    set affection = 0
+    set dev_score = 0
+    set creative_score = 0
+
+    play music bgm_ambient fade 2
 
     scene bg classroom
-    show yumia happy at center
+    show yumia happy at left
+    show kaori normal at right
 
-    yumia "Hello, world!"
+    yumia "Welcome to the Game Development Club! I'm Yumia, the lead writer and designer."
+    kaori "And I'm Kaori. I oversee the engine architecture and Web Audio pipeline."
 
-    narrator "This is the first Kawaijs visual novel running natively on the Web."
+    yumia "We're building our next visual novel using Kawaijs — a modern, web-native scripting engine."
+    kaori "It compiles human-friendly .kawa scripts directly into deterministic bytecode that runs smoothly in any browser."
+
+    play sound sfx_sparkle
+    yumia "We need your help to choose our project's main direction! What is your biggest strength?"
 
     menu:
-        "Say hello":
-            set affection += 1
-            show yumia happy at center
-            yumia "Nice to meet you! It's so exciting to meet new developers."
-            jump check_route
+        "High-performance architecture & Web Audio":
+            play sound sfx_click
+            set dev_score += 2
+            show kaori happy at right
+            show yumia normal at left
+            kaori "Impressive. An engineer with an eye for modularity and crisp performance."
+            yumia "Hey! Don't forget that great stories need emotional resonance too!"
+            jump technical_route
 
-        "Ignore her":
-            set affection -= 1
-            show yumia sad at center
-            yumia "Wow. Rude..."
-            jump check_route
+        "Rich storytelling, character drama & art":
+            play sound sfx_click
+            set creative_score += 2
+            show yumia excited at left
+            show kaori thinking at right
+            yumia "Yes!! That's the spirit! Players remember characters that touch their hearts."
+            kaori "A solid script is essential, provided the memory footprint stays lightweight."
+            jump creative_route
 
-label check_route:
-    if affection >= 1:
-        jump good_ending
+        "Full-stack mastery: Code, Music, and Narrative":
+            play sound sfx_click
+            set dev_score += 1
+            set creative_score += 1
+            show yumia excited at left
+            show kaori smug at right
+            kaori "Ambitious. A true solo-dev Renaissance creator."
+            yumia "That means we can make something truly unforgettable together!"
+            jump courtyard_scene
+
+label technical_route:
+    play music bgm_upbeat fade 1
+    scene bg rooftop
+    show kaori smug at center
+
+    kaori "Up here on the rooftop, the architecture comes together cleanly."
+    kaori "With Kawaijs, we get rollback snapshots in O(1) time and instant HMR via the Vite plugin."
+    
+    play sound sfx_sparkle
+    kaori "Look at the city lights. Every browser tab can be a stage for interactive fiction."
+    jump evaluate_ending
+
+label creative_route:
+    play music bgm_upbeat fade 1
+    scene bg sunset_courtyard
+    show yumia happy at center
+
+    yumia "Isn't the sunset courtyard breathtaking?"
+    yumia "With Kawaijs, writers don't need complex code to craft branching paths or dialogue menus."
+    
+    play sound sfx_sparkle
+    yumia "The cherry blossoms remind me that great stories bloom when imagination meets great tools."
+    jump evaluate_ending
+
+label courtyard_scene:
+    play music bgm_upbeat fade 1
+    scene bg sunset_courtyard
+    show yumia happy at left
+    show kaori happy at right
+
+    yumia "Look at the sunset! We've already outlined our story branches and characters."
+    kaori "The bundle compiled in under 15ms. The Web Audio controller is initialized and ready."
+    jump evaluate_ending
+
+label evaluate_ending:
+    if dev_score >= 2:
+        jump ending_tech
     else:
-        jump normal_ending
+        if creative_score >= 2:
+            jump ending_creative
+        else:
+            jump ending_master
 
-label good_ending:
-    show yumia excited at center
-    yumia "I have a feeling we are going to build amazing visual novels together!"
-    narrator "You unlocked the Good Ending!"
+label ending_tech:
+    scene bg rooftop
+    show kaori smug at center
+    kaori "You have proven your engineering mastery. Our next release will be revolutionary."
+    narrator "🏆 Ending 1/3: The Master Architect — High Performance & Flawless Code."
+    stop music fade 2
     return
 
-label normal_ending:
-    show yumia normal at center
-    yumia "Maybe next time you will be friendlier... Until then!"
-    narrator "You reached the Normal Ending."
+label ending_creative:
+    scene bg sunset_courtyard
+    show yumia excited at center
+    yumia "Our visual novel is going to touch millions of hearts around the world!"
+    narrator "🌸 Ending 2/3: The Renowned Storyteller — Emotion, Art & Unforgettable Characters."
+    stop music fade 2
+    return
+
+label ending_master:
+    scene bg classroom
+    show yumia excited at left
+    show kaori happy at right
+    yumia "Code, art, music, and story in perfect harmony!"
+    kaori "You have unlocked the full power of Kawaijs."
+    narrator "✨ Ending 3/3: The Renaissance Visionary — A True Master of Interactive Fiction."
+    stop music fade 2
     return

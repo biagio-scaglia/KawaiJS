@@ -76,6 +76,7 @@ export const KEYWORDS: Record<string, TokenType> = {
   voice: 'VOICE',
   fadein: 'FADEIN',
   fadeout: 'FADEOUT',
+  fade: 'FADEIN',
   loop: 'LOOP',
   narrator: 'NARRATOR',
   true: 'BOOLEAN',
