@@ -275,8 +275,9 @@ export function buildProject(projectDir = '.', options: BuildOptions = {}): bool
     class StoryVM {
       constructor(story) {
         this.story = story;
+        const startLabel = story.meta.startLabel || 'start';
         this.state = {
-          currentLabel: story.meta.startLabel || 'start',
+          currentLabel: startLabel,
           instructionPointer: 0,
           callStack: [],
           variables: {},
@@ -297,7 +298,22 @@ export function buildProject(projectDir = '.', options: BuildOptions = {}): bool
       getState() { return this.state; }
       onStateChange(cb) { this.listeners.add(cb); return () => this.listeners.delete(cb); }
       onAudioEvent(cb) { this.audioListeners.add(cb); return () => this.audioListeners.delete(cb); }
-      start() { this.execute(); }
+      start() {
+        this.state.currentLabel = this.story.meta.startLabel || 'start';
+        this.state.instructionPointer = 0;
+        this.state.isFinished = false;
+        this.state.isWaitingForInput = false;
+        this.snapshotStack = [];
+        this.execute();
+      }
+      jump(target) {
+        this.state.currentLabel = target;
+        this.state.instructionPointer = 0;
+        this.state.choices = null;
+        this.state.isWaitingForInput = false;
+        this.state.isFinished = false;
+        this.execute();
+      }
       next() {
         if (this.state.isFinished || this.isExecuting || (this.state.choices && this.state.choices.length > 0)) return;
         this.state.isWaitingForInput = false;
@@ -346,8 +362,8 @@ export function buildProject(projectDir = '.', options: BuildOptions = {}): bool
             if (!currentInstructions || this.state.instructionPointer >= currentInstructions.length) {
               if (this.state.callStack.length > 0) {
                 const ret = this.state.callStack.pop();
-                this.state.currentLabel = ret.label;
-                this.state.instructionPointer = ret.pointer;
+                this.state.currentLabel = ret.returnLabel || ret.label;
+                this.state.instructionPointer = ret.returnPointer || ret.pointer;
                 continue;
               }
               this.state.isFinished = true;
@@ -366,12 +382,13 @@ export function buildProject(projectDir = '.', options: BuildOptions = {}): bool
       }
       executeInstruction(inst) {
         switch (inst.type) {
+          case 'dialogue':
           case 'say': {
             let spkName = null;
             let spkColor = null;
             if (inst.speaker) {
-              const decl = this.story.characters[inst.speaker];
-              spkName = decl ? decl.displayName : inst.speaker;
+              const decl = this.story.characters ? this.story.characters[inst.speaker] : null;
+              spkName = decl ? (decl.name || decl.displayName || inst.speaker) : inst.speaker;
               spkColor = decl ? decl.color : null;
             }
             this.state.dialogue = { speaker: inst.speaker || null, speakerDisplayName: spkName, speakerColor: spkColor, text: inst.text };
@@ -390,9 +407,10 @@ export function buildProject(projectDir = '.', options: BuildOptions = {}): bool
             break;
           }
           case 'show': {
+            const charDef = this.state.visual.characters[inst.character] || {};
             this.state.visual.characters[inst.character] = {
-              expression: inst.expression || undefined,
-              position: inst.position || 'center'
+              expression: inst.expression || charDef.expression,
+              position: inst.position || charDef.position || 'center'
             };
             this.notify();
             break;
@@ -402,21 +420,25 @@ export function buildProject(projectDir = '.', options: BuildOptions = {}): bool
             this.notify();
             break;
           }
+          case 'play_audio':
           case 'play': {
             if (inst.channel === 'music') this.state.audio.music = inst.track;
             else if (inst.channel === 'voice') this.state.audio.voice = inst.track;
             this.notifyAudio({ action: 'play', channel: inst.channel, track: inst.track, fade: inst.fade, loop: inst.loop !== false });
             break;
           }
+          case 'stop_audio':
           case 'stop': {
             if (inst.channel === 'music') this.state.audio.music = null;
             else if (inst.channel === 'voice') this.state.audio.voice = null;
             this.notifyAudio({ action: 'stop', channel: inst.channel, fade: inst.fade });
             break;
           }
+          case 'choice':
           case 'menu': {
             const avail = [];
-            for (const item of inst.choices) {
+            const list = inst.choices || [];
+            for (const item of list) {
               if (item.condition) {
                 if (evaluateCondition(item.condition, this.state.variables)) avail.push(item);
               } else {
@@ -435,26 +457,11 @@ export function buildProject(projectDir = '.', options: BuildOptions = {}): bool
             this.state.instructionPointer = 0;
             break;
           }
-          case 'call': {
-            this.state.callStack.push({ label: this.state.currentLabel, pointer: this.state.instructionPointer });
-            this.state.currentLabel = inst.targetLabel;
+          case 'branch': {
+            const pass = evaluateCondition(inst.condition, this.state.variables);
+            const target = pass ? inst.thenLabel : (inst.elseLabel || inst.thenLabel);
+            this.state.currentLabel = target;
             this.state.instructionPointer = 0;
-            break;
-          }
-          case 'return': {
-            if (this.state.callStack.length > 0) {
-              const ret = this.state.callStack.pop();
-              this.state.currentLabel = ret.label;
-              this.state.instructionPointer = ret.pointer;
-            } else {
-              this.state.isFinished = true;
-              this.notify();
-            }
-            break;
-          }
-          case 'set': {
-            const cur = this.state.variables[inst.variable];
-            this.state.variables[inst.variable] = applySetOp(cur, inst.operator, inst.value, this.state.variables);
             break;
           }
           case 'if': {
@@ -465,6 +472,31 @@ export function buildProject(projectDir = '.', options: BuildOptions = {}): bool
             } else if (inst.elseLabel) {
               this.state.currentLabel = inst.elseLabel;
               this.state.instructionPointer = 0;
+            }
+            break;
+          }
+          case 'set': {
+            const cur = this.state.variables[inst.variable];
+            this.state.variables[inst.variable] = applySetOp(cur, inst.operator || '=', inst.value, this.state.variables);
+            break;
+          }
+          case 'call': {
+            this.state.callStack.push({ returnLabel: this.state.currentLabel, returnPointer: this.state.instructionPointer });
+            this.state.currentLabel = inst.targetLabel;
+            this.state.instructionPointer = 0;
+            break;
+          }
+          case 'return': {
+            if (this.state.callStack.length > 0) {
+              const ret = this.state.callStack.pop();
+              this.state.currentLabel = ret.returnLabel || ret.label;
+              this.state.instructionPointer = ret.returnPointer || ret.pointer;
+            } else {
+              this.state.isFinished = true;
+              this.state.dialogue = null;
+              this.state.choices = null;
+              this.state.isWaitingForInput = false;
+              this.notify();
             }
             break;
           }
@@ -946,7 +978,7 @@ export function buildProject(projectDir = '.', options: BuildOptions = {}): bool
                 <button class="kawa-btn kawa-btn-load-end">\${SVG_ICONS.load} Load Slot</button>
               </div>\`;
             endCard.querySelector('.kawa-btn-replay').addEventListener('click', () => {
-              window.location.reload();
+              this.vm.jump('start');
             });
             endCard.querySelector('.kawa-btn-load-end').addEventListener('click', () => {
               this.showSaveLoad('load');
