@@ -264,6 +264,34 @@ export function buildProject(projectDir = '.', options: BuildOptions = {}): bool
               const ok = evaluateCondition(inst.condition, this.state.variables);
               this.state.currentLabel = ok ? inst.thenLabel : (inst.elseLabel || inst.thenLabel);
               this.state.instructionPointer = 0;
+            } else if (inst.type === 'play_audio') {
+              for (const cb of this.audioListeners) {
+                cb({
+                  action: 'play',
+                  channel: inst.channel,
+                  track: inst.track,
+                  fade: inst.fade,
+                  loop: inst.loop
+                });
+              }
+              if (inst.channel === 'music') {
+                this.state.audio.music = inst.track;
+              } else if (inst.channel === 'voice') {
+                this.state.audio.voice = inst.track;
+              }
+            } else if (inst.type === 'stop_audio') {
+              for (const cb of this.audioListeners) {
+                cb({
+                  action: 'stop',
+                  channel: inst.channel,
+                  fade: inst.fade
+                });
+              }
+              if (inst.channel === 'music') {
+                this.state.audio.music = null;
+              } else if (inst.channel === 'voice') {
+                this.state.audio.voice = null;
+              }
             } else if (inst.type === 'return') {
               this.state.isFinished = true;
             }
@@ -278,10 +306,163 @@ export function buildProject(projectDir = '.', options: BuildOptions = {}): bool
       }
       notify() { for (const l of this.listeners) l(this.state); }
     }
+    class AudioManager {
+      constructor() {
+        this.masterVolume = 1.0;
+        this.musicVolume = 0.8;
+        this.soundVolume = 1.0;
+        this.voiceVolume = 1.0;
+        this.isMuted = false;
+        this.currentMusicAudio = null;
+        this.currentMusicTrack = null;
+        this.currentVoiceAudio = null;
+        this.soundPool = [];
+        this.isUnlocked = false;
+        this.pendingMusic = null;
+
+        const unlock = () => {
+          this.isUnlocked = true;
+          if (this.pendingMusic) {
+            const { src, options } = this.pendingMusic;
+            this.pendingMusic = null;
+            this.playMusic(src, options);
+          }
+          window.removeEventListener('click', unlock);
+          window.removeEventListener('keydown', unlock);
+          window.removeEventListener('touchstart', unlock);
+        };
+        window.addEventListener('click', unlock, { passive: true });
+        window.addEventListener('keydown', unlock, { passive: true });
+        window.addEventListener('touchstart', unlock, { passive: true });
+      }
+      toggleMute() {
+        this.isMuted = !this.isMuted;
+        if (this.currentMusicAudio) {
+          this.currentMusicAudio.volume = this.isMuted ? 0 : this.masterVolume * this.musicVolume;
+        }
+        return this.isMuted;
+      }
+      playMusic(src, options = {}) {
+        if (this.currentMusicTrack === src && this.currentMusicAudio && !this.currentMusicAudio.paused) {
+          return;
+        }
+        if (!this.isUnlocked) {
+          this.pendingMusic = { src, options };
+        }
+        const fadein = options.fadein ?? 0;
+        const loop = options.loop ?? true;
+        const targetVolume = this.isMuted ? 0 : (options.volume ?? 1) * this.masterVolume * this.musicVolume;
+
+        if (this.currentMusicAudio) {
+          this.stopMusic({ fadeout: fadein > 0 ? fadein : 0.3 });
+        }
+
+        const audio = new Audio(src);
+        audio.loop = loop;
+        this.currentMusicAudio = audio;
+        this.currentMusicTrack = src;
+
+        if (fadein > 0) {
+          audio.volume = 0;
+          audio.play().catch(() => {});
+          this.fadeVolume(audio, 0, targetVolume, fadein * 1000);
+        } else {
+          audio.volume = targetVolume;
+          audio.play().catch(() => {});
+        }
+      }
+      stopMusic(options = {}) {
+        const fadeout = options.fadeout ?? 0;
+        const audio = this.currentMusicAudio;
+        if (!audio) return;
+        this.currentMusicAudio = null;
+        this.currentMusicTrack = null;
+        this.pendingMusic = null;
+
+        if (fadeout > 0) {
+          this.fadeVolume(audio, audio.volume, 0, fadeout * 1000, () => {
+            audio.pause();
+            audio.src = '';
+          });
+        } else {
+          audio.pause();
+          audio.src = '';
+        }
+      }
+      playSound(src, volume = 1) {
+        if (this.isMuted) return;
+        const audio = new Audio(src);
+        audio.volume = volume * this.masterVolume * this.soundVolume;
+        audio.play().catch(() => {});
+        this.soundPool.push(audio);
+        audio.addEventListener('ended', () => {
+          const idx = this.soundPool.indexOf(audio);
+          if (idx !== -1) this.soundPool.splice(idx, 1);
+        });
+      }
+      playVoice(src, volume = 1) {
+        if (this.currentVoiceAudio) {
+          this.currentVoiceAudio.pause();
+          this.currentVoiceAudio.src = '';
+        }
+        if (this.isMuted) return;
+        const audio = new Audio(src);
+        audio.volume = volume * this.masterVolume * this.voiceVolume;
+        audio.play().catch(() => {});
+        this.currentVoiceAudio = audio;
+      }
+      stopVoice() {
+        if (this.currentVoiceAudio) {
+          this.currentVoiceAudio.pause();
+          this.currentVoiceAudio.src = '';
+          this.currentVoiceAudio = null;
+        }
+      }
+      fadeVolume(audio, from, to, durationMs, onComplete) {
+        const steps = 20;
+        const stepTime = durationMs / steps;
+        const volumeStep = (to - from) / steps;
+        let currentStep = 0;
+        const interval = setInterval(() => {
+          currentStep++;
+          if (this.isMuted) {
+            audio.volume = 0;
+          } else {
+            audio.volume = Math.max(0, Math.min(1, from + volumeStep * currentStep));
+          }
+          if (currentStep >= steps) {
+            clearInterval(interval);
+            if (!this.isMuted) audio.volume = to;
+            if (onComplete) onComplete();
+          }
+        }, stepTime);
+      }
+      attachToVM(vm, assetResolver) {
+        return vm.onAudioEvent((event) => {
+          if (event.action === 'play' && event.track) {
+            const url = assetResolver(event.track, event.channel);
+            if (event.channel === 'music') {
+              this.playMusic(url, { fadein: event.fade, loop: event.loop });
+            } else if (event.channel === 'sound') {
+              this.playSound(url);
+            } else if (event.channel === 'voice') {
+              this.playVoice(url);
+            }
+          } else if (event.action === 'stop') {
+            if (event.channel === 'music') {
+              this.stopMusic({ fadeout: event.fade });
+            } else if (event.channel === 'voice') {
+              this.stopVoice();
+            }
+          }
+        });
+      }
+    }
     class DOMRenderer {
-      constructor(vm, container) {
+      constructor(vm, container, audioManager) {
         this.vm = vm;
         this.container = container;
+        this.audioManager = audioManager;
         this.isChoicePending = false;
         this.build();
         vm.onStateChange(s => this.render(s));
@@ -305,6 +486,7 @@ export function buildProject(projectDir = '.', options: BuildOptions = {}): bool
                   <button class="kawa-btn kawa-hist">History</button>
                   <button class="kawa-btn kawa-save">Save</button>
                   <button class="kawa-btn kawa-load">Load</button>
+                  <button class="kawa-btn kawa-mute" title="Toggle Mute">🔊</button>
                 </nav>
               </div>
             </div>
@@ -320,12 +502,20 @@ export function buildProject(projectDir = '.', options: BuildOptions = {}): bool
         this.histBtn = this.container.querySelector('.kawa-hist');
         this.saveBtn = this.container.querySelector('.kawa-save');
         this.loadBtn = this.container.querySelector('.kawa-load');
+        this.muteBtn = this.container.querySelector('.kawa-mute');
 
         this.boxEl.addEventListener('click', () => this.vm.next());
         this.backBtn.addEventListener('click', (e) => { e.stopPropagation(); this.vm.rollback(); });
         this.histBtn.addEventListener('click', (e) => { e.stopPropagation(); this.showHistory(); });
         this.saveBtn.addEventListener('click', (e) => { e.stopPropagation(); this.showSaveLoad('save'); });
         this.loadBtn.addEventListener('click', (e) => { e.stopPropagation(); this.showSaveLoad('load'); });
+        if (this.muteBtn && this.audioManager) {
+          this.muteBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const isMuted = this.audioManager.toggleMute();
+            this.muteBtn.textContent = isMuted ? '🔇' : '🔊';
+          });
+        }
         window.addEventListener('keydown', (e) => {
           const modal = this.rootEl.querySelector('.kawa-modal-overlay');
           if (modal) {
@@ -337,6 +527,12 @@ export function buildProject(projectDir = '.', options: BuildOptions = {}): bool
           if (e.key === 's' || e.key === 'S') this.showSaveLoad('save');
           if (e.key === 'l' || e.key === 'L') this.showSaveLoad('load');
           if (e.key === 'h' || e.key === 'H') this.showHistory();
+          if (e.key === 'm' || e.key === 'M') {
+            if (this.audioManager && this.muteBtn) {
+              const isMuted = this.audioManager.toggleMute();
+              this.muteBtn.textContent = isMuted ? '🔇' : '🔊';
+            }
+          }
         });
       }
       render(state) {
@@ -513,7 +709,12 @@ export function buildProject(projectDir = '.', options: BuildOptions = {}): bool
     }
 
     const vm = new StoryVM(story);
-    new DOMRenderer(vm, document.getElementById('app'));
+    const audio = new AudioManager();
+    const audioResolver = (track, channel) => {
+      return track.includes('.') ? './assets/audio/' + track : './assets/audio/' + track + '.mp3';
+    };
+    audio.attachToVM(vm, audioResolver);
+    new DOMRenderer(vm, document.getElementById('app'), audio);
     vm.start();
   </script>
 </body>
