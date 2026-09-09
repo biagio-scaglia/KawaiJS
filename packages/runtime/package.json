@@ -1,6 +1,6 @@
 {
   "name": "@kawaijs/runtime",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Headless state machine, execution engine, save/load, and rollback system for Kawaijs",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",

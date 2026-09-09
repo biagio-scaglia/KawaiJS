@@ -1,6 +1,6 @@
 {
   "name": "@kawaijs/renderer-dom",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Standard semantic DOM and CSS rendering engine for Kawaijs visual novels",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
