@@ -6,10 +6,16 @@
     "packages/*"
   ],
   "scripts": {
+    "dev": "node ./packages/cli/bin/kawa.js dev ./examples/hello-world",
     "build": "npm run --workspaces --if-present build",
+    "build:example": "node ./packages/cli/bin/kawa.js build ./examples/hello-world",
     "typecheck": "tsc -b",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "release": "node scripts/release.js patch",
+    "release:patch": "node scripts/release.js patch",
+    "release:minor": "node scripts/release.js minor",
+    "release:major": "node scripts/release.js major"
   },
   "keywords": [
     "visual-novel",
