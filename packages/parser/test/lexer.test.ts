@@ -17,6 +17,29 @@ describe('Lexer', () => {
     expect(tokens[2]?.value).toBe('Yumia');
   });
 
+  it('tokenizes compound assignment and comparison operators', () => {
+    const code = `set score += 5
+if score >= 10:
+    set score -= 2
+`;
+    const lexer = new Lexer(code);
+    const tokens = lexer.tokenize();
+    const types = tokens.map(t => t.type);
+
+    expect(types).toContain('PLUS_EQUALS');
+    expect(types).toContain('GREATER_EQUALS');
+    expect(types).toContain('MINUS_EQUALS');
+  });
+
+  it('tokenizes narrator keyword and strings', () => {
+    const code = `narrator "This is a story."`;
+    const lexer = new Lexer(code);
+    const tokens = lexer.tokenize();
+
+    expect(tokens[0]?.type).toBe('NARRATOR');
+    expect(tokens[1]?.value).toBe('This is a story.');
+  });
+
   it('correctly tracks INDENT and DEDENT levels', () => {
     const code = `label start:
     scene bg room

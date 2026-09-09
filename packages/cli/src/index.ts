@@ -5,8 +5,10 @@ export * from '@kawaijs/renderer-dom';
 
 import { createProject } from './commands/create.js';
 import { validateProject } from './commands/validate.js';
+import { startDevServer } from './commands/dev.js';
+import { buildProject } from './commands/build.js';
 
-export { createProject, validateProject };
+export { createProject, validateProject, startDevServer, buildProject };
 
 export function runCLI(args: string[]): void {
   const command = args[0];
@@ -15,6 +17,21 @@ export function runCLI(args: string[]): void {
     case 'create': {
       const projectName = args[1] ?? 'my-novel';
       createProject(projectName);
+      break;
+    }
+
+    case 'dev': {
+      const targetPath = args[1] ?? '.';
+      startDevServer(targetPath);
+      break;
+    }
+
+    case 'build': {
+      const targetPath = args[1] ?? '.';
+      const ok = buildProject(targetPath);
+      if (!ok) {
+        process.exitCode = 1;
+      }
       break;
     }
 
@@ -30,7 +47,7 @@ export function runCLI(args: string[]): void {
     case 'version':
     case '-v':
     case '--version': {
-      console.log('Kawaijs v0.1.0');
+      console.log('Kawaijs v0.1.1');
       break;
     }
 
@@ -47,16 +64,16 @@ Usage:
 
 Commands:
   create <name>     Scaffold a new visual novel project
+  dev [path]        Start the local development server (with live reload)
+  build [path]      Build a static production web bundle (dist/)
   validate [path]   Validate Kawa Script syntax, labels, and links
-  dev               Start the local development server (with HMR)
-  build             Build a static production web bundle
   help              Show this help message
   version           Show version information
 
 Example:
   kawa create my-novel
   cd my-novel
-  kawa validate
+  kawa dev
 `);
       break;
     }

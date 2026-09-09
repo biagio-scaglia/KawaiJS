@@ -1,16 +1,46 @@
 import type { StoryState, StoryVM } from '@kawaijs/runtime';
 
+export type AssetType = 'background' | 'character' | 'audio';
+
+export function defaultAssetResolver(path: string, type: AssetType): string {
+  if (
+    path.startsWith('http://') ||
+    path.startsWith('https://') ||
+    path.startsWith('data:') ||
+    path.startsWith('/') ||
+    path.startsWith('./')
+  ) {
+    return path;
+  }
+
+  if (type === 'background') {
+    const clean = path.replace(/^bg\s+/, '').trim();
+    return clean.includes('.') ? `assets/backgrounds/${clean}` : `assets/backgrounds/${clean}.png`;
+  }
+
+  if (type === 'character') {
+    const clean = path.replace(/_/g, '/').replace(/\s+/g, '/').trim();
+    return clean.includes('.') ? `assets/characters/${clean}` : `assets/characters/${clean}.png`;
+  }
+
+  if (type === 'audio') {
+    return path.includes('.') ? `assets/audio/${path}` : `assets/audio/${path}.mp3`;
+  }
+
+  return path;
+}
+
 export interface DOMRendererOptions {
   container: HTMLElement;
   typewriterSpeed?: number; // ms per character, 0 for instant
-  assetResolver?: (path: string, type: 'background' | 'character' | 'audio') => string;
+  assetResolver?: (path: string, type: AssetType) => string;
 }
 
 export class DOMRenderer {
   private readonly vm: StoryVM;
   private readonly container: HTMLElement;
   private readonly typewriterSpeed: number;
-  private readonly assetResolver: (path: string, type: 'background' | 'character' | 'audio') => string;
+  private readonly assetResolver: (path: string, type: AssetType) => string;
 
   private rootEl!: HTMLDivElement;
   private backgroundEl!: HTMLDivElement;
@@ -30,7 +60,7 @@ export class DOMRenderer {
     this.vm = vm;
     this.container = options.container;
     this.typewriterSpeed = options.typewriterSpeed ?? 20;
-    this.assetResolver = options.assetResolver ?? ((path) => path);
+    this.assetResolver = options.assetResolver ?? defaultAssetResolver;
 
     this.buildDOM();
     this.bindEvents();
@@ -66,25 +96,25 @@ export class DOMRenderer {
     this.backgroundEl.className = 'kawa-background';
 
     this.charactersEl = document.createElement('div');
-    this.charactersEl.className = 'kawa-characters';
+    this.charactersEl.className = 'kawa-characters kawa-sprites';
 
     const uiLayerEl = document.createElement('div');
     uiLayerEl.className = 'kawa-ui-layer';
 
     // Choice Container
     this.choiceContainerEl = document.createElement('div');
-    this.choiceContainerEl.className = 'kawa-choice-container';
+    this.choiceContainerEl.className = 'kawa-choice-container kawa-choices';
     this.choiceContainerEl.style.display = 'none';
 
     // Dialogue Box
     this.dialogueBoxEl = document.createElement('div');
-    this.dialogueBoxEl.className = 'kawa-dialogue-box';
+    this.dialogueBoxEl.className = 'kawa-dialogue-box kawa-dialogue';
 
     this.speakerTagEl = document.createElement('div');
-    this.speakerTagEl.className = 'kawa-speaker-tag';
+    this.speakerTagEl.className = 'kawa-speaker-tag kawa-speaker';
 
     this.dialogueTextEl = document.createElement('div');
-    this.dialogueTextEl.className = 'kawa-dialogue-text';
+    this.dialogueTextEl.className = 'kawa-dialogue-text kawa-text';
 
     const indicatorEl = document.createElement('div');
     indicatorEl.className = 'kawa-continue-indicator';
@@ -206,21 +236,30 @@ export class DOMRenderer {
       }
 
       const img = document.createElement('img');
-      const expr = charState.expression ? `_${charState.expression}` : '';
-      img.src = this.assetResolver(`${charId}${expr}.png`, 'character');
+      const charAssetKey = charState.expression ? `${charId}/${charState.expression}` : charId;
+      img.src = this.assetResolver(charAssetKey, 'character');
       img.alt = `${charId} ${charState.expression ?? ''}`;
       img.onerror = () => {
+        // Try flat filename e.g. yumia_happy.png if yumia/happy.png fails
+        if (charState.expression && !img.dataset.fallbackTried) {
+          img.dataset.fallbackTried = 'true';
+          img.src = this.assetResolver(`${charId}_${charState.expression}`, 'character');
+          return;
+        }
         // Fallback placeholder sprite if image is missing
         img.style.display = 'none';
-        spriteDiv.style.width = '200px';
-        spriteDiv.style.height = '400px';
-        spriteDiv.style.background = 'rgba(244, 63, 94, 0.4)';
+        spriteDiv.style.width = '220px';
+        spriteDiv.style.height = '420px';
+        spriteDiv.style.background = 'rgba(244, 63, 94, 0.25)';
         spriteDiv.style.border = '2px dashed #f43f5e';
         spriteDiv.style.borderRadius = '16px';
         spriteDiv.style.display = 'flex';
         spriteDiv.style.alignItems = 'center';
         spriteDiv.style.justifyContent = 'center';
-        spriteDiv.textContent = `${charId} (${charState.expression ?? 'normal'})`;
+        spriteDiv.style.color = '#ffffff';
+        spriteDiv.style.fontWeight = '600';
+        spriteDiv.style.fontSize = '1.1rem';
+        spriteDiv.textContent = `${charId}\n(${charState.expression ?? 'normal'})`;
       };
 
       spriteDiv.appendChild(img);
@@ -253,7 +292,7 @@ export class DOMRenderer {
 
       state.choices.forEach((choice, index) => {
         const btn = document.createElement('button');
-        btn.className = 'kawa-choice-btn';
+        btn.className = 'kawa-choice-btn kawa-choice';
         btn.textContent = choice.text;
         btn.addEventListener('click', (e) => {
           e.stopPropagation();

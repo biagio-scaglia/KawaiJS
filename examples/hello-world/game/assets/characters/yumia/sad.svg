@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 1000" width="600" height="1000">
+  <defs>
+    <linearGradient id="hairGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#fb7185"/>
+      <stop offset="100%" stop-color="#e11d48"/>
+    </linearGradient>
+    <linearGradient id="uniformGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#1e293b"/>
+      <stop offset="100%" stop-color="#0f172a"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Body / School Uniform -->
+  <path d="M220 450 L380 450 L420 900 L180 900 Z" fill="url(#uniformGrad)"/>
+  <polygon points="260,450 300,530 340,450 380,450 300,560 220,450" fill="#ffffff"/>
+  <polygon points="285,520 315,520 330,580 300,550 270,580" fill="#f43f5e"/>
+
+  <!-- Neck -->
+  <rect x="275" y="380" width="50" height="80" fill="#fed7aa"/>
+
+  <!-- Long Hair (Back) -->
+  <path d="M160 250 C130 500, 150 750, 190 850 C230 750, 200 500, 220 280 Z" fill="url(#hairGrad)"/>
+  <path d="M440 250 C470 500, 450 750, 410 850 C370 750, 400 500, 380 280 Z" fill="url(#hairGrad)"/>
+
+  <!-- Face -->
+  <ellipse cx="300" cy="320" rx="100" ry="115" fill="#ffedd5"/>
+
+  <!-- Sad / Pouting Eyes -->
+  <circle cx="245" cy="315" r="14" fill="#881337"/>
+  <circle cx="355" cy="315" r="14" fill="#881337"/>
+  <!-- Tear droplet -->
+  <circle cx="230" cy="335" r="5" fill="#38bdf8"/>
+
+  <!-- Pout / Frown -->
+  <path d="M285 375 Q300 360 315 375" fill="none" stroke="#e11d48" stroke-width="4" stroke-linecap="round"/>
+
+  <!-- Hair (Front & Bangs) -->
+  <path d="M200 250 C210 160, 390 160, 400 250 C380 280, 350 310, 330 280 C310 320, 290 320, 270 280 C250 310, 220 280, 200 250 Z" fill="url(#hairGrad)"/>
+  <path d="M190 240 C170 340, 180 430, 210 470 C195 410, 195 330, 205 260 Z" fill="url(#hairGrad)"/>
+  <path d="M410 240 C430 340, 420 430, 390 470 C405 410, 405 330, 395 260 Z" fill="url(#hairGrad)"/>
+</svg>

@@ -155,6 +155,7 @@ export class Compiler {
           instructions.push({
             type: 'set',
             variable: stmt.variable,
+            operator: stmt.operator,
             value: stmt.value,
             loc: stmt.loc
           });

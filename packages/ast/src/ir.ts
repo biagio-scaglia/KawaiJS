@@ -19,7 +19,7 @@ export type Instruction =
   | { readonly type: 'dialogue'; readonly speaker?: string; readonly text: string; readonly loc?: SourceLocation }
   | { readonly type: 'choice'; readonly prompt?: string; readonly choices: readonly ChoiceOption[]; readonly loc?: SourceLocation }
   | { readonly type: 'jump'; readonly targetLabel: string; readonly loc?: SourceLocation }
-  | { readonly type: 'set'; readonly variable: string; readonly value: unknown; readonly loc?: SourceLocation }
+  | { readonly type: 'set'; readonly variable: string; readonly operator?: '=' | '+=' | '-='; readonly value: unknown; readonly loc?: SourceLocation }
   | { readonly type: 'branch'; readonly condition: string; readonly thenLabel: string; readonly elseLabel?: string; readonly loc?: SourceLocation }
   | { readonly type: 'play_audio'; readonly channel: 'music' | 'sound' | 'voice'; readonly track: string; readonly fade?: number; readonly loop?: boolean; readonly loc?: SourceLocation }
   | { readonly type: 'stop_audio'; readonly channel: 'music' | 'sound' | 'voice'; readonly fade?: number; readonly loc?: SourceLocation }

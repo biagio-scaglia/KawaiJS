@@ -50,6 +50,57 @@ label start:
     expect(vm.getState().dialogue?.text).toBe('You picked B');
   });
 
+  it('handles variable mutation and conditional branching (Complete Story Pipeline)', () => {
+    const code = `character yumia "Yumia"
+
+label start:
+    set affection = 0
+    yumia "Hello!"
+    menu:
+        "Be friendly":
+            set affection += 1
+            jump check_route
+        "Be rude":
+            set affection -= 1
+            jump check_route
+
+label check_route:
+    if affection >= 1:
+        jump good_end
+    else:
+        jump normal_end
+
+label good_end:
+    yumia "I like you!"
+    return
+
+label normal_end:
+    yumia "Goodbye."
+    return
+`;
+    const story = compileScript(code);
+
+    // Route 1: Be friendly -> affection = 1 -> good_end
+    const vmGood = new StoryVM(story);
+    vmGood.start(); // dialogue "Hello!"
+    expect(vmGood.getState().dialogue?.text).toBe('Hello!');
+    
+    vmGood.next(); // reaches menu
+    expect(vmGood.getState().choices?.length).toBe(2);
+    
+    vmGood.choose(0); // "Be friendly"
+    expect(vmGood.getState().variables['affection']).toBe(1);
+    expect(vmGood.getState().dialogue?.text).toBe('I like you!');
+
+    // Route 2: Be rude -> affection = -1 -> normal_end
+    const vmNormal = new StoryVM(story);
+    vmNormal.start();
+    vmNormal.next();
+    vmNormal.choose(1); // "Be rude"
+    expect(vmNormal.getState().variables['affection']).toBe(-1);
+    expect(vmNormal.getState().dialogue?.text).toBe('Goodbye.');
+  });
+
   it('supports deterministic rollback', () => {
     const code = `label start:
     "Step 1"

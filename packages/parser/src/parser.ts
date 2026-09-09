@@ -95,6 +95,8 @@ export class Parser {
       case 'STRING':
         // Narration without speaker identifier
         return this.parseDialogueStmt();
+      case 'NARRATOR':
+        return this.parseDialogueStmt();
       case 'IDENTIFIER': {
         // Speaker dialogue e.g. yumia "Hello!"
         if (this.peek(1).type === 'STRING') {
@@ -236,7 +238,11 @@ export class Parser {
     let speaker: string | undefined;
     let startLoc = this.currentLocation();
 
-    if (this.check('IDENTIFIER')) {
+    if (this.check('NARRATOR')) {
+      const narTok = this.advance();
+      speaker = undefined; // pure narration
+      startLoc = narTok.loc;
+    } else if (this.check('IDENTIFIER')) {
       const spkTok = this.advance();
       speaker = spkTok.value;
       startLoc = spkTok.loc;
@@ -312,7 +318,22 @@ export class Parser {
   private parseSetStmt(): SetStmtNode {
     const startTok = this.consume('SET', 'Expected "set" keyword');
     const varTok = this.consume('IDENTIFIER', 'Expected variable name after "set"');
-    this.consume('EQUALS', 'Expected "=" in set statement');
+
+    let operator: '=' | '+=' | '-=' = '=';
+    if (this.match('EQUALS')) {
+      operator = '=';
+    } else if (this.match('PLUS_EQUALS')) {
+      operator = '+=';
+    } else if (this.match('MINUS_EQUALS')) {
+      operator = '-=';
+    } else {
+      throw new KawaError({
+        code: 'E0103',
+        message: 'Expected "=", "+=", or "-=" in set statement',
+        severity: 'error',
+        loc: this.currentLocation()
+      });
+    }
 
     let value: unknown;
     if (this.check('STRING')) {
@@ -336,6 +357,7 @@ export class Parser {
     return {
       type: 'SetStmt',
       variable: varTok.value,
+      operator,
       value,
       loc: createLocation(this.file, startTok.loc.start, this.previousLocation().end)
     };

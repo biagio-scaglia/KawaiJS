@@ -2,6 +2,7 @@ import type { Instruction, StoryPackage } from '@kawaijs/ast';
 import { cloneState, createInitialState, type Snapshot, type StoryState } from './state.js';
 import { HistoryManager } from './history.js';
 import { SaveManager } from './save.js';
+import { applySetOperation, evaluateCondition } from './evaluator.js';
 
 export interface AudioEvent {
   readonly action: 'play' | 'stop';
@@ -289,18 +290,20 @@ export class StoryVM {
       }
 
       case 'set': {
+        const currentVal = this.state.variables[inst.variable];
+        const nextVal = applySetOperation(currentVal, inst.operator, inst.value, this.state.variables);
         this.state = {
           ...this.state,
           variables: {
             ...this.state.variables,
-            [inst.variable]: inst.value
+            [inst.variable]: nextVal
           }
         };
         break;
       }
 
       case 'branch': {
-        const conditionVal = Boolean(this.state.variables[inst.condition] ?? inst.condition === 'true');
+        const conditionVal = evaluateCondition(inst.condition, this.state.variables);
         const targetLabel = conditionVal ? inst.thenLabel : (inst.elseLabel ?? inst.thenLabel);
         this.state = {
           ...this.state,

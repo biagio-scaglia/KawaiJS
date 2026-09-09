@@ -108,6 +108,7 @@ export interface ReturnStmtNode extends BaseNode {
 export interface SetStmtNode extends BaseNode {
   readonly type: 'SetStmt';
   readonly variable: string;
+  readonly operator: '=' | '+=' | '-=';
   readonly value: unknown;
 }
 

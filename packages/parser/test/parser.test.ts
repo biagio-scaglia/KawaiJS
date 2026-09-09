@@ -3,14 +3,14 @@ import { Parser } from '../src/parser.js';
 import { formatDiagnostic, KawaError } from '../src/diagnostic.js';
 
 describe('Parser', () => {
-  it('parses character declarations, labels, and dialogue', () => {
+  it('parses character declarations, labels, dialogue, and narrator', () => {
     const code = `character yumia "Yumia" #f43f5e
 
 label start:
     scene bg classroom with fade
     show yumia happy at center
     yumia "Good morning!"
-    "A peaceful day begins."
+    narrator "A peaceful day begins."
 `;
     const parser = Parser.fromSource(code);
     const ast = parser.parse();
@@ -30,6 +30,26 @@ label start:
       expect(labelDecl.body[1]?.type).toBe('ShowStmt');
       expect(labelDecl.body[2]?.type).toBe('DialogueStmt');
       expect(labelDecl.body[3]?.type).toBe('DialogueStmt');
+    }
+  });
+
+  it('parses set statements with operators and conditional branching', () => {
+    const code = `label start:
+    set affection = 0
+    set affection += 1
+    if affection >= 1:
+        jump good_end
+    else:
+        jump normal_end
+`;
+    const parser = Parser.fromSource(code);
+    const ast = parser.parse();
+
+    const labelDecl = ast.statements[0];
+    if (labelDecl?.type === 'LabelDecl') {
+      expect(labelDecl.body[0]?.type).toBe('SetStmt');
+      expect(labelDecl.body[1]?.type).toBe('SetStmt');
+      expect(labelDecl.body[2]?.type).toBe('IfStmt');
     }
   });
 

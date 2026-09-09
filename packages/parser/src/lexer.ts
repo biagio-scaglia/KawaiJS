@@ -99,7 +99,7 @@ export class Lexer {
         return this.readIdentifier();
       }
 
-      // Symbols
+      // Symbols & Operators
       if (ch === ':') {
         const startLoc = this.getCurrentPosition();
         this.advance();
@@ -110,9 +110,53 @@ export class Lexer {
         };
       }
 
+      if (ch === ',') {
+        const startLoc = this.getCurrentPosition();
+        this.advance();
+        return {
+          type: 'COMMA',
+          value: ',',
+          loc: createLocation(this.file, startLoc, this.getCurrentPosition())
+        };
+      }
+
+      if (ch === '+') {
+        const startLoc = this.getCurrentPosition();
+        this.advance();
+        if (this.peek() === '=') {
+          this.advance();
+          return {
+            type: 'PLUS_EQUALS',
+            value: '+=',
+            loc: createLocation(this.file, startLoc, this.getCurrentPosition())
+          };
+        }
+      }
+
+      if (ch === '-') {
+        const startLoc = this.getCurrentPosition();
+        this.advance();
+        if (this.peek() === '=') {
+          this.advance();
+          return {
+            type: 'MINUS_EQUALS',
+            value: '-=',
+            loc: createLocation(this.file, startLoc, this.getCurrentPosition())
+          };
+        }
+      }
+
       if (ch === '=') {
         const startLoc = this.getCurrentPosition();
         this.advance();
+        if (this.peek() === '=') {
+          this.advance();
+          return {
+            type: 'DOUBLE_EQUALS',
+            value: '==',
+            loc: createLocation(this.file, startLoc, this.getCurrentPosition())
+          };
+        }
         return {
           type: 'EQUALS',
           value: '=',
@@ -120,12 +164,51 @@ export class Lexer {
         };
       }
 
-      if (ch === ',') {
+      if (ch === '!') {
         const startLoc = this.getCurrentPosition();
         this.advance();
+        if (this.peek() === '=') {
+          this.advance();
+          return {
+            type: 'NOT_EQUALS',
+            value: '!=',
+            loc: createLocation(this.file, startLoc, this.getCurrentPosition())
+          };
+        }
+      }
+
+      if (ch === '>') {
+        const startLoc = this.getCurrentPosition();
+        this.advance();
+        if (this.peek() === '=') {
+          this.advance();
+          return {
+            type: 'GREATER_EQUALS',
+            value: '>=',
+            loc: createLocation(this.file, startLoc, this.getCurrentPosition())
+          };
+        }
         return {
-          type: 'COMMA',
-          value: ',',
+          type: 'GREATER',
+          value: '>',
+          loc: createLocation(this.file, startLoc, this.getCurrentPosition())
+        };
+      }
+
+      if (ch === '<') {
+        const startLoc = this.getCurrentPosition();
+        this.advance();
+        if (this.peek() === '=') {
+          this.advance();
+          return {
+            type: 'LESS_EQUALS',
+            value: '<=',
+            loc: createLocation(this.file, startLoc, this.getCurrentPosition())
+          };
+        }
+        return {
+          type: 'LESS',
+          value: '<',
           loc: createLocation(this.file, startLoc, this.getCurrentPosition())
         };
       }

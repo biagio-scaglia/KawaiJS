@@ -24,14 +24,23 @@ export type TokenType =
   | 'FADEIN'
   | 'FADEOUT'
   | 'LOOP'
+  | 'NARRATOR'
   // Literals & Identifiers
   | 'IDENTIFIER'
   | 'STRING'
   | 'NUMBER'
   | 'BOOLEAN'
-  // Symbols
+  // Symbols & Operators
   | 'COLON'
   | 'EQUALS'
+  | 'PLUS_EQUALS'
+  | 'MINUS_EQUALS'
+  | 'DOUBLE_EQUALS'
+  | 'NOT_EQUALS'
+  | 'GREATER_EQUALS'
+  | 'LESS_EQUALS'
+  | 'GREATER'
+  | 'LESS'
   | 'COMMA'
   // Layout tokens
   | 'NEWLINE'
@@ -68,6 +77,7 @@ export const KEYWORDS: Record<string, TokenType> = {
   fadein: 'FADEIN',
   fadeout: 'FADEOUT',
   loop: 'LOOP',
+  narrator: 'NARRATOR',
   true: 'BOOLEAN',
   false: 'BOOLEAN'
 };

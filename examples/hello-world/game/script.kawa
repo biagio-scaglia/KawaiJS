@@ -1,0 +1,43 @@
+# Kawaijs Hello World Visual Novel
+character yumia "Yumia" #f43f5e
+
+label start:
+    set affection = 0
+
+    scene bg classroom
+    show yumia happy at center
+
+    yumia "Hello, world!"
+
+    narrator "This is the first Kawaijs visual novel running natively on the Web."
+
+    menu:
+        "Say hello":
+            set affection += 1
+            show yumia happy at center
+            yumia "Nice to meet you! It's so exciting to meet new developers."
+            jump check_route
+
+        "Ignore her":
+            set affection -= 1
+            show yumia sad at center
+            yumia "Wow. Rude..."
+            jump check_route
+
+label check_route:
+    if affection >= 1:
+        jump good_ending
+    else:
+        jump normal_ending
+
+label good_ending:
+    show yumia excited at center
+    yumia "I have a feeling we are going to build amazing visual novels together!"
+    narrator "You unlocked the Good Ending!"
+    return
+
+label normal_ending:
+    show yumia normal at center
+    yumia "Maybe next time you will be friendlier... Until then!"
+    narrator "You reached the Normal Ending."
+    return
