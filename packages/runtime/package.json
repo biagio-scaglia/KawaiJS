@@ -1,6 +1,6 @@
 {
   "name": "@kawaijs/runtime",
-  "version": "0.1.7",
+  "version": "0.1.8",
   "description": "Headless state machine, execution engine, save/load, and rollback system for Kawaijs",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -25,7 +25,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@kawaijs/ast": "^0.1.7"
+    "@kawaijs/ast": "^0.1.8"
   },
   "keywords": [
     "kawaijs",
