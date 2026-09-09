@@ -22,15 +22,27 @@ export function startDevServer(projectDir = '.', options: DevServerOptions = {})
 
   const clients = new Set<http.ServerResponse>();
 
-  // File watcher for auto-reload
+  // Debounced file watcher for auto-reload
+  let reloadTimeout: NodeJS.Timeout | null = null;
   const gameDir = path.join(rootDir, 'game');
   if (fs.existsSync(gameDir)) {
     fs.watch(gameDir, { recursive: true }, (_eventType, filename) => {
-      if (filename && (filename.endsWith('.kawa') || filename.endsWith('.css') || filename.startsWith('assets'))) {
-        console.log(`🔄 [Kawa Dev] File changed: ${filename}. Reloading...`);
-        for (const client of clients) {
-          client.write(`data: reload\n\n`);
-        }
+      if (
+        filename &&
+        (filename.endsWith('.kawa') || filename.endsWith('.css') || filename.startsWith('assets')) &&
+        !filename.includes('~') &&
+        !filename.startsWith('.') &&
+        !filename.endsWith('.tmp')
+      ) {
+        if (reloadTimeout) clearTimeout(reloadTimeout);
+        reloadTimeout = setTimeout(() => {
+          console.log(`🔄 [Kawa Dev] File changed: ${filename}. Reloading...`);
+          for (const client of clients) {
+            try {
+              client.write(`data: reload\n\n`);
+            } catch {}
+          }
+        }, 250);
       }
     });
   }
@@ -173,7 +185,30 @@ export function startDevServer(projectDir = '.', options: DevServerOptions = {})
         // Inline runtime VM + DOM Renderer
         ${getInlineRuntimeScript()}
 
-        window.__kawa_app = mountKawaApp(story, document.getElementById('app'));
+        const app = mountKawaApp(story, document.getElementById('app'));
+        window.__kawa_app = app;
+
+        // Auto-resume state on dev live reload
+        const DEV_SESSION_KEY = 'kawaijs_dev_state';
+        const savedDevState = sessionStorage.getItem(DEV_SESSION_KEY);
+        if (savedDevState) {
+          try {
+            const parsed = JSON.parse(savedDevState);
+            if (parsed && parsed.currentLabel && story.labels[parsed.currentLabel]) {
+              app.vm.state = parsed;
+              app.vm.snapshotStack = [parsed];
+              app.vm.notify();
+            }
+          } catch {}
+        }
+
+        app.vm.onStateChange((state) => {
+          if (!state.isFinished) {
+            sessionStorage.setItem(DEV_SESSION_KEY, JSON.stringify(state));
+          } else {
+            sessionStorage.removeItem(DEV_SESSION_KEY);
+          }
+        });
       } catch (err) {
         errorEl.style.display = 'block';
         errorEl.textContent = err.stack || err.message;
@@ -735,6 +770,33 @@ function getInlineRuntimeScript(): string {
           });
         } else {
           this.choiceEl.style.display = 'none';
+        }
+
+        if (state.isFinished) {
+          this.choiceEl.style.display = 'none';
+          const exEnd = this.rootEl.querySelector('.kawa-ending-card');
+          if (!exEnd) {
+            const endCard = document.createElement('div');
+            endCard.className = 'kawa-ending-card';
+            endCard.innerHTML = \`
+              <div class="kawa-ending-title">🌸 The End</div>
+              <div class="kawa-ending-subtitle">Story complete! Thank you for playing.</div>
+              <div style="display:flex;gap:12px;margin-top:16px;">
+                <button class="kawa-btn kawa-btn-replay">🔄 Play Again</button>
+                <button class="kawa-btn kawa-btn-load-end">📂 Load Slot</button>
+              </div>\`;
+            endCard.querySelector('.kawa-btn-replay').addEventListener('click', () => {
+              sessionStorage.removeItem('kawaijs_dev_state');
+              window.location.reload();
+            });
+            endCard.querySelector('.kawa-btn-load-end').addEventListener('click', () => {
+              this.showSaveLoad('load');
+            });
+            this.rootEl.appendChild(endCard);
+          }
+        } else {
+          const exEnd = this.rootEl.querySelector('.kawa-ending-card');
+          if (exEnd) exEnd.remove();
         }
       }
       async showSaveLoad(mode) {
