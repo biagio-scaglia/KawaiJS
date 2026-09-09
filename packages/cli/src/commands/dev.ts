@@ -154,10 +154,16 @@ export function startDevServer(projectDir = '.', options: DevServerOptions = {})
       try {
         const source = fs.readFileSync(scriptPath, 'utf-8');
         const story = compileScript(source, path.basename(scriptPath));
-        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.writeHead(200, {
+          'Content-Type': 'application/json',
+          'Cache-Control': 'no-cache, no-store, must-revalidate'
+        });
         res.end(JSON.stringify(story));
       } catch (err: unknown) {
-        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.writeHead(500, {
+          'Content-Type': 'application/json',
+          'Cache-Control': 'no-cache, no-store, must-revalidate'
+        });
         let errMsg = 'Compilation Error';
         if (err instanceof KawaError) {
           const source = fs.readFileSync(scriptPath, 'utf-8');
@@ -172,7 +178,10 @@ export function startDevServer(projectDir = '.', options: DevServerOptions = {})
 
     // 3. User & Default Stylesheet
     if (url === '/style.css') {
-      res.writeHead(200, { 'Content-Type': 'text/css' });
+      res.writeHead(200, {
+        'Content-Type': 'text/css',
+        'Cache-Control': 'no-cache, no-store, must-revalidate'
+      });
       let combinedCss = `/* Kawaijs Base Theme */\n` + getBaseThemeCss() + '\n\n';
 
       if (fs.existsSync(stylePath)) {
@@ -227,7 +236,10 @@ export function startDevServer(projectDir = '.', options: DevServerOptions = {})
     }
 
     // 5. HTML Shell & Web Runtime
-    res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+    res.writeHead(200, {
+      'Content-Type': 'text/html; charset=utf-8',
+      'Cache-Control': 'no-cache, no-store, must-revalidate'
+    });
     res.end(`<!DOCTYPE html>
 <html lang="en">
 <head>
