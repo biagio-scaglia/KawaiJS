@@ -1,5 +1,12 @@
+export * from '@kawaijs/ast';
+export * from '@kawaijs/parser';
+export * from '@kawaijs/runtime';
+export * from '@kawaijs/renderer-dom';
+
 import { createProject } from './commands/create.js';
 import { validateProject } from './commands/validate.js';
+
+export { createProject, validateProject };
 
 export function runCLI(args: string[]): void {
   const command = args[0];
@@ -23,7 +30,7 @@ export function runCLI(args: string[]): void {
     case 'version':
     case '-v':
     case '--version': {
-      console.log('Kawaijs CLI v0.1.0');
+      console.log('Kawaijs v0.1.0');
       break;
     }
 
@@ -36,6 +43,7 @@ export function runCLI(args: string[]): void {
 
 Usage:
   kawa <command> [arguments]
+  kawaijs <command> [arguments]
 
 Commands:
   create <name>     Scaffold a new visual novel project

@@ -1,14 +1,14 @@
 {
-  "name": "@kawaijs/cli",
+  "name": "kawaijs",
   "version": "0.1.0",
-  "description": "Command-line interface and toolchain for Kawaijs visual novels",
+  "description": "Web-native visual novel engine and toolchain inspired by Ren'Py",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "type": "module",
   "bin": {
     "kawa": "bin/kawa.js",
     "kawaijs": "bin/kawa.js"
   },
-  "main": "./dist/index.js",
-  "types": "./dist/index.d.ts",
-  "type": "module",
   "files": [
     "dist",
     "bin"
@@ -37,10 +37,12 @@
   },
   "keywords": [
     "kawaijs",
-    "cli",
     "visual-novel",
     "renpy",
-    "toolchain"
+    "game-engine",
+    "web-native",
+    "cli",
+    "typescript"
   ],
   "author": "Biagio Scaglia",
   "license": "MIT"
