@@ -1,0 +1,48 @@
+{
+  "name": "vscode-kawa",
+  "displayName": "Kawaijs Language Support",
+  "description": "Rich syntax highlighting and language support for Kawaijs visual novel scripts (.kawa)",
+  "version": "0.1.10",
+  "publisher": "kawaijs",
+  "engines": {
+    "vscode": "^1.75.0"
+  },
+  "categories": [
+    "Programming Languages",
+    "Snippets"
+  ],
+  "keywords": [
+    "kawaijs",
+    "kawa",
+    "visual novel",
+    "renpy"
+  ],
+  "contributes": {
+    "languages": [
+      {
+        "id": "kawa",
+        "aliases": [
+          "Kawaijs",
+          "kawa"
+        ],
+        "extensions": [
+          ".kawa"
+        ],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "kawa",
+        "scopeName": "source.kawa",
+        "path": "./syntaxes/kawa.tmLanguage.json"
+      }
+    ],
+    "snippets": [
+      {
+        "language": "kawa",
+        "path": "./snippets/kawa.json"
+      }
+    ]
+  }
+}

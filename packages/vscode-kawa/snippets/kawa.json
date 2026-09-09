@@ -1,0 +1,70 @@
+{
+  "Character Declaration": {
+    "prefix": "char",
+    "body": [
+      "character ${1:id} \"${2:Display Name}\" #${3:f43f5e}"
+    ],
+    "description": "Declare a character with an ID, display name, and color"
+  },
+  "Label": {
+    "prefix": "label",
+    "body": [
+      "label ${1:label_name}:",
+      "    ${0}"
+    ],
+    "description": "Create a story label block"
+  },
+  "Scene Statement": {
+    "prefix": "scene",
+    "body": [
+      "scene ${1:bg_classroom} with ${2:fade}"
+    ],
+    "description": "Change the background scene"
+  },
+  "Show Character": {
+    "prefix": "show",
+    "body": [
+      "show ${1:character} ${2:happy} at ${3:center} with ${4:dissolve}"
+    ],
+    "description": "Show a character sprite on the stage"
+  },
+  "Hide Character": {
+    "prefix": "hide",
+    "body": [
+      "hide ${1:character} with ${2:dissolve}"
+    ],
+    "description": "Hide a character sprite"
+  },
+  "Dialogue": {
+    "prefix": "say",
+    "body": [
+      "${1:character} \"${2:Dialogue line}\""
+    ],
+    "description": "Speaker dialogue statement"
+  },
+  "Menu Choice Block": {
+    "prefix": "menu",
+    "body": [
+      "menu:",
+      "    \"${1:Choice 1}\":",
+      "        jump ${2:label_one}",
+      "    \"${3:Choice 2}\":",
+      "        jump ${4:label_two}"
+    ],
+    "description": "Create an interactive choice menu"
+  },
+  "Play Music": {
+    "prefix": "playm",
+    "body": [
+      "play music ${1:main_theme} fadein ${2:1.0}"
+    ],
+    "description": "Play background music track"
+  },
+  "Stop Music": {
+    "prefix": "stopm",
+    "body": [
+      "stop music fadeout ${1:1.0}"
+    ],
+    "description": "Stop background music track"
+  }
+}

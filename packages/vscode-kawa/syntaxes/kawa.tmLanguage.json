@@ -1,0 +1,158 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "Kawaijs",
+  "scopeName": "source.kawa",
+  "patterns": [
+    { "include": "#comments" },
+    { "include": "#character-declaration" },
+    { "include": "#label-declaration" },
+    { "include": "#keywords" },
+    { "include": "#audio-commands" },
+    { "include": "#visual-commands" },
+    { "include": "#dialogue" },
+    { "include": "#strings" },
+    { "include": "#numbers" },
+    { "include": "#booleans" },
+    { "include": "#colors" },
+    { "include": "#operators" }
+  ],
+  "repository": {
+    "comments": {
+      "name": "comment.line.number-sign.kawa",
+      "match": "#.*$"
+    },
+    "character-declaration": {
+      "match": "^\\s*(character)\\s+([a-zA-Z_][a-zA-Z0-9_]*)\\s+(\"[^\"]*\")(\\s+(#[a-fA-F0-9]{3,8}|[a-zA-Z_][a-zA-Z0-9_]*))?",
+      "captures": {
+        "1": { "name": "keyword.declaration.character.kawa" },
+        "2": { "name": "variable.name.character.kawa" },
+        "3": { "name": "string.quoted.double.displayname.kawa" },
+        "5": { "name": "constant.other.color.kawa" }
+      }
+    },
+    "label-declaration": {
+      "match": "^\\s*(label)\\s+([a-zA-Z_][a-zA-Z0-9_]*)\\s*(:)",
+      "captures": {
+        "1": { "name": "keyword.declaration.label.kawa" },
+        "2": { "name": "entity.name.function.label.kawa" },
+        "3": { "name": "punctuation.separator.colon.kawa" }
+      }
+    },
+    "keywords": {
+      "patterns": [
+        {
+          "name": "keyword.control.kawa",
+          "match": "\\b(jump|return|menu|if|elif|else|set|pause)\\b"
+        },
+        {
+          "name": "keyword.other.position.kawa",
+          "match": "\\b(at|with|fadein|fadeout|fade|loop)\\b"
+        },
+        {
+          "name": "support.constant.position.kawa",
+          "match": "\\b(left|center|right|top|bottom)\\b"
+        },
+        {
+          "name": "support.constant.transition.kawa",
+          "match": "\\b(fade|dissolve|vpunch|hpunch|flash|none)\\b"
+        }
+      ]
+    },
+    "audio-commands": {
+      "match": "\\b(play|stop)\\s+(music|sound|voice)\\b",
+      "captures": {
+        "1": { "name": "keyword.control.audio.kawa" },
+        "2": { "name": "support.type.audio-channel.kawa" }
+      }
+    },
+    "visual-commands": {
+      "patterns": [
+        {
+          "match": "^\\s*(scene)\\s+([^\\n\\r#]+?)(?:\\s+(with)\\s+([a-zA-Z_][a-zA-Z0-9_]*))?\\s*$",
+          "captures": {
+            "1": { "name": "keyword.control.scene.kawa" },
+            "2": { "name": "entity.name.tag.scene.kawa" },
+            "3": { "name": "keyword.other.with.kawa" },
+            "4": { "name": "support.constant.transition.kawa" }
+          }
+        },
+        {
+          "match": "^\\s*(show)\\s+([a-zA-Z_][a-zA-Z0-9_]*)(?:\\s+([a-zA-Z_][a-zA-Z0-9_]*))?(?:\\s+(at)\\s+([a-zA-Z_][a-zA-Z0-9_]*))?(?:\\s+(with)\\s+([a-zA-Z_][a-zA-Z0-9_]*))?\\s*$",
+          "captures": {
+            "1": { "name": "keyword.control.show.kawa" },
+            "2": { "name": "variable.name.character.kawa" },
+            "3": { "name": "entity.other.attribute-name.expression.kawa" },
+            "4": { "name": "keyword.other.at.kawa" },
+            "5": { "name": "support.constant.position.kawa" },
+            "6": { "name": "keyword.other.with.kawa" },
+            "7": { "name": "support.constant.transition.kawa" }
+          }
+        },
+        {
+          "match": "^\\s*(hide)\\s+([a-zA-Z_][a-zA-Z0-9_]*)(?:\\s+(with)\\s+([a-zA-Z_][a-zA-Z0-9_]*))?\\s*$",
+          "captures": {
+            "1": { "name": "keyword.control.hide.kawa" },
+            "2": { "name": "variable.name.character.kawa" },
+            "3": { "name": "keyword.other.with.kawa" },
+            "4": { "name": "support.constant.transition.kawa" }
+          }
+        }
+      ]
+    },
+    "dialogue": {
+      "match": "^\\s*([a-zA-Z_][a-zA-Z0-9_]*|narrator)?\\s*(\"[^\"]*\")",
+      "captures": {
+        "1": { "name": "variable.name.speaker.kawa" },
+        "2": {
+          "name": "string.quoted.double.dialogue.kawa",
+          "patterns": [{ "include": "#inline-tags" }]
+        }
+      }
+    },
+    "inline-tags": {
+      "patterns": [
+        {
+          "name": "markup.bold.kawa",
+          "match": "\\{b\\}.*?\\{/b\\}"
+        },
+        {
+          "name": "markup.italic.kawa",
+          "match": "\\{i\\}.*?\\{/i\\}"
+        },
+        {
+          "name": "markup.other.color.kawa",
+          "match": "\\{color=[^}]+\\}.*?\\{/color\\}"
+        },
+        {
+          "name": "markup.other.size.kawa",
+          "match": "\\{size=[^}]+\\}.*?\\{/size\\}"
+        }
+      ]
+    },
+    "strings": {
+      "name": "string.quoted.double.kawa",
+      "begin": "\"",
+      "end": "\"",
+      "patterns": [
+        { "include": "#inline-tags" },
+        { "name": "constant.character.escape.kawa", "match": "\\\\." }
+      ]
+    },
+    "numbers": {
+      "name": "constant.numeric.kawa",
+      "match": "\\b\\d+(\\.\\d+)?\\b"
+    },
+    "booleans": {
+      "name": "constant.language.boolean.kawa",
+      "match": "\\b(true|false)\\b"
+    },
+    "colors": {
+      "name": "constant.other.color.hex.kawa",
+      "match": "#[0-9a-fA-F]{3,8}\\b"
+    },
+    "operators": {
+      "name": "keyword.operator.kawa",
+      "match": "(==|!=|>=|<=|>|<|\\+=|-=|=)"
+    }
+  }
+}
