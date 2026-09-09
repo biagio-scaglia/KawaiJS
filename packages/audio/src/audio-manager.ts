@@ -22,17 +22,47 @@ export class AudioManager {
   private musicVolume: number;
   private soundVolume: number;
   private voiceVolume: number;
+  private isMuted = false;
 
   private currentMusicAudio: HTMLAudioElement | null = null;
   private currentMusicTrack: string | null = null;
   private currentVoiceAudio: HTMLAudioElement | null = null;
   private soundPool: HTMLAudioElement[] = [];
+  private isUnlocked = false;
+  private pendingMusic: { src: string; options: PlayMusicOptions } | null = null;
 
   constructor(options: AudioOptions = {}) {
     this.masterVolume = options.masterVolume ?? 1.0;
     this.musicVolume = options.musicVolume ?? 0.8;
     this.soundVolume = options.soundVolume ?? 1.0;
     this.voiceVolume = options.voiceVolume ?? 1.0;
+
+    if (typeof window !== 'undefined') {
+      const unlock = () => {
+        this.isUnlocked = true;
+        if (this.pendingMusic) {
+          const { src, options } = this.pendingMusic;
+          this.pendingMusic = null;
+          this.playMusic(src, options);
+        }
+        window.removeEventListener('click', unlock);
+        window.removeEventListener('keydown', unlock);
+        window.removeEventListener('touchstart', unlock);
+      };
+      window.addEventListener('click', unlock, { passive: true });
+      window.addEventListener('keydown', unlock, { passive: true });
+      window.addEventListener('touchstart', unlock, { passive: true });
+    }
+  }
+
+  public toggleMute(): boolean {
+    this.isMuted = !this.isMuted;
+    this.updateActiveVolumes();
+    return this.isMuted;
+  }
+
+  public getIsMuted(): boolean {
+    return this.isMuted;
   }
 
   public setMasterVolume(val: number): void {
@@ -42,9 +72,7 @@ export class AudioManager {
 
   public setMusicVolume(val: number): void {
     this.musicVolume = Math.max(0, Math.min(1, val));
-    if (this.currentMusicAudio) {
-      this.currentMusicAudio.volume = this.masterVolume * this.musicVolume;
-    }
+    this.updateActiveVolumes();
   }
 
   public setSoundVolume(val: number): void {
@@ -53,9 +81,7 @@ export class AudioManager {
 
   public setVoiceVolume(val: number): void {
     this.voiceVolume = Math.max(0, Math.min(1, val));
-    if (this.currentVoiceAudio) {
-      this.currentVoiceAudio.volume = this.masterVolume * this.voiceVolume;
-    }
+    this.updateActiveVolumes();
   }
 
   public playMusic(src: string, options: PlayMusicOptions = {}): void {
@@ -65,9 +91,13 @@ export class AudioManager {
       return; // already playing this track
     }
 
+    if (!this.isUnlocked) {
+      this.pendingMusic = { src, options };
+    }
+
     const fadein = options.fadein ?? 0;
     const loop = options.loop ?? true;
-    const targetVolume = (options.volume ?? 1) * this.masterVolume * this.musicVolume;
+    const targetVolume = this.isMuted ? 0 : (options.volume ?? 1) * this.masterVolume * this.musicVolume;
 
     // Fade out previous music if active
     if (this.currentMusicAudio) {
@@ -196,10 +226,10 @@ export class AudioManager {
 
   private updateActiveVolumes(): void {
     if (this.currentMusicAudio) {
-      this.currentMusicAudio.volume = this.masterVolume * this.musicVolume;
+      this.currentMusicAudio.volume = this.isMuted ? 0 : this.masterVolume * this.musicVolume;
     }
     if (this.currentVoiceAudio) {
-      this.currentVoiceAudio.volume = this.masterVolume * this.voiceVolume;
+      this.currentVoiceAudio.volume = this.isMuted ? 0 : this.masterVolume * this.voiceVolume;
     }
   }
 }

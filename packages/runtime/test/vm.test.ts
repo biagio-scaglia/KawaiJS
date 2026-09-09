@@ -129,6 +129,55 @@ label normal_end:
     expect(vm.getState().dialogue?.text).toBe('Step 1');
   });
 
+  it('executes structured if/else with fallthrough code seamlessly', () => {
+    const code = `label start:
+    set value = 10
+    if value >= 10:
+        "Branch high"
+    else:
+        "Branch low"
+    "Continuation after if"
+    return
+`;
+    const story = compileScript(code);
+    const vm = new StoryVM(story);
+
+    vm.start();
+    expect(vm.getState().dialogue?.text).toBe('Branch high');
+
+    vm.next();
+    expect(vm.getState().dialogue?.text).toBe('Continuation after if');
+
+    vm.next();
+    expect(vm.getState().isFinished).toBe(true);
+  });
+
+  it('executes structured menu choices with fallthrough code', () => {
+    const code = `label start:
+    menu:
+        "Choice 1":
+            "Picked 1"
+        "Choice 2":
+            "Picked 2"
+    "Continuation after menu"
+    return
+`;
+    const story = compileScript(code);
+    const vm = new StoryVM(story);
+
+    vm.start();
+    expect(vm.getState().choices?.length).toBe(2);
+
+    vm.choose(0);
+    expect(vm.getState().dialogue?.text).toBe('Picked 1');
+
+    vm.next();
+    expect(vm.getState().dialogue?.text).toBe('Continuation after menu');
+
+    vm.next();
+    expect(vm.getState().isFinished).toBe(true);
+  });
+
   it('supports save and load persistence', async () => {
     const code = `character yumia "Yumia"
 
@@ -155,3 +204,4 @@ label start:
     expect(vm.getState().visual.background).toBe('bg library');
   });
 });
+

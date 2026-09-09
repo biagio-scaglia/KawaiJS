@@ -70,7 +70,9 @@ export class Compiler {
   ): Instruction[] {
     const instructions: Instruction[] = [];
 
-    for (const stmt of statements) {
+    for (let i = 0; i < statements.length; i++) {
+      const stmt = statements[i]!;
+
       switch (stmt.type) {
         case 'SceneStmt':
           instructions.push({
@@ -111,13 +113,23 @@ export class Compiler {
           break;
 
         case 'MenuStmt': {
+          const remainingStatements = statements.slice(i + 1);
+          const hasRemaining = remainingStatements.length > 0;
+          this.anonymousLabelCounter += 1;
+          const mergeLabel = `__menu_merge_${currentLabel}_${this.anonymousLabelCounter}`;
+
           const choiceOptions: ChoiceOption[] = [];
           for (const choice of stmt.choices) {
             this.anonymousLabelCounter += 1;
             const syntheticLabel = `__choice_${currentLabel}_${this.anonymousLabelCounter}`;
-            
-            // Compile choice body into its own synthetic label block
+
             const choiceInstructions = this.compileBlock(syntheticLabel, choice.body, labels);
+            if (hasRemaining || choice.body.length === 0) {
+              const lastInst = choiceInstructions[choiceInstructions.length - 1];
+              if (!lastInst || (lastInst.type !== 'jump' && lastInst.type !== 'return')) {
+                choiceInstructions.push({ type: 'jump', targetLabel: mergeLabel });
+              }
+            }
             labels[syntheticLabel] = choiceInstructions;
 
             choiceOptions.push({
@@ -133,7 +145,11 @@ export class Compiler {
             choices: choiceOptions,
             loc: stmt.loc
           });
-          break;
+
+          if (hasRemaining) {
+            labels[mergeLabel] = this.compileBlock(mergeLabel, remainingStatements, labels);
+          }
+          return instructions;
         }
 
         case 'JumpStmt':
@@ -162,37 +178,80 @@ export class Compiler {
           break;
 
         case 'IfStmt': {
+          const remainingStatements = statements.slice(i + 1);
+          const hasRemaining = remainingStatements.length > 0;
           this.anonymousLabelCounter += 1;
-          const thenLabel = `__if_then_${currentLabel}_${this.anonymousLabelCounter}`;
           const mergeLabel = `__if_merge_${currentLabel}_${this.anonymousLabelCounter}`;
 
+          // Compile Then Branch
+          this.anonymousLabelCounter += 1;
+          const thenLabel = `__if_then_${currentLabel}_${this.anonymousLabelCounter}`;
           const thenInstructions = this.compileBlock(thenLabel, stmt.thenBranch, labels);
-          // If thenBranch doesn't end with jump or return, fall through to mergeLabel
-          thenInstructions.push({ type: 'jump', targetLabel: mergeLabel });
+          if (hasRemaining || stmt.thenBranch.length === 0) {
+            const lastInst = thenInstructions[thenInstructions.length - 1];
+            if (!lastInst || (lastInst.type !== 'jump' && lastInst.type !== 'return')) {
+              thenInstructions.push({ type: 'jump', targetLabel: mergeLabel });
+            }
+          }
           labels[thenLabel] = thenInstructions;
 
-          let elseLabel: string | undefined;
+          // Compile Else & Elif Branches
+          let currentBranchTarget = mergeLabel;
+
           if (stmt.elseBranch) {
-            elseLabel = `__if_else_${currentLabel}_${this.anonymousLabelCounter}`;
+            this.anonymousLabelCounter += 1;
+            const elseLabel = `__if_else_${currentLabel}_${this.anonymousLabelCounter}`;
             const elseInstructions = this.compileBlock(elseLabel, stmt.elseBranch.body, labels);
-            elseInstructions.push({ type: 'jump', targetLabel: mergeLabel });
+            if (hasRemaining || stmt.elseBranch.body.length === 0) {
+              const lastInst = elseInstructions[elseInstructions.length - 1];
+              if (!lastInst || (lastInst.type !== 'jump' && lastInst.type !== 'return')) {
+                elseInstructions.push({ type: 'jump', targetLabel: mergeLabel });
+              }
+            }
             labels[elseLabel] = elseInstructions;
-          } else {
-            elseLabel = mergeLabel;
+            currentBranchTarget = elseLabel;
+          }
+
+          const elifBranches = stmt.elifBranches || [];
+          for (let e = elifBranches.length - 1; e >= 0; e--) {
+            const elif = elifBranches[e]!;
+            this.anonymousLabelCounter += 1;
+            const elifThenLabel = `__elif_then_${currentLabel}_${this.anonymousLabelCounter}`;
+            const elifTestLabel = `__elif_test_${currentLabel}_${this.anonymousLabelCounter}`;
+
+            const elifThenInst = this.compileBlock(elifThenLabel, elif.body, labels);
+            if (hasRemaining || elif.body.length === 0) {
+              const lastInst = elifThenInst[elifThenInst.length - 1];
+              if (!lastInst || (lastInst.type !== 'jump' && lastInst.type !== 'return')) {
+                elifThenInst.push({ type: 'jump', targetLabel: mergeLabel });
+              }
+            }
+            labels[elifThenLabel] = elifThenInst;
+
+            labels[elifTestLabel] = [
+              {
+                type: 'branch',
+                condition: elif.condition,
+                thenLabel: elifThenLabel,
+                elseLabel: currentBranchTarget,
+                loc: elif.loc
+              }
+            ];
+            currentBranchTarget = elifTestLabel;
           }
 
           instructions.push({
             type: 'branch',
             condition: stmt.condition,
             thenLabel,
-            elseLabel,
+            elseLabel: currentBranchTarget,
             loc: stmt.loc
           });
 
-          // Create merge block for following instructions
-          labels[mergeLabel] = [];
-          // Switch compiling remainder of statements into mergeLabel if needed
-          break;
+          if (hasRemaining) {
+            labels[mergeLabel] = this.compileBlock(mergeLabel, remainingStatements, labels);
+          }
+          return instructions;
         }
 
         case 'PlayStmt':

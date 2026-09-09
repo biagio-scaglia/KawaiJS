@@ -344,6 +344,34 @@ export class DOMRenderer {
     } else {
       this.choiceContainerEl.style.display = 'none';
     }
+
+    // Render Ending Card if Story is Finished
+    if (state.isFinished) {
+      this.choiceContainerEl.style.display = 'none';
+      const existingEnd = this.rootEl.querySelector('.kawa-ending-card');
+      if (!existingEnd) {
+        const endCard = document.createElement('div');
+        endCard.className = 'kawa-ending-card';
+        endCard.innerHTML = `
+          <div class="kawa-ending-title">🌸 The End</div>
+          <div class="kawa-ending-subtitle">Story complete! Thank you for playing.</div>
+          <div style="display:flex;gap:12px;margin-top:16px;">
+            <button class="kawa-btn kawa-btn-replay">🔄 Play Again</button>
+            <button class="kawa-btn kawa-btn-load-end">📂 Load Slot</button>
+          </div>
+        `;
+        endCard.querySelector('.kawa-btn-replay')?.addEventListener('click', () => {
+          this.vm.jump('start');
+        });
+        endCard.querySelector('.kawa-btn-load-end')?.addEventListener('click', () => {
+          this.showSaveLoadModal('load');
+        });
+        this.rootEl.appendChild(endCard);
+      }
+    } else {
+      const existingEnd = this.rootEl.querySelector('.kawa-ending-card');
+      if (existingEnd) existingEnd.remove();
+    }
   }
 
   private startTypewriter(text: string): void {
