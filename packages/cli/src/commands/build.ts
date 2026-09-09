@@ -539,9 +539,30 @@ export function buildProject(projectDir = '.', options: BuildOptions = {}): bool
         this.isChoicePending = false;
         this.backBtn.disabled = !this.vm.canRollback();
         if (state.visual.background) {
-          const bg = state.visual.background.replace(/^bg\\s+/, '');
-          this.bgEl.style.backgroundImage = 'url("./assets/backgrounds/' + bg + (bg.includes('.') ? '' : '.svg') + '"), url("./assets/backgrounds/' + bg + '.png")';
-          this.bgEl.style.opacity = '1';
+          const rawBg = state.visual.background;
+          const bg = rawBg.replace(/^bg[\s_]+/i, '').trim();
+          const baseName = bg.replace(/\.(svg|png|jpg|jpeg|webp)$/i, '');
+          const svgUrl = './assets/backgrounds/' + (bg.includes('.') ? bg : bg + '.svg');
+          const pngUrl = './assets/backgrounds/' + baseName + '.png';
+
+          const img = new Image();
+          img.onload = () => {
+            this.bgEl.style.backgroundImage = 'url("' + svgUrl + '")';
+            this.bgEl.style.opacity = '1';
+          };
+          img.onerror = () => {
+            const img2 = new Image();
+            img2.onload = () => {
+              this.bgEl.style.backgroundImage = 'url("' + pngUrl + '")';
+              this.bgEl.style.opacity = '1';
+            };
+            img2.onerror = () => {
+              this.bgEl.style.backgroundImage = 'radial-gradient(ellipse at center, #334155 0%, #0f172a 100%)';
+              this.bgEl.style.opacity = '1';
+            };
+            img2.src = pngUrl;
+          };
+          img.src = svgUrl;
         } else {
           this.bgEl.style.opacity = '0';
         }

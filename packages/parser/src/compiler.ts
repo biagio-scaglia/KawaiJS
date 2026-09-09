@@ -148,6 +148,8 @@ export class Compiler {
 
           if (hasRemaining) {
             labels[mergeLabel] = this.compileBlock(mergeLabel, remainingStatements, labels);
+          } else {
+            labels[mergeLabel] = [];
           }
           return instructions;
         }
@@ -250,6 +252,8 @@ export class Compiler {
 
           if (hasRemaining) {
             labels[mergeLabel] = this.compileBlock(mergeLabel, remainingStatements, labels);
+          } else {
+            labels[mergeLabel] = [];
           }
           return instructions;
         }

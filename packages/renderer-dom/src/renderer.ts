@@ -14,13 +14,13 @@ export function defaultAssetResolver(path: string, type: AssetType): string {
   }
 
   if (type === 'background') {
-    const clean = path.replace(/^bg\s+/, '').trim();
-    return clean.includes('.') ? `assets/backgrounds/${clean}` : `assets/backgrounds/${clean}.png`;
+    const clean = path.replace(/^bg[\s_]+/i, '').trim();
+    return clean.includes('.') ? `assets/backgrounds/${clean}` : `assets/backgrounds/${clean}.svg`;
   }
 
   if (type === 'character') {
     const clean = path.replace(/_/g, '/').replace(/\s+/g, '/').trim();
-    return clean.includes('.') ? `assets/characters/${clean}` : `assets/characters/${clean}.png`;
+    return clean.includes('.') ? `assets/characters/${clean}` : `assets/characters/${clean}.svg`;
   }
 
   if (type === 'audio') {
@@ -244,9 +244,31 @@ export class DOMRenderer {
 
     // Render background
     if (state.visual.background) {
-      const bgUrl = this.assetResolver(state.visual.background, 'background');
-      this.backgroundEl.style.backgroundImage = `url("${bgUrl}")`;
-      this.backgroundEl.style.opacity = '1';
+      const rawBg = state.visual.background;
+      const cleanBg = rawBg.replace(/^bg[\s_]+/i, '').trim();
+      const baseName = cleanBg.replace(/\.(svg|png|jpg|jpeg|webp)$/i, '');
+      const primaryUrl = this.assetResolver(cleanBg, 'background');
+
+      const img = new Image();
+      img.onload = () => {
+        this.backgroundEl.style.backgroundImage = `url("${primaryUrl}")`;
+        this.backgroundEl.style.opacity = '1';
+      };
+      img.onerror = () => {
+        const fallbackPng = this.assetResolver(`${baseName}.png`, 'background');
+        const img2 = new Image();
+        img2.onload = () => {
+          this.backgroundEl.style.backgroundImage = `url("${fallbackPng}")`;
+          this.backgroundEl.style.opacity = '1';
+        };
+        img2.onerror = () => {
+          // Graceful gradient fallback to prevent any black screen
+          this.backgroundEl.style.backgroundImage = 'radial-gradient(ellipse at center, #334155 0%, #0f172a 100%)';
+          this.backgroundEl.style.opacity = '1';
+        };
+        img2.src = fallbackPng;
+      };
+      img.src = primaryUrl;
     } else {
       this.backgroundEl.style.opacity = '0';
     }

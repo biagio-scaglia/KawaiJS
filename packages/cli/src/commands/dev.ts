@@ -104,18 +104,24 @@ export function startDevServer(projectDir = '.', options: DevServerOptions = {})
 
     // 4. Game Assets (/assets/*)
     if (url.startsWith('/assets/')) {
-      const relPath = decodeURIComponent(url.replace('/assets/', ''));
+      const cleanUrl = url.split('?')[0]!;
+      const relPath = decodeURIComponent(cleanUrl.replace(/^\/?assets\//, ''));
       let filePath = path.join(assetsDir, relPath);
 
-      if (!fs.existsSync(filePath)) {
-        // Try fallback extensions (.svg, .png, .webp, .jpg, .jpeg, .mp3, .ogg)
+      if (!fs.existsSync(filePath) || !fs.statSync(filePath).isFile()) {
+        // Try fallback extensions and strip prefixes
         const parsed = path.parse(filePath);
-        for (const ext of ['.svg', '.png', '.webp', '.jpg', '.jpeg', '.mp3', '.ogg']) {
-          const candidate = path.join(parsed.dir, parsed.name + ext);
-          if (fs.existsSync(candidate) && fs.statSync(candidate).isFile()) {
-            filePath = candidate;
-            break;
+        const cleanName = parsed.name.replace(/^bg[\s_]+/i, '');
+        
+        for (const nameCandidate of [parsed.name, cleanName]) {
+          for (const ext of ['', '.svg', '.png', '.webp', '.jpg', '.jpeg', '.mp3', '.ogg', '.wav']) {
+            const candidate = path.join(parsed.dir, nameCandidate + ext);
+            if (fs.existsSync(candidate) && fs.statSync(candidate).isFile()) {
+              filePath = candidate;
+              break;
+            }
           }
+          if (fs.existsSync(filePath) && fs.statSync(filePath).isFile()) break;
         }
       }
 
@@ -701,9 +707,30 @@ function getInlineRuntimeScript(): string {
         this.isChoicePending = false;
         this.backBtn.disabled = !this.vm.canRollback();
         if (state.visual.background) {
-          const bg = state.visual.background.replace(/^bg\\s+/, '');
-          this.bgEl.style.backgroundImage = 'url("/assets/backgrounds/' + bg + (bg.includes('.') ? '' : '.svg') + '"), url("/assets/backgrounds/' + bg + '.png")';
-          this.bgEl.style.opacity = '1';
+          const rawBg = state.visual.background;
+          const bg = rawBg.replace(/^bg[\s_]+/i, '').trim();
+          const baseName = bg.replace(/\.(svg|png|jpg|jpeg|webp)$/i, '');
+          const svgUrl = '/assets/backgrounds/' + (bg.includes('.') ? bg : bg + '.svg');
+          const pngUrl = '/assets/backgrounds/' + baseName + '.png';
+
+          const img = new Image();
+          img.onload = () => {
+            this.bgEl.style.backgroundImage = 'url("' + svgUrl + '")';
+            this.bgEl.style.opacity = '1';
+          };
+          img.onerror = () => {
+            const img2 = new Image();
+            img2.onload = () => {
+              this.bgEl.style.backgroundImage = 'url("' + pngUrl + '")';
+              this.bgEl.style.opacity = '1';
+            };
+            img2.onerror = () => {
+              this.bgEl.style.backgroundImage = 'radial-gradient(ellipse at center, #334155 0%, #0f172a 100%)';
+              this.bgEl.style.opacity = '1';
+            };
+            img2.src = pngUrl;
+          };
+          img.src = svgUrl;
         } else {
           this.bgEl.style.opacity = '0';
         }
