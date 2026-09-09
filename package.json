@@ -1,6 +1,6 @@
 {
   "name": "kawaijs-monorepo",
-  "version": "0.1.6",
+  "version": "0.1.7",
   "private": true,
   "type": "module",
   "description": "A web-native visual novel engine and toolchain inspired by Ren'Py",
