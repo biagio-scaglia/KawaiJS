@@ -37,6 +37,14 @@ export function evaluateCondition(condition: string, variables: Record<string, u
   if (!trimmed || trimmed === 'true') return true;
   if (trimmed === 'false') return false;
 
+  const toNum = (v: unknown): number => {
+    if (typeof v === 'number') return v;
+    if (v === true) return 1;
+    if (v === false || v === undefined || v === null || v === '') return 0;
+    const n = Number(v);
+    return isNaN(n) ? 0 : n;
+  };
+
   // Binary comparison operators: >=, <=, !=, ==, >, <
   const operators = ['>=', '<=', '!=', '==', '>', '<'] as const;
   for (const op of operators) {
@@ -49,17 +57,17 @@ export function evaluateCondition(condition: string, variables: Record<string, u
 
       switch (op) {
         case '>=':
-          return Number(leftVal) >= Number(rightVal);
+          return toNum(leftVal) >= toNum(rightVal);
         case '<=':
-          return Number(leftVal) <= Number(rightVal);
+          return toNum(leftVal) <= toNum(rightVal);
         case '>':
-          return Number(leftVal) > Number(rightVal);
+          return toNum(leftVal) > toNum(rightVal);
         case '<':
-          return Number(leftVal) < Number(rightVal);
+          return toNum(leftVal) < toNum(rightVal);
         case '==':
-          return leftVal == rightVal;
+          return leftVal === rightVal || String(leftVal) === String(rightVal);
         case '!=':
-          return leftVal != rightVal;
+          return leftVal !== rightVal && String(leftVal) !== String(rightVal);
       }
     }
   }
@@ -67,11 +75,19 @@ export function evaluateCondition(condition: string, variables: Record<string, u
   // Negation
   if (trimmed.startsWith('!')) {
     const varName = trimmed.slice(1).trim();
-    return !Boolean(variables[varName]);
+    const val = variables[varName];
+    if (val === false || val === 'false' || val === 0 || val === '0' || val === undefined || val === null || val === '') {
+      return true;
+    }
+    return false;
   }
 
   // Single identifier / flag
-  return Boolean(variables[trimmed]);
+  const val = trimmed in variables ? variables[trimmed] : resolveValue(trimmed, variables);
+  if (val === false || val === 'false' || val === 0 || val === '0' || val === undefined || val === null || val === '') {
+    return false;
+  }
+  return Boolean(val);
 }
 
 /**

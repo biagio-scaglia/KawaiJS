@@ -30,6 +30,7 @@ export type TokenType =
   | 'STRING'
   | 'NUMBER'
   | 'BOOLEAN'
+  | 'COLOR'
   // Symbols & Operators
   | 'COLON'
   | 'EQUALS'

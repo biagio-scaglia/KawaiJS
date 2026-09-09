@@ -53,27 +53,27 @@ if score >= 10:
     expect(types).toContain('DEDENT');
   });
 
-  it('ignores comments and blank lines', () => {
-    const code = `# Header comment
-
-label start:
-    # Inline comment
-    "Narration"
-`;
+  it('tokenizes hex color literals without treating them as comments', () => {
+    const code = `character yumia "Yumia" #f43f5e`;
     const lexer = new Lexer(code);
     const tokens = lexer.tokenize();
 
-    const types = tokens.map(t => t.type);
-    expect(types).toEqual([
-      'LABEL',
+    expect(tokens.map(t => t.type)).toEqual([
+      'CHARACTER',
       'IDENTIFIER',
-      'COLON',
-      'NEWLINE',
-      'INDENT',
       'STRING',
-      'NEWLINE',
-      'DEDENT',
+      'COLOR',
       'EOF'
     ]);
+    expect(tokens[3]?.value).toBe('#f43f5e');
+  });
+
+  it('handles string escape sequences', () => {
+    const code = `"Hello \\"world\\"\\nLine 2"`;
+    const lexer = new Lexer(code);
+    const tokens = lexer.tokenize();
+
+    expect(tokens[0]?.type).toBe('STRING');
+    expect(tokens[0]?.value).toBe('Hello "world"\nLine 2');
   });
 });

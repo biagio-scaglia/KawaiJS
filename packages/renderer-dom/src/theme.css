@@ -22,11 +22,20 @@
 }
 
 /* Base Reset & Root Container */
+html, body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  background: #030712;
+  overflow: hidden;
+}
+
 .kawa-root {
   position: relative;
   width: 100vw;
   height: 100vh;
-  background-color: var(--kawa-bg-color);
+  background: radial-gradient(circle at 50% 50%, #0f172a 0%, #020617 100%);
   color: var(--kawa-text-color);
   font-family: var(--kawa-font-family);
   display: flex;
@@ -47,7 +56,7 @@
   width: 100%;
   max-width: calc(100vh * (16 / 9));
   aspect-ratio: var(--kawa-stage-aspect-ratio);
-  background-color: #000000;
+  background: radial-gradient(ellipse at center, #1e293b 0%, #0f172a 100%);
   overflow: hidden;
   box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8);
 }
@@ -83,15 +92,27 @@
   animation: kawa-screen-flash 0.5s ease-out forwards;
 }
 
-/* Background Scene Layer */
+/* Background Scene Layer with Crossfade Support */
 .kawa-background {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: radial-gradient(ellipse at center, #1e293b 0%, #0f172a 100%);
+  overflow: hidden;
+}
+
+.kawa-bg-layer {
   position: absolute;
   inset: 0;
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
-  transition: opacity 0.4s ease-in-out, background-image 0.4s ease-in-out;
-  z-index: 1;
+  transition: opacity 0.4s ease-in-out;
+  opacity: 0;
+}
+
+.kawa-bg-layer.active {
+  opacity: 1;
 }
 
 /* Characters Layer */
@@ -477,5 +498,26 @@
   font-size: 1.1rem;
   color: #cbd5e1;
   margin-bottom: 16px;
+}
+
+/* Accessible Focus States */
+.kawa-btn:focus-visible,
+.kawa-choice-btn:focus-visible,
+.kawa-slot-btn:focus-visible,
+.kawa-dialogue-box:focus-visible {
+  outline: 2px solid var(--kawa-primary-accent);
+  outline-offset: 3px;
+}
+
+/* Reduced Motion Support */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
 

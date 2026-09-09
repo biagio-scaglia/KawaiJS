@@ -125,7 +125,7 @@ export class Parser {
     const nameTok = this.consume('STRING', 'Expected character display name in quotes (e.g. "Yumia")');
 
     let color: string | undefined;
-    if (this.check('STRING') || this.check('IDENTIFIER')) {
+    if (this.check('COLOR') || this.check('STRING') || this.check('IDENTIFIER')) {
       color = this.advance().value;
     }
 
@@ -135,7 +135,7 @@ export class Parser {
       id: idTok.value,
       displayName: nameTok.value,
       color,
-      loc: createLocation(this.file, startTok.loc.start, nameTok.loc.end)
+      loc: createLocation(this.file, startTok.loc.start, (this.previous() ?? nameTok).loc.end)
     };
   }
 
@@ -157,10 +157,14 @@ export class Parser {
   private parseSceneStmt(): SceneStmtNode {
     const startTok = this.consume('SCENE', 'Expected "scene" keyword');
     
-    // Background can be multiple identifiers e.g. "bg classroom" or "classroom"
+    // Background can be a string literal e.g. "bg classroom" or multiple identifiers
     const bgParts: string[] = [];
-    while (this.check('IDENTIFIER') && this.peek().value !== 'with') {
+    if (this.check('STRING')) {
       bgParts.push(this.advance().value);
+    } else {
+      while ((this.check('IDENTIFIER') || this.check('NUMBER')) && this.peek().value !== 'with') {
+        bgParts.push(this.advance().value);
+      }
     }
 
     if (bgParts.length === 0) {

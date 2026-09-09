@@ -46,13 +46,33 @@ label start:
     expect(Object.keys(story.labels).length).toBeGreaterThan(2);
   });
 
-  it('detects unknown jump labels and suggests diagnostics', () => {
-    const brokenCode = `label start:
-    jump missing_label
+  it('preserves character hex color definitions', () => {
+    const code = `character yumia "Yumia" #f43f5e
+character kaori "Kaori" #0284c7
+
+label start:
+    "Hello"
 `;
-    expect(() => {
+    const story = compileScript(code);
+    expect(story.characters['yumia']?.color).toBe('#f43f5e');
+    expect(story.characters['kaori']?.color).toBe('#0284c7');
+  });
+
+  it('detects unknown jump labels and suggests nearest matching labels', () => {
+    const brokenCode = `label roof_top:
+    "Rooftop scene"
+
+label start:
+    jump rooftop
+`;
+    try {
       compileScript(brokenCode);
-    }).toThrowError(KawaError);
+      expect.fail('Should have thrown KawaError');
+    } catch (e) {
+      expect(e).toBeInstanceOf(KawaError);
+      const err = e as KawaError;
+      expect(err.diagnostic.hint).toContain("Did you mean 'roof_top'?");
+    }
   });
 });
 

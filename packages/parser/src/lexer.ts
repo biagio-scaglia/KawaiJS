@@ -59,6 +59,12 @@ export class Lexer {
         continue;
       }
 
+      // Hex Color literal (#f43f5e, #fff, etc.)
+      if (ch === '#' && this.isHexColorAhead()) {
+        this.hasTokensOnCurrentLine = true;
+        return this.readHexColor();
+      }
+
       // Comments (# to end of line)
       if (ch === '#') {
         this.skipComment();
@@ -431,6 +437,43 @@ export class Lexer {
 
   private isAlphaNumeric(ch: string): boolean {
     return this.isAlpha(ch) || this.isDigit(ch);
+  }
+
+  private isHexChar(ch: string): boolean {
+    return (ch >= '0' && ch <= '9') || (ch >= 'a' && ch <= 'f') || (ch >= 'A' && ch <= 'F');
+  }
+
+  private isHexColorAhead(): boolean {
+    let offset = 1;
+    let hexLen = 0;
+    while (this.isHexChar(this.peek(offset))) {
+      offset++;
+      hexLen++;
+    }
+    const nextChar = this.peek(offset);
+    const isValidLen = hexLen === 3 || hexLen === 4 || hexLen === 6 || hexLen === 8;
+    const isBoundary =
+      nextChar === '\0' ||
+      nextChar === ' ' ||
+      nextChar === '\t' ||
+      nextChar === '\n' ||
+      nextChar === '\r' ||
+      nextChar === ',' ||
+      nextChar === ':';
+    return isValidLen && isBoundary;
+  }
+
+  private readHexColor(): Token {
+    const startLoc = this.getCurrentPosition();
+    let value = this.advance(); // consume '#'
+    while (!this.isEof() && this.isHexChar(this.peek())) {
+      value += this.advance();
+    }
+    return {
+      type: 'COLOR',
+      value,
+      loc: createLocation(this.file, startLoc, this.getCurrentPosition())
+    };
   }
 
   private getCurrentPosition() {

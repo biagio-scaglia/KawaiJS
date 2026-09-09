@@ -285,19 +285,57 @@ export class Compiler {
 
   private validateLabelReferences(labels: Record<string, Instruction[]>): void {
     const knownLabels = new Set(Object.keys(labels));
+    const userLabels = Array.from(knownLabels).filter(l => !l.startsWith('__'));
 
     for (const [labelName, instructions] of Object.entries(labels)) {
       for (const inst of instructions) {
         if (inst.type === 'jump' && !knownLabels.has(inst.targetLabel)) {
+          let closestLabel: string | undefined;
+          let minDistance = Infinity;
+
+          for (const uLabel of userLabels) {
+            const dist = levenshteinDistance(inst.targetLabel, uLabel);
+            if (dist < minDistance && dist <= 3) {
+              minDistance = dist;
+              closestLabel = uLabel;
+            }
+          }
+
+          let hint = `Available labels: ${userLabels.join(', ')}`;
+          if (closestLabel) {
+            hint = `Did you mean '${closestLabel}'?\n     Available labels: ${userLabels.join(', ')}`;
+          }
+
           throw new KawaError({
             code: 'E0202',
-            message: `Unknown label '${inst.targetLabel}' referenced in '${labelName}'`,
+            message: `Unknown label '${inst.targetLabel}' referenced in '${labelName.startsWith('__') ? 'block' : labelName}'`,
             severity: 'error',
             loc: inst.loc,
-            hint: `Available labels: ${Array.from(knownLabels).filter(l => !l.startsWith('__')).join(', ')}`
+            hint
           });
         }
       }
     }
   }
+}
+
+function levenshteinDistance(a: string, b: string): number {
+  const m = a.length;
+  const n = b.length;
+  const dp: number[][] = Array.from({ length: m + 1 }, () => Array(n + 1).fill(0));
+
+  for (let i = 0; i <= m; i++) dp[i]![0] = i;
+  for (let j = 0; j <= n; j++) dp[0]![j] = j;
+
+  for (let i = 1; i <= m; i++) {
+    for (let j = 1; j <= n; j++) {
+      if (a[i - 1] === b[j - 1]) {
+        dp[i]![j] = dp[i - 1]![j - 1]!;
+      } else {
+        dp[i]![j] = 1 + Math.min(dp[i - 1]![j]!, dp[i]![j - 1]!, dp[i - 1]![j - 1]!);
+      }
+    }
+  }
+
+  return dp[m]![n]!;
 }
