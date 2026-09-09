@@ -1,6 +1,6 @@
 {
   "name": "@kawaijs/vite-plugin",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "description": "Official Vite/Rollup plugin to import and hot-reload .kawa visual novel scripts directly",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -26,8 +26,8 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@kawaijs/ast": "^0.1.5",
-    "@kawaijs/parser": "^0.1.5"
+    "@kawaijs/ast": "^0.1.6",
+    "@kawaijs/parser": "^0.1.6"
   },
   "peerDependencies": {
     "vite": ">=4.0.0"

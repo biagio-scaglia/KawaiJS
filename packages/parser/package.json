@@ -1,6 +1,6 @@
 {
   "name": "@kawaijs/parser",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "description": "Lexer, Parser, Compiler, and Diagnostics for Kawa Script",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -25,7 +25,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@kawaijs/ast": "^0.1.5"
+    "@kawaijs/ast": "^0.1.6"
   },
   "keywords": [
     "kawaijs",
