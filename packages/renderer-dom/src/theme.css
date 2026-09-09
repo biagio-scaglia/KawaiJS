@@ -267,27 +267,46 @@ html, body {
 /* Quick Menu Bar */
 .kawa-quick-menu {
   display: flex;
-  gap: 10px;
+  gap: 8px;
   justify-content: flex-end;
   margin-top: 10px;
   pointer-events: auto;
+  align-items: center;
 }
 
 .kawa-btn {
   background: var(--kawa-menu-btn-bg);
   color: #cbd5e1;
   border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 4px;
-  padding: 4px 12px;
+  border-radius: 6px;
+  padding: 6px 12px;
   font-size: 0.85rem;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.15s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  line-height: 1;
+}
+
+.kawa-btn svg {
+  display: inline-block;
+  vertical-align: middle;
+  flex-shrink: 0;
 }
 
 .kawa-btn:hover {
   background: var(--kawa-menu-btn-hover-bg);
   color: #ffffff;
+  border-color: rgba(244, 63, 94, 0.4);
+}
+
+.kawa-btn.active {
+  background: var(--kawa-primary-accent);
+  color: #ffffff;
+  border-color: var(--kawa-primary-accent);
+  box-shadow: 0 0 10px rgba(244, 63, 94, 0.5);
 }
 
 .kawa-btn:disabled {
@@ -295,7 +314,142 @@ html, body {
   cursor: not-allowed;
 }
 
-/* Modals (History, Save/Load) */
+/* Floating Auto / Skip Status Badges */
+.kawa-mode-badge {
+  position: absolute;
+  top: 24px;
+  right: 24px;
+  padding: 6px 14px;
+  border-radius: 8px;
+  font-weight: 800;
+  font-size: 0.9rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  pointer-events: none;
+  animation: kawa-badge-pulse 1.2s infinite ease-in-out;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+}
+
+.kawa-mode-badge.kawa-badge-auto {
+  background: rgba(14, 165, 233, 0.9);
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.kawa-mode-badge.kawa-badge-skip {
+  background: rgba(244, 63, 94, 0.95);
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+@keyframes kawa-badge-pulse {
+  0%, 100% { opacity: 0.85; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.04); }
+}
+
+/* Settings Modal UI */
+.kawa-settings-group {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 8px 0;
+}
+
+.kawa-setting-row {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  background: rgba(15, 23, 42, 0.6);
+  padding: 12px 16px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.kawa-setting-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #e2e8f0;
+}
+
+.kawa-setting-value {
+  font-size: 0.85rem;
+  color: var(--kawa-primary-accent);
+  font-weight: 700;
+}
+
+.kawa-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 6px;
+  border-radius: 3px;
+  background: #334155;
+  outline: none;
+  cursor: pointer;
+}
+
+.kawa-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--kawa-primary-accent);
+  cursor: pointer;
+  box-shadow: 0 0 6px rgba(244, 63, 94, 0.6);
+  transition: transform 0.1s ease;
+}
+
+.kawa-slider::-webkit-slider-thumb:hover {
+  transform: scale(1.2);
+}
+
+.kawa-slider::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--kawa-primary-accent);
+  cursor: pointer;
+  box-shadow: 0 0 6px rgba(244, 63, 94, 0.6);
+}
+
+/* Rich Text & Inline Tag Styles */
+.kawa-bold { font-weight: 700; }
+.kawa-italic { font-style: italic; }
+
+/* Camera Shake & Screen Effects */
+@keyframes kawa-vpunch-anim {
+  0%, 100% { transform: translateY(0); }
+  20% { transform: translateY(-16px); }
+  40% { transform: translateY(16px); }
+  60% { transform: translateY(-8px); }
+  80% { transform: translateY(8px); }
+}
+
+@keyframes kawa-hpunch-anim {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-16px); }
+  40% { transform: translateX(16px); }
+  60% { transform: translateX(-8px); }
+  80% { transform: translateX(8px); }
+}
+
+.kawa-vpunch {
+  animation: kawa-vpunch-anim 0.4s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+}
+
+.kawa-hpunch {
+  animation: kawa-hpunch-anim 0.4s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+}
+
+/* Modals (History, Save/Load, Settings) */
 .kawa-modal-overlay {
   position: absolute;
   inset: 0;
@@ -432,6 +586,10 @@ html, body {
   font-weight: 600;
   cursor: pointer;
   transition: all 0.15s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
 }
 
 .kawa-slot-btn-save {
@@ -450,6 +608,8 @@ html, body {
   background: rgba(239, 68, 68, 0.2);
   color: #f87171;
   border: 1px solid rgba(239, 68, 68, 0.3);
+  padding: 6px 8px;
+  flex: 0 0 auto;
 }
 .kawa-slot-btn-del:hover { background: rgba(239, 68, 68, 0.4); }
 
@@ -504,7 +664,8 @@ html, body {
 .kawa-btn:focus-visible,
 .kawa-choice-btn:focus-visible,
 .kawa-slot-btn:focus-visible,
-.kawa-dialogue-box:focus-visible {
+.kawa-dialogue-box:focus-visible,
+.kawa-slider:focus-visible {
   outline: 2px solid var(--kawa-primary-accent);
   outline-offset: 3px;
 }
@@ -520,4 +681,5 @@ html, body {
     scroll-behavior: auto !important;
   }
 }
+
 
