@@ -1,6 +1,6 @@
 {
   "name": "@kawaijs/renderer-dom",
-  "version": "0.1.10",
+  "version": "0.1.11",
   "description": "Standard semantic DOM and CSS rendering engine for Kawaijs visual novels",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -26,8 +26,8 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@kawaijs/ast": "^0.1.10",
-    "@kawaijs/runtime": "^0.1.10"
+    "@kawaijs/ast": "^0.1.11",
+    "@kawaijs/runtime": "^0.1.11"
   },
   "keywords": [
     "kawaijs",

@@ -2,7 +2,7 @@
   "name": "vscode-kawa",
   "displayName": "Kawaijs Language Support",
   "description": "Rich syntax highlighting and language support for Kawaijs visual novel scripts (.kawa)",
-  "version": "0.1.10",
+  "version": "0.1.11",
   "publisher": "kawaijs",
   "engines": {
     "vscode": "^1.75.0"
