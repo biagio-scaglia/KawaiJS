@@ -93,7 +93,19 @@ export function startDevServer(projectDir = '.', options: DevServerOptions = {})
     // 4. Game Assets (/assets/*)
     if (url.startsWith('/assets/')) {
       const relPath = decodeURIComponent(url.replace('/assets/', ''));
-      const filePath = path.join(assetsDir, relPath);
+      let filePath = path.join(assetsDir, relPath);
+
+      if (!fs.existsSync(filePath)) {
+        // Try fallback extensions (.svg, .png, .webp, .jpg, .jpeg, .mp3, .ogg)
+        const parsed = path.parse(filePath);
+        for (const ext of ['.svg', '.png', '.webp', '.jpg', '.jpeg', '.mp3', '.ogg']) {
+          const candidate = path.join(parsed.dir, parsed.name + ext);
+          if (fs.existsSync(candidate) && fs.statSync(candidate).isFile()) {
+            filePath = candidate;
+            break;
+          }
+        }
+      }
 
       if (fs.existsSync(filePath) && fs.statSync(filePath).isFile()) {
         const ext = path.extname(filePath).toLowerCase();
