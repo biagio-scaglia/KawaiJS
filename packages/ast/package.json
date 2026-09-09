@@ -1,0 +1,35 @@
+{
+  "name": "@kawaijs/ast",
+  "version": "0.1.0",
+  "description": "Abstract Syntax Tree and Story Intermediate Representation definitions for Kawaijs",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "type": "module",
+  "files": [
+    "dist"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/biagio-scaglia/KawaiJS.git",
+    "directory": "packages/ast"
+  },
+  "bugs": {
+    "url": "https://github.com/biagio-scaglia/KawaiJS/issues"
+  },
+  "homepage": "https://github.com/biagio-scaglia/KawaiJS#readme",
+  "scripts": {
+    "build": "tsc",
+    "typecheck": "tsc --noEmit"
+  },
+  "keywords": [
+    "kawaijs",
+    "ast",
+    "visual-novel",
+    "renpy"
+  ],
+  "author": "Biagio Scaglia",
+  "license": "MIT"
+}

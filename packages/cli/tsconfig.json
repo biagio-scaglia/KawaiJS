@@ -1,0 +1,15 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "composite": true
+  },
+  "references": [
+    { "path": "../ast" },
+    { "path": "../parser" },
+    { "path": "../runtime" },
+    { "path": "../renderer-dom" }
+  ],
+  "include": ["src/**/*"]
+}

@@ -1,0 +1,306 @@
+:root {
+  --kawa-font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  --kawa-bg-color: #0b0f19;
+  --kawa-text-color: #f3f4f6;
+  --kawa-primary-accent: #f43f5e;
+  --kawa-dialogue-bg: rgba(15, 23, 42, 0.85);
+  --kawa-dialogue-border: rgba(244, 63, 94, 0.3);
+  --kawa-dialogue-radius: 12px;
+  --kawa-dialogue-padding: 24px 32px;
+  --kawa-speaker-bg: #f43f5e;
+  --kawa-speaker-color: #ffffff;
+  --kawa-speaker-radius: 6px;
+  --kawa-choice-bg: rgba(30, 41, 59, 0.9);
+  --kawa-choice-hover-bg: rgba(244, 63, 94, 0.85);
+  --kawa-choice-color: #ffffff;
+  --kawa-choice-border: 1px solid rgba(255, 255, 255, 0.15);
+  --kawa-choice-radius: 8px;
+  --kawa-choice-padding: 14px 28px;
+  --kawa-menu-btn-bg: rgba(15, 23, 42, 0.6);
+  --kawa-menu-btn-hover-bg: rgba(244, 63, 94, 0.8);
+  --kawa-stage-aspect-ratio: 16 / 9;
+}
+
+/* Base Reset & Root Container */
+.kawa-root {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  background-color: var(--kawa-bg-color);
+  color: var(--kawa-text-color);
+  font-family: var(--kawa-font-family);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  user-select: none;
+  box-sizing: border-box;
+}
+
+.kawa-root * {
+  box-sizing: border-box;
+}
+
+/* Stage & Aspect Ratio Box */
+.kawa-stage {
+  position: relative;
+  width: 100%;
+  max-width: calc(100vh * (16 / 9));
+  aspect-ratio: var(--kawa-stage-aspect-ratio);
+  background-color: #000000;
+  overflow: hidden;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8);
+}
+
+/* Background Scene Layer */
+.kawa-background {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  transition: opacity 0.4s ease-in-out, background-image 0.4s ease-in-out;
+  z-index: 1;
+}
+
+/* Characters Layer */
+.kawa-characters {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 2;
+  display: flex;
+  align-items: flex-end;
+}
+
+.kawa-sprite {
+  position: absolute;
+  bottom: 0;
+  height: 85%;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.kawa-sprite img {
+  max-height: 100%;
+  width: auto;
+  object-fit: contain;
+  filter: drop-shadow(0 10px 15px rgba(0, 0, 0, 0.5));
+}
+
+.kawa-sprite.kawa-pos-left {
+  left: 15%;
+  transform: translateX(-50%);
+}
+
+.kawa-sprite.kawa-pos-center {
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.kawa-sprite.kawa-pos-right {
+  left: 85%;
+  transform: translateX(-50%);
+}
+
+/* UI Overlay Layer */
+.kawa-ui-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: 32px 48px;
+  pointer-events: none;
+}
+
+/* Dialogue Box */
+.kawa-dialogue-box {
+  position: relative;
+  width: 100%;
+  min-height: 140px;
+  background: var(--kawa-dialogue-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--kawa-dialogue-border);
+  border-radius: var(--kawa-dialogue-radius);
+  padding: var(--kawa-dialogue-padding);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+  pointer-events: auto;
+  cursor: pointer;
+  transition: transform 0.15s ease;
+}
+
+.kawa-dialogue-box:hover {
+  transform: translateY(-2px);
+}
+
+.kawa-speaker-tag {
+  display: inline-block;
+  font-weight: 700;
+  font-size: 1.1rem;
+  letter-spacing: 0.03em;
+  color: var(--kawa-speaker-color);
+  background-color: var(--kawa-speaker-bg);
+  padding: 4px 14px;
+  border-radius: var(--kawa-speaker-radius);
+  margin-bottom: 10px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.kawa-dialogue-text {
+  font-size: 1.15rem;
+  line-height: 1.65;
+  color: var(--kawa-text-color);
+  word-break: break-word;
+}
+
+.kawa-continue-indicator {
+  position: absolute;
+  right: 24px;
+  bottom: 16px;
+  font-size: 1rem;
+  color: var(--kawa-primary-accent);
+  animation: kawa-bounce 1.2s infinite ease-in-out;
+}
+
+@keyframes kawa-bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(4px); }
+}
+
+/* Choice Buttons Container */
+.kawa-choice-container {
+  position: absolute;
+  top: 45%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  width: 80%;
+  max-width: 500px;
+  pointer-events: auto;
+  z-index: 20;
+}
+
+.kawa-choice-btn {
+  background: var(--kawa-choice-bg);
+  backdrop-filter: blur(8px);
+  color: var(--kawa-choice-color);
+  border: var(--kawa-choice-border);
+  border-radius: var(--kawa-choice-radius);
+  padding: var(--kawa-choice-padding);
+  font-size: 1.05rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  text-align: center;
+}
+
+.kawa-choice-btn:hover {
+  background: var(--kawa-choice-hover-bg);
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 0 8px 20px rgba(244, 63, 94, 0.4);
+}
+
+.kawa-choice-btn:active {
+  transform: translateY(0) scale(0.99);
+}
+
+/* Quick Menu Bar */
+.kawa-quick-menu {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  margin-top: 10px;
+  pointer-events: auto;
+}
+
+.kawa-btn {
+  background: var(--kawa-menu-btn-bg);
+  color: #cbd5e1;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+  padding: 4px 12px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.kawa-btn:hover {
+  background: var(--kawa-menu-btn-hover-bg);
+  color: #ffffff;
+}
+
+.kawa-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* Modals (History, Save/Load) */
+.kawa-modal-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(6px);
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: auto;
+}
+
+.kawa-modal-card {
+  background: #1e293b;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 12px;
+  width: 90%;
+  max-width: 600px;
+  max-height: 80%;
+  display: flex;
+  flex-direction: column;
+  padding: 24px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+}
+
+.kawa-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  padding-bottom: 10px;
+}
+
+.kawa-modal-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+.kawa-modal-body {
+  overflow-y: auto;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-right: 8px;
+}
+
+.kawa-history-item {
+  padding: 8px 12px;
+  border-radius: 6px;
+  background: rgba(15, 23, 42, 0.6);
+  font-size: 0.95rem;
+}
+
+.kawa-history-speaker {
+  font-weight: 700;
+  color: var(--kawa-primary-accent);
+  margin-bottom: 2px;
+}

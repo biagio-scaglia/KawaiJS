@@ -1,0 +1,28 @@
+{
+  "name": "kawaijs-monorepo",
+  "private": true,
+  "description": "A web-native visual novel engine and toolchain inspired by Ren'Py",
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "build": "npm run --workspaces --if-present build",
+    "typecheck": "tsc -b",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "keywords": [
+    "visual-novel",
+    "renpy",
+    "game-engine",
+    "web-native",
+    "typescript"
+  ],
+  "author": "Biagio Scaglia",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "^26.5.0",
+    "typescript": "^5.7.3",
+    "vitest": "^3.0.7"
+  }
+}

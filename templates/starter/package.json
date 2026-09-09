@@ -1,0 +1,14 @@
+{
+  "name": "starter-visual-novel",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "kawa dev",
+    "build": "kawa build",
+    "validate": "kawa validate"
+  },
+  "dependencies": {
+    "kawaijs": "^0.1.0"
+  }
+}

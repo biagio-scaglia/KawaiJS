@@ -1,0 +1,10 @@
+{
+  "files": [],
+  "references": [
+    { "path": "./packages/ast" },
+    { "path": "./packages/parser" },
+    { "path": "./packages/runtime" },
+    { "path": "./packages/renderer-dom" },
+    { "path": "./packages/cli" }
+  ]
+}

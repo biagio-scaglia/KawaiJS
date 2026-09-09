@@ -1,0 +1,42 @@
+{
+  "name": "@kawaijs/renderer-dom",
+  "version": "0.1.0",
+  "description": "Standard semantic DOM and CSS rendering engine for Kawaijs visual novels",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "type": "module",
+  "files": [
+    "dist",
+    "src/theme.css"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/biagio-scaglia/KawaiJS.git",
+    "directory": "packages/renderer-dom"
+  },
+  "bugs": {
+    "url": "https://github.com/biagio-scaglia/KawaiJS/issues"
+  },
+  "homepage": "https://github.com/biagio-scaglia/KawaiJS#readme",
+  "scripts": {
+    "build": "tsc",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@kawaijs/ast": "^0.1.0",
+    "@kawaijs/runtime": "^0.1.0"
+  },
+  "keywords": [
+    "kawaijs",
+    "renderer",
+    "dom",
+    "css",
+    "visual-novel",
+    "renpy"
+  ],
+  "author": "Biagio Scaglia",
+  "license": "MIT"
+}

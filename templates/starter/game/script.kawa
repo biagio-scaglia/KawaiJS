@@ -1,0 +1,30 @@
+# Kawaijs Visual Novel Starter Script
+character yumia "Yumia" #f43f5e
+
+label start:
+    scene bg classroom
+    show yumia happy at center
+
+    yumia "Hello! Welcome to Kawaijs."
+    yumia "This is a web-native visual novel engine inspired by Ren'Py."
+
+    menu:
+        "Tell me more!":
+            jump tell_more
+
+        "Let's make a game!":
+            jump make_game
+
+label tell_more:
+    show yumia excited at center
+    yumia "Kawaijs scripts compile to pure static web apps that run anywhere!"
+    yumia "You can customize every pixel using standard CSS."
+    jump conclusion
+
+label make_game:
+    yumia "Awesome! Open game/script.kawa and start writing your story."
+    jump conclusion
+
+label conclusion:
+    "Thank you for trying Kawaijs!"
+    return

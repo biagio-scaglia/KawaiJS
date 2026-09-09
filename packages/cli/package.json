@@ -1,0 +1,47 @@
+{
+  "name": "@kawaijs/cli",
+  "version": "0.1.0",
+  "description": "Command-line interface and toolchain for Kawaijs visual novels",
+  "bin": {
+    "kawa": "./bin/kawa.js",
+    "kawaijs": "./bin/kawa.js"
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "type": "module",
+  "files": [
+    "dist",
+    "bin"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/biagio-scaglia/KawaiJS.git",
+    "directory": "packages/cli"
+  },
+  "bugs": {
+    "url": "https://github.com/biagio-scaglia/KawaiJS/issues"
+  },
+  "homepage": "https://github.com/biagio-scaglia/KawaiJS#readme",
+  "scripts": {
+    "build": "tsc",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@kawaijs/ast": "^0.1.0",
+    "@kawaijs/parser": "^0.1.0",
+    "@kawaijs/runtime": "^0.1.0",
+    "@kawaijs/renderer-dom": "^0.1.0"
+  },
+  "keywords": [
+    "kawaijs",
+    "cli",
+    "visual-novel",
+    "renpy",
+    "toolchain"
+  ],
+  "author": "Biagio Scaglia",
+  "license": "MIT"
+}
