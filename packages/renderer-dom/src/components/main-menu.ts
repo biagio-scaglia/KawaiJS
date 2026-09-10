@@ -154,17 +154,19 @@ export class MainMenuComponent {
       headerEl.appendChild(logoEl);
     }
 
+    const storyMeta = this.vm.getStory()?.meta;
+    const defaultTitle = storyMeta?.title || 'Kawaijs Visual Novel';
+    const defaultSubtitle = storyMeta?.author ? `By ${storyMeta.author}` : 'A web-native visual novel';
+
     const titleEl = document.createElement('h1');
     titleEl.className = 'kawa-main-menu-title';
-    titleEl.textContent = this.options?.title || 'Kawaijs Visual Novel';
+    titleEl.textContent = this.options?.title || defaultTitle;
     headerEl.appendChild(titleEl);
 
-    if (this.options?.subtitle) {
-      const subEl = document.createElement('div');
-      subEl.className = 'kawa-main-menu-subtitle';
-      subEl.textContent = this.options.subtitle;
-      headerEl.appendChild(subEl);
-    }
+    const subEl = document.createElement('div');
+    subEl.className = 'kawa-main-menu-subtitle';
+    subEl.textContent = this.options?.subtitle ?? defaultSubtitle;
+    headerEl.appendChild(subEl);
 
     const navEl = document.createElement('nav');
     navEl.className = 'kawa-main-menu-nav';

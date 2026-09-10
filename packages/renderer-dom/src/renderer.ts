@@ -80,8 +80,8 @@ export class DOMRenderer {
       this.render(state);
     });
 
-    // Default: Show Ren'Py-style Main Menu before entering story, unless disabled
-    if (this.mainMenuOptions && this.mainMenuOptions.enabled !== false) {
+    // Default: Show Ren'Py-style Main Menu before entering story, unless explicitly disabled
+    if (this.mainMenuOptions?.enabled !== false) {
       this.showMainMenu();
     } else {
       this.render(this.vm.getState());

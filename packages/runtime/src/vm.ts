@@ -39,6 +39,10 @@ export class StoryVM {
     return this.state;
   }
 
+  public getStory(): StoryPackage {
+    return this.story;
+  }
+
   public getHistoryManager(): HistoryManager {
     return this.historyManager;
   }
