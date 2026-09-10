@@ -89,6 +89,26 @@ html, body { margin: 0; padding: 0; width: 100%; height: 100%; background: #0307
 .kawa-slider { width: 100%; height: 6px; border-radius: 3px; background: #334155; outline: none; cursor: pointer; }
 .kawa-bold { font-weight: 700; }
 .kawa-italic { font-style: italic; }
+.kawa-main-menu { position: absolute; inset: 0; z-index: 40; display: flex; align-items: center; justify-content: center; background: radial-gradient(circle at 50% 50%, rgba(15, 23, 42, 0.95) 0%, rgba(2, 6, 23, 0.98) 100%); animation: kawa-fade-in 0.4s ease-out; user-select: none; }
+.kawa-main-menu-backdrop { position: absolute; inset: 0; background: radial-gradient(ellipse at center, rgba(15, 23, 42, 0.45) 0%, rgba(2, 6, 23, 0.85) 100%); backdrop-filter: blur(8px); z-index: 1; }
+.kawa-main-menu-content { position: relative; z-index: 2; display: flex; flex-direction: column; align-items: center; justify-content: space-between; width: 90%; max-width: 600px; height: 85%; max-height: 520px; text-align: center; padding: 24px 16px; }
+.kawa-main-menu-header { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.kawa-main-menu-logo { max-height: 70px; width: auto; object-fit: contain; }
+.kawa-main-menu-title { margin: 0; font-size: 2.8rem; font-weight: 800; background: linear-gradient(135deg, #ffffff 0%, #fda4af 50%, var(--kawa-primary-accent) 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+.kawa-main-menu-subtitle { font-size: 1.1rem; color: #94a3b8; font-weight: 500; letter-spacing: 0.05em; text-transform: uppercase; }
+.kawa-main-menu-nav { display: flex; flex-direction: column; gap: 12px; width: 100%; max-width: 320px; margin: 16px 0; }
+.kawa-main-menu-btn { display: inline-flex; align-items: center; justify-content: center; gap: 10px; background: rgba(30, 41, 59, 0.75); backdrop-filter: blur(12px); color: #ffffff; font-family: inherit; font-size: 1.1rem; font-weight: 600; padding: 14px 28px; border-radius: 10px; border: 1px solid rgba(255, 255, 255, 0.12); cursor: pointer; transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4); }
+.kawa-main-menu-btn:hover:not(.disabled) { background: var(--kawa-primary-accent); transform: translateY(-2px) scale(1.02); }
+.kawa-main-menu-btn.disabled { opacity: 0.4; cursor: not-allowed; pointer-events: none; }
+.kawa-main-menu-footer { font-size: 0.85rem; color: #64748b; font-weight: 500; }
+.kawa-about-card { max-width: 480px; }
+.kawa-about-content { display: flex; flex-direction: column; align-items: center; text-align: center; }
+.kawa-about-logo-badge { font-size: 2.5rem; margin-bottom: 8px; }
+.kawa-about-game-title { font-size: 1.5rem; font-weight: 800; margin: 0 0 4px 0; color: #ffffff; }
+.kawa-about-game-sub { font-size: 0.95rem; color: #94a3b8; margin: 0 0 14px 0; }
+.kawa-about-divider { width: 50px; height: 2px; background: var(--kawa-primary-accent); margin-bottom: 14px; }
+.kawa-about-info { font-size: 0.9rem; color: #cbd5e1; line-height: 1.5; margin: 0 0 14px 0; }
+.kawa-about-footer-text { font-size: 0.8rem; color: #64748b; }
 `;
 }
 

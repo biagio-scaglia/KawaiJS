@@ -20,8 +20,9 @@ export function mountKawaApp(
     ...options
   });
 
-  vm.start();
+  if (!renderer.isMainMenuActive()) {
+    vm.start();
+  }
+
   return { vm, renderer };
 }
-
-

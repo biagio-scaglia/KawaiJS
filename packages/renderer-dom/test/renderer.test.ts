@@ -36,7 +36,7 @@ label start:
   it('mounts and renders initial stage, background, and character sprites', () => {
     const story = compileScript(sampleScript);
     const vm = new StoryVM(story);
-    const renderer = new DOMRenderer(vm, { container, typewriterSpeed: 0 });
+    const renderer = new DOMRenderer(vm, { container, typewriterSpeed: 0, mainMenu: { enabled: false } });
 
     vm.start();
 
@@ -69,7 +69,7 @@ label start:
   it('renders dialogue, speaker tag with color, and accessibility attributes', () => {
     const story = compileScript(sampleScript);
     const vm = new StoryVM(story);
-    const renderer = new DOMRenderer(vm, { container, typewriterSpeed: 0 });
+    const renderer = new DOMRenderer(vm, { container, typewriterSpeed: 0, mainMenu: { enabled: false } });
 
     vm.start();
 
@@ -91,7 +91,7 @@ label start:
   it('renders interactive choice menu and dispatches choice selection', () => {
     const story = compileScript(sampleScript);
     const vm = new StoryVM(story);
-    const renderer = new DOMRenderer(vm, { container, typewriterSpeed: 0 });
+    const renderer = new DOMRenderer(vm, { container, typewriterSpeed: 0, mainMenu: { enabled: false } });
 
     vm.start(); // at dialogue
     vm.next();  // at menu
@@ -116,7 +116,7 @@ label start:
   it('supports modal display for save/load and dialogue history', async () => {
     const story = compileScript(sampleScript);
     const vm = new StoryVM(story);
-    const renderer = new DOMRenderer(vm, { container, typewriterSpeed: 0 });
+    const renderer = new DOMRenderer(vm, { container, typewriterSpeed: 0, mainMenu: { enabled: false } });
 
     vm.start();
 
@@ -147,7 +147,7 @@ label start:
   it('triggers screen shake and flash animations', () => {
     const story = compileScript(sampleScript);
     const vm = new StoryVM(story);
-    const renderer = new DOMRenderer(vm, { container, typewriterSpeed: 0 });
+    const renderer = new DOMRenderer(vm, { container, typewriterSpeed: 0, mainMenu: { enabled: false } });
 
     renderer.shakeScreen();
     const stage = container.querySelector('.kawa-stage');
@@ -156,6 +156,107 @@ label start:
     renderer.flashScreen();
     const flash = container.querySelector('.kawa-flash-overlay');
     expect(flash).not.toBeNull();
+
+    renderer.destroy();
+  });
+
+  it('supports customizable Start / Main Menu and transition to story', async () => {
+    const story = compileScript(sampleScript);
+    const vm = new StoryVM(story);
+    let startCallbackFired = false;
+
+    const renderer = new DOMRenderer(vm, {
+      container,
+      typewriterSpeed: 0,
+      mainMenu: {
+        enabled: true,
+        title: 'Custom Novel Title',
+        subtitle: 'By Kawaijs Creator',
+        customFooter: 'Test Footer Info',
+        onStart: () => {
+          startCallbackFired = true;
+        }
+      }
+    });
+
+    // Main Menu should be rendered and visible
+    expect(renderer.isMainMenuActive()).toBe(true);
+    const mainMenuEl = container.querySelector('.kawa-main-menu') as HTMLElement;
+    expect(mainMenuEl).not.toBeNull();
+    expect(mainMenuEl.style.display).toBe('flex');
+
+    const titleEl = container.querySelector('.kawa-main-menu-title');
+    expect(titleEl?.textContent).toBe('Custom Novel Title');
+
+    const subEl = container.querySelector('.kawa-main-menu-subtitle');
+    expect(subEl?.textContent).toBe('By Kawaijs Creator');
+
+    const footerEl = container.querySelector('.kawa-main-menu-footer');
+    expect(footerEl?.textContent).toBe('Test Footer Info');
+
+    // Click "About" button from Main Menu
+    const aboutBtn = container.querySelector('.kawa-main-menu-btn[data-action="about"]') as HTMLButtonElement;
+    expect(aboutBtn).not.toBeNull();
+    aboutBtn.click();
+
+    const aboutModal = container.querySelector('.kawa-about-card');
+    expect(aboutModal).not.toBeNull();
+    expect(aboutModal?.textContent).toContain('Custom Novel Title');
+
+    // Close about modal
+    (container.querySelector('.kawa-about-card .kawa-btn') as HTMLButtonElement).click();
+    expect(container.querySelector('.kawa-about-card')).toBeNull();
+
+    // Click "Start Game"
+    const startBtn = container.querySelector('.kawa-main-menu-btn[data-action="start"]') as HTMLButtonElement;
+    expect(startBtn).not.toBeNull();
+    startBtn.click();
+
+    expect(startCallbackFired).toBe(true);
+    expect(renderer.isMainMenuActive()).toBe(false);
+    expect(mainMenuEl.style.display).toBe('none');
+
+    // VM is now playing the dialogue
+    const dialogueBox = container.querySelector('.kawa-dialogue-box') as HTMLElement;
+    expect(dialogueBox.textContent).toContain('Hello from DOM Renderer!');
+
+    // Test returning to title screen via Quick Menu Title button
+    const titleBtn = container.querySelector('.kawa-quick-menu button[aria-label="Return to Title Screen"]') as HTMLButtonElement;
+    expect(titleBtn).not.toBeNull();
+    titleBtn.click();
+
+    expect(renderer.isMainMenuActive()).toBe(true);
+    expect(mainMenuEl.style.display).toBe('flex');
+
+    renderer.destroy();
+  });
+
+  it('renders default Ren\'Py menu items (Start, Continue, Load, Preferences, About, Quit) and handles Quit', () => {
+    const story = compileScript(sampleScript);
+    const vm = new StoryVM(story);
+    let quitFired = false;
+
+    const renderer = new DOMRenderer(vm, {
+      container,
+      typewriterSpeed: 0,
+      mainMenu: {
+        onQuit: () => {
+          quitFired = true;
+        }
+      }
+    });
+
+    expect(renderer.isMainMenuActive()).toBe(true);
+
+    const buttons = container.querySelectorAll('.kawa-main-menu-btn');
+    const buttonActions = Array.from(buttons).map(b => b.getAttribute('data-action'));
+    expect(buttonActions).toEqual(['start', 'continue', 'load', 'settings', 'about', 'quit']);
+
+    // Test Quit button
+    const quitBtn = container.querySelector('.kawa-main-menu-btn[data-action="quit"]') as HTMLButtonElement;
+    expect(quitBtn).not.toBeNull();
+    quitBtn.click();
+    expect(quitFired).toBe(true);
 
     renderer.destroy();
   });
@@ -169,3 +270,5 @@ label start:
     expect(container.innerHTML).toBe('');
   });
 });
+
+
