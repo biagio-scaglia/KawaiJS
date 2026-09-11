@@ -57,7 +57,7 @@ export interface Token {
   readonly loc: SourceLocation;
 }
 
-export const KEYWORDS: Record<string, TokenType> = {
+export const KEYWORDS: Record<string, TokenType> = Object.assign(Object.create(null), {
   character: 'CHARACTER',
   label: 'LABEL',
   scene: 'SCENE',
@@ -84,4 +84,4 @@ export const KEYWORDS: Record<string, TokenType> = {
   narrator: 'NARRATOR',
   true: 'BOOLEAN',
   false: 'BOOLEAN'
-};
+});

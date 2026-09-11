@@ -1,0 +1,20 @@
+# Edge Cases Fixture
+character detective "Detective"
+
+label start:
+    set __proto__ = "polluted"
+    set constructor = "hacked"
+    set score = 100
+    set score -= 25
+    set flag = true
+    
+    if score >= 75 and flag:
+        "High score verified."
+    else:
+        "Score verification failed."
+
+    if undeclared_var:
+        "Should not enter this block."
+
+    detective "Investigation complete."
+    return

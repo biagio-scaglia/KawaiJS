@@ -17,9 +17,12 @@ import { showSettingsModal } from './modals/settings-modal.js';
 import { showHistoryModal } from './modals/history-modal.js';
 import { showAboutModal } from './modals/about-modal.js';
 
+import { ViewportAdapter } from './layout/viewport-adapter.js';
+
 export * from './icons.js';
 export * from './types.js';
 export * from './utils/rich-text.js';
+export * from './layout/viewport-adapter.js';
 export * from './modals/save-load-modal.js';
 export * from './modals/settings-modal.js';
 export * from './modals/history-modal.js';
@@ -34,6 +37,7 @@ export * from './components/stage-layer.js';
 export class DOMRenderer {
   private readonly vm: StoryVM;
   private readonly container: HTMLElement;
+  private readonly options: DOMRendererOptions;
   private typewriterSpeed: number;
   private autoDelayMs: number;
   private musicVolume: number;
@@ -48,6 +52,7 @@ export class DOMRenderer {
   private choiceMenu!: ChoiceMenuComponent;
   private quickMenu!: QuickMenuComponent;
   private mainMenu!: MainMenuComponent;
+  private viewportAdapter?: ViewportAdapter;
 
   private isAutoMode = false;
   private isSkipMode = false;
@@ -60,6 +65,7 @@ export class DOMRenderer {
   constructor(vm: StoryVM, options: DOMRendererOptions) {
     this.vm = vm;
     this.container = options.container;
+    this.options = options;
     this.typewriterSpeed = options.typewriterSpeed ?? 20;
     this.autoDelayMs = options.autoDelayMs ?? 1800;
     this.assetResolver = options.assetResolver ?? defaultAssetResolver;
@@ -110,6 +116,9 @@ export class DOMRenderer {
     if (this.dialogueBox) {
       this.dialogueBox.destroy();
     }
+    if (this.viewportAdapter) {
+      this.viewportAdapter.destroy();
+    }
     if (this.autoTimer) {
       clearTimeout(this.autoTimer);
     }
@@ -120,6 +129,10 @@ export class DOMRenderer {
       window.removeEventListener('keydown', this.boundKeyHandler);
     }
     this.container.innerHTML = '';
+  }
+
+  public getViewportAdapter(): ViewportAdapter | undefined {
+    return this.viewportAdapter;
   }
 
   public shakeScreen(type: 'shake' | 'vpunch' | 'hpunch' = 'shake'): void {
@@ -364,6 +377,12 @@ export class DOMRenderer {
 
     this.rootEl.appendChild(this.stageLayer.stageEl);
     this.container.appendChild(this.rootEl);
+
+    this.viewportAdapter = new ViewportAdapter(
+      this.container,
+      this.stageLayer.stageEl,
+      this.options.virtualCanvas
+    );
   }
 
   private bindEvents(): void {

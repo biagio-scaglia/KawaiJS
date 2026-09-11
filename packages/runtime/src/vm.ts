@@ -1,8 +1,8 @@
 import type { Instruction, StoryPackage } from '@kawaijs/ast';
 import { cloneState, createInitialState, type Snapshot, type StoryState } from './state.js';
 import { HistoryManager } from './history.js';
-import { SaveManager } from './save.js';
-import { applySetOperation, evaluateCondition } from './evaluator.js';
+import { computeStoryHash, SaveManager, type SaveSlot, type LoadResult } from './save.js';
+import { applySetOperation, evaluateCondition, isSafeKey } from './evaluator.js';
 
 export interface AudioEvent {
   readonly action: 'play' | 'stop';
@@ -14,8 +14,10 @@ export interface AudioEvent {
 
 export type StateChangeListener = (state: StoryState) => void;
 export type AudioEventListener = (event: AudioEvent) => void;
+export type TickListener = (deltaMs: number, totalTimeMs: number) => void;
 
 export class StoryVM {
+  public readonly storyHash: string;
   private readonly story: StoryPackage;
   private state: StoryState;
   private snapshotStack: Snapshot[] = [];
@@ -24,12 +26,16 @@ export class StoryVM {
 
   private stateChangeListeners = new Set<StateChangeListener>();
   private audioEventListeners = new Set<AudioEventListener>();
+  private tickListeners = new Set<TickListener>();
 
+  private executionTrace: string[] = [];
+  private virtualTimeMs = 0;
   private isExecuting = false;
 
   constructor(story: StoryPackage, saveManager?: SaveManager) {
     this.story = story;
-    const startLabel = story.meta.startLabel ?? 'start';
+    this.storyHash = computeStoryHash(story);
+    const startLabel = story.meta?.startLabel ?? 'start';
     this.state = createInitialState(startLabel);
     this.historyManager = new HistoryManager();
     this.saveManager = saveManager ?? new SaveManager();
@@ -51,6 +57,35 @@ export class StoryVM {
     return this.saveManager;
   }
 
+  public getExecutionTrace(): readonly string[] {
+    return [...this.executionTrace];
+  }
+
+  public clearExecutionTrace(): void {
+    this.executionTrace = [];
+  }
+
+  private recordTrace(entry: string): void {
+    this.executionTrace.push(entry);
+  }
+
+  public getVirtualTime(): number {
+    return this.virtualTimeMs;
+  }
+
+  public tick(deltaMs: number): void {
+    if (deltaMs <= 0) return;
+    this.virtualTimeMs += deltaMs;
+    for (const listener of this.tickListeners) {
+      listener(deltaMs, this.virtualTimeMs);
+    }
+  }
+
+  public onTick(listener: TickListener): () => void {
+    this.tickListeners.add(listener);
+    return () => this.tickListeners.delete(listener);
+  }
+
   public onStateChange(listener: StateChangeListener): () => void {
     this.stateChangeListeners.add(listener);
     return () => this.stateChangeListeners.delete(listener);
@@ -62,11 +97,12 @@ export class StoryVM {
   }
 
   public start(): void {
-    const startLabel = this.story.meta.startLabel ?? 'start';
+    const startLabel = this.story.meta?.startLabel ?? 'start';
     if (!this.story.labels[startLabel]) {
       throw new Error(`Cannot start story: Start label '${startLabel}' not found in story package.`);
     }
 
+    this.recordTrace(`START ${startLabel}`);
     this.state = createInitialState(startLabel);
     this.snapshotStack = [];
     this.executeUntilWaiting();
@@ -100,6 +136,7 @@ export class StoryVM {
     }
 
     const choice = this.state.choices[choiceIndex]!;
+    this.recordTrace(`CHOOSE ${choiceIndex} (${choice.text}) -> ${choice.targetLabel}`);
     this.state = {
       ...this.state,
       choices: null,
@@ -119,6 +156,7 @@ export class StoryVM {
       throw new Error(`Target label '${labelName}' not found in story package.`);
     }
 
+    this.recordTrace(`JUMP_MANUAL ${labelName}`);
     this.state = {
       ...this.state,
       currentLabel: labelName,
@@ -144,6 +182,7 @@ export class StoryVM {
     const prev = this.snapshotStack[this.snapshotStack.length - 1];
     if (prev) {
       this.state = cloneState(prev.state);
+      this.recordTrace(`ROLLBACK`);
       this.notifyStateChanged();
       return true;
     }
@@ -155,20 +194,29 @@ export class StoryVM {
     return this.snapshotStack.length > 1;
   }
 
-  public async save(slotId: string): Promise<void> {
+  public async save(slotId: string): Promise<SaveSlot> {
     const currentSnapshot = this.captureSnapshot();
     const previewText = this.state.dialogue?.text ?? 'Game in progress';
-    await this.saveManager.saveSlot(slotId, currentSnapshot, previewText);
+    this.recordTrace(`SAVE slot_${slotId}`);
+    return await this.saveManager.saveSlot(slotId, currentSnapshot, previewText, this.storyHash);
   }
 
-  public async load(slotId: string): Promise<boolean> {
-    const slot = await this.saveManager.loadSlot(slotId);
-    if (!slot) return false;
+  public async load(slotId: string, validateStoryHash = true): Promise<boolean> {
+    const res = await this.loadWithDetails(slotId, validateStoryHash);
+    return res.success;
+  }
 
-    this.state = cloneState(slot.snapshot.state);
-    this.snapshotStack = [slot.snapshot];
+  public async loadWithDetails(slotId: string, validateStoryHash = true): Promise<LoadResult> {
+    const res = await this.saveManager.loadSlot(slotId, validateStoryHash ? this.storyHash : undefined);
+    if (!res.success || !res.slot) {
+      return res;
+    }
+
+    this.state = cloneState(res.slot.snapshot.state);
+    this.snapshotStack = [res.slot.snapshot];
+    this.recordTrace(`LOAD slot_${slotId}`);
     this.notifyStateChanged();
-    return true;
+    return res;
   }
 
   private executeUntilWaiting(): void {
@@ -182,6 +230,7 @@ export class StoryVM {
           // Handle end of label: check call stack
           if (this.state.callStack.length > 0) {
             const topFrame = this.state.callStack[this.state.callStack.length - 1]!;
+            this.recordTrace(`RETURN -> ${topFrame.returnLabel}:${topFrame.returnPointer}`);
             this.state = {
               ...this.state,
               currentLabel: topFrame.returnLabel,
@@ -192,6 +241,7 @@ export class StoryVM {
           }
 
           // Story finished
+          this.recordTrace('END');
           this.state = {
             ...this.state,
             isFinished: true,
@@ -222,6 +272,7 @@ export class StoryVM {
   private executeInstruction(inst: Instruction): void {
     switch (inst.type) {
       case 'scene': {
+        this.recordTrace(`SCENE ${inst.background}${inst.transition ? ` [${inst.transition}]` : ''}`);
         this.state = {
           ...this.state,
           visual: {
@@ -234,6 +285,7 @@ export class StoryVM {
       }
 
       case 'show': {
+        this.recordTrace(`SHOW ${inst.character}${inst.expression ? ` ${inst.expression}` : ''}${inst.position ? ` at ${inst.position}` : ''}`);
         const charDef = this.state.visual.characters[inst.character] ?? {};
         this.state = {
           ...this.state,
@@ -252,6 +304,7 @@ export class StoryVM {
       }
 
       case 'hide': {
+        this.recordTrace(`HIDE ${inst.character}`);
         const nextChars = { ...this.state.visual.characters };
         delete nextChars[inst.character];
         this.state = {
@@ -268,6 +321,7 @@ export class StoryVM {
         const charDef = inst.speaker ? this.story.characters[inst.speaker] : undefined;
         const displayName = charDef?.name ?? inst.speaker;
         const color = charDef?.color;
+        this.recordTrace(`DIALOGUE ${displayName ? `[${displayName}] ` : ''}${inst.text}`);
 
         this.state = {
           ...this.state,
@@ -289,6 +343,7 @@ export class StoryVM {
           if (!choice.condition) return true;
           return evaluateCondition(choice.condition, this.state.variables);
         });
+        this.recordTrace(`CHOICES [${availableChoices.map(c => c.text).join(', ')}]`);
         this.state = {
           ...this.state,
           choices: availableChoices,
@@ -298,6 +353,7 @@ export class StoryVM {
       }
 
       case 'jump': {
+        this.recordTrace(`JUMP ${inst.targetLabel}`);
         this.state = {
           ...this.state,
           currentLabel: inst.targetLabel,
@@ -309,12 +365,14 @@ export class StoryVM {
       case 'set': {
         const currentVal = this.state.variables[inst.variable];
         const nextVal = applySetOperation(currentVal, inst.operator, inst.value, this.state.variables, inst.isVariable);
+        this.recordTrace(`SET ${inst.variable} ${inst.operator ?? '='} ${String(nextVal)}`);
+        const nextVars = Object.assign(Object.create(null), this.state.variables);
+        if (isSafeKey(inst.variable)) {
+          nextVars[inst.variable] = nextVal;
+        }
         this.state = {
           ...this.state,
-          variables: {
-            ...this.state.variables,
-            [inst.variable]: nextVal
-          }
+          variables: nextVars
         };
         break;
       }
@@ -322,6 +380,7 @@ export class StoryVM {
       case 'branch': {
         const conditionVal = evaluateCondition(inst.condition, this.state.variables);
         const targetLabel = conditionVal ? inst.thenLabel : (inst.elseLabel ?? inst.thenLabel);
+        this.recordTrace(`BRANCH ${inst.condition} (${conditionVal}) -> ${targetLabel}`);
         this.state = {
           ...this.state,
           currentLabel: targetLabel,
@@ -331,6 +390,7 @@ export class StoryVM {
       }
 
       case 'play_audio': {
+        this.recordTrace(`PLAY_AUDIO ${inst.channel}:${inst.track}`);
         this.emitAudioEvent({
           action: 'play',
           channel: inst.channel,
@@ -351,6 +411,7 @@ export class StoryVM {
       }
 
       case 'stop_audio': {
+        this.recordTrace(`STOP_AUDIO ${inst.channel}`);
         this.emitAudioEvent({
           action: 'stop',
           channel: inst.channel,
@@ -371,6 +432,7 @@ export class StoryVM {
       case 'return': {
         if (this.state.callStack.length > 0) {
           const topFrame = this.state.callStack[this.state.callStack.length - 1]!;
+          this.recordTrace(`RETURN -> ${topFrame.returnLabel}:${topFrame.returnPointer}`);
           this.state = {
             ...this.state,
             currentLabel: topFrame.returnLabel,
@@ -378,6 +440,7 @@ export class StoryVM {
             callStack: this.state.callStack.slice(0, -1)
           };
         } else {
+          this.recordTrace('END');
           this.state = {
             ...this.state,
             isFinished: true,

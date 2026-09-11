@@ -36,7 +36,8 @@
     "@kawaijs/runtime": "^0.1.11",
     "@kawaijs/renderer-dom": "^0.1.11",
     "@kawaijs/audio": "^0.1.11",
-    "@kawaijs/vite-plugin": "^0.1.11"
+    "@kawaijs/vite-plugin": "^0.1.11",
+    "esbuild": "^0.28.2"
   },
   "keywords": [
     "kawaijs",

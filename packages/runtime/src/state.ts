@@ -52,7 +52,7 @@ export function createInitialState(startLabel = 'start'): StoryState {
     currentLabel: startLabel,
     instructionPointer: 0,
     callStack: [],
-    variables: {},
+    variables: Object.create(null) as Record<string, unknown>,
     visual: {
       background: null,
       transition: null,
@@ -74,7 +74,7 @@ export function cloneState(state: StoryState): StoryState {
     currentLabel: state.currentLabel,
     instructionPointer: state.instructionPointer,
     callStack: state.callStack.map(frame => ({ ...frame })),
-    variables: { ...state.variables },
+    variables: Object.assign(Object.create(null), state.variables),
     visual: {
       background: state.visual.background,
       transition: state.visual.transition,

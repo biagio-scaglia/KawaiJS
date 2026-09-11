@@ -98,6 +98,12 @@ export interface AudioManagerLike {
   getSoundVolume?(): number;
 }
 
+export interface VirtualCanvasOptions {
+  readonly width?: number;
+  readonly height?: number;
+  readonly scaleMode?: 'contain' | 'cover' | 'stretch';
+}
+
 export interface DOMRendererOptions {
   container: HTMLElement;
   typewriterSpeed?: number; // ms per character, 0 for instant
@@ -105,4 +111,5 @@ export interface DOMRendererOptions {
   assetResolver?: (path: string, type: AssetType) => string;
   mainMenu?: MainMenuOptions;
   audioManager?: AudioManagerLike;
+  virtualCanvas?: VirtualCanvasOptions;
 }

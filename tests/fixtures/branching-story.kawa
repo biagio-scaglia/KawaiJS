@@ -1,0 +1,30 @@
+# Branching Story Fixture
+character yumia "Yumia" #f43f5e
+
+label start:
+    scene bg courtyard
+    set has_umbrella = false
+    set courage = 15
+    show yumia neutral at center
+    yumia "It looks like it might rain today."
+    
+    menu:
+        "Offer to share an umbrella" if has_umbrella:
+            jump share_umbrella
+        "Offer a jacket" if courage >= 10:
+            jump offer_jacket
+        "Run for shelter":
+            jump run_shelter
+
+label share_umbrella:
+    yumia "Thank you, that is very sweet!"
+    return
+
+label offer_jacket:
+    set affinity = 20
+    yumia "You are so warm and kind, thank you!"
+    return
+
+label run_shelter:
+    yumia "Hurry up, before we get soaked!"
+    return

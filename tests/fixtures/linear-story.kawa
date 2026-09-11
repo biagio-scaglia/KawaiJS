@@ -1,0 +1,16 @@
+# Linear Story Fixture
+character yumia "Yumia" #f43f5e
+character sensei "Sensei" #38bdf8
+
+label start:
+    scene bg classroom with fade
+    play music bgm_peaceful loop fade 1
+    show yumia happy at center
+    yumia "Good morning, Sensei!"
+    sensei "Good morning, Yumia. Ready for class?"
+    set affinity = 10
+    set affinity += 5
+    "The bell chimes softly in the distance."
+    hide yumia
+    stop music fade 1
+    return

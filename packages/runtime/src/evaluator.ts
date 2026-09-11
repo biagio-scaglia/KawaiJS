@@ -1,3 +1,14 @@
+export const DANGEROUS_KEYS = new Set(['__proto__', 'constructor', 'prototype']);
+
+export function isSafeKey(key: string): boolean {
+  return !DANGEROUS_KEYS.has(key);
+}
+
+export function hasVar(variables: Record<string, unknown>, key: string): boolean {
+  if (!isSafeKey(key)) return false;
+  return Object.prototype.hasOwnProperty.call(variables, key);
+}
+
 /**
  * Resolves a token or identifier against the current runtime variable store.
  */
@@ -31,7 +42,7 @@ export function resolveValue(
   }
 
   // Lookup in variable store
-  if (trimmed in variables) {
+  if (hasVar(variables, trimmed)) {
     return variables[trimmed];
   }
 
@@ -162,7 +173,7 @@ export function evaluateCondition(condition: string, variables: Record<string, u
   }
 
   // 5. Single identifier / flag
-  const val = trimmed in variables ? variables[trimmed] : resolveValue(trimmed, variables);
+  const val = hasVar(variables, trimmed) ? variables[trimmed] : resolveValue(trimmed, variables);
   return isTruthy(val);
 }
 
@@ -176,7 +187,7 @@ export function applySetOperation(
   variables: Record<string, unknown>,
   isVariable?: boolean
 ): unknown {
-  const resolved = isVariable !== false && typeof assignedValue === 'string' && assignedValue in variables
+  const resolved = isVariable !== false && typeof assignedValue === 'string' && hasVar(variables, assignedValue)
     ? variables[assignedValue]
     : assignedValue;
 

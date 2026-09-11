@@ -288,6 +288,39 @@ label start:
 
     renderer.destroy();
   });
+
+  it('implements responsive layout contract with ViewportAdapter', () => {
+    const story = compileScript(sampleScript);
+    const vm = new StoryVM(story);
+    const renderer = new DOMRenderer(vm, {
+      container,
+      mainMenu: { enabled: false },
+      virtualCanvas: { width: 1920, height: 1080, scaleMode: 'contain' }
+    });
+
+    const adapter = renderer.getViewportAdapter();
+    expect(adapter).toBeDefined();
+    if (!adapter) return;
+
+    const metrics = adapter.getMetrics();
+    expect(metrics.virtualWidth).toBe(1920);
+    expect(metrics.virtualHeight).toBe(1080);
+    expect(metrics.scale).toBeGreaterThan(0);
+
+    // Story coordinates -> Virtual Canvas -> Stage Pixels
+    const centerVirtual = adapter.storyToVirtual(0.5, 0.5);
+    expect(centerVirtual).toEqual({ x: 960, y: 540 });
+
+    const centerPixels = adapter.storyToStagePixels(0.5, 0.5);
+    expect(centerPixels.px).toBe(Math.round(960 * metrics.scale));
+    expect(centerPixels.py).toBe(Math.round(540 * metrics.scale));
+
+    const stage = container.querySelector('.kawa-stage') as HTMLElement;
+    expect(stage.style.getPropertyValue('--kawa-virtual-width')).toBe('1920px');
+    expect(stage.style.getPropertyValue('--kawa-virtual-height')).toBe('1080px');
+
+    renderer.destroy();
+  });
 });
 
 
