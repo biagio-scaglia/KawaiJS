@@ -12,6 +12,7 @@ export class StageLayerComponent {
   private currentBgUrl = '';
 
   private activeCharacters = new Map<string, { div: HTMLDivElement; img: HTMLImageElement; expression?: string; position?: string }>();
+  private pendingRemovals = new Map<string, { div: HTMLDivElement; timer: ReturnType<typeof setTimeout> }>();
   private readonly assetResolver: (path: string, type: AssetType) => string;
 
   constructor(assetResolver: (path: string, type: AssetType) => string) {
@@ -90,14 +91,25 @@ export class StageLayerComponent {
     for (const [id, entry] of this.activeCharacters.entries()) {
       if (!presentChars.has(id)) {
         entry.div.style.opacity = '0';
-        entry.div.style.transform = `${entry.div.style.transform} translateY(20px)`;
-        setTimeout(() => entry.div.remove(), 350);
+        entry.div.style.transform = `translateY(20px)`;
+        const timer = setTimeout(() => {
+          entry.div.remove();
+          this.pendingRemovals.delete(id);
+        }, 350);
+        this.pendingRemovals.set(id, { div: entry.div, timer });
         this.activeCharacters.delete(id);
       }
     }
 
     // Add or update active characters
     for (const [id, charState] of Object.entries(characters)) {
+      if (this.pendingRemovals.has(id)) {
+        const pending = this.pendingRemovals.get(id)!;
+        clearTimeout(pending.timer);
+        pending.div.remove();
+        this.pendingRemovals.delete(id);
+      }
+
       const pos = charState.position ?? 'center';
       const expr = charState.expression;
       const assetKey = expr ? `${id}/${expr}` : id;

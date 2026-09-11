@@ -88,16 +88,18 @@ html, body { margin: 0; padding: 0; width: 100%; height: 100%; background: #0307
 .kawa-italic { font-style: italic; }
 .kawa-main-menu { position: absolute; inset: 0; z-index: 40; display: flex; align-items: center; justify-content: center; background: radial-gradient(circle at 50% 50%, rgba(15, 23, 42, 0.95) 0%, rgba(2, 6, 23, 0.98) 100%); animation: kawa-fade-in 0.4s ease-out; user-select: none; }
 .kawa-main-menu-backdrop { position: absolute; inset: 0; background: radial-gradient(ellipse at center, rgba(15, 23, 42, 0.45) 0%, rgba(2, 6, 23, 0.85) 100%); backdrop-filter: blur(8px); z-index: 1; }
-.kawa-main-menu-content { position: relative; z-index: 2; display: flex; flex-direction: column; align-items: center; justify-content: space-between; width: 90%; max-width: 600px; height: 85%; max-height: 520px; text-align: center; padding: 24px 16px; }
-.kawa-main-menu-header { display: flex; flex-direction: column; align-items: center; gap: 8px; }
-.kawa-main-menu-logo { max-height: 70px; width: auto; object-fit: contain; }
-.kawa-main-menu-title { margin: 0; font-size: 2.8rem; font-weight: 800; background: linear-gradient(135deg, #ffffff 0%, #fda4af 50%, var(--kawa-primary-accent) 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-.kawa-main-menu-subtitle { font-size: 1.1rem; color: #94a3b8; font-weight: 500; letter-spacing: 0.05em; text-transform: uppercase; }
-.kawa-main-menu-nav { display: flex; flex-direction: column; gap: 12px; width: 100%; max-width: 320px; margin: 16px 0; }
-.kawa-main-menu-btn { display: inline-flex; align-items: center; justify-content: center; gap: 10px; background: rgba(30, 41, 59, 0.75); backdrop-filter: blur(12px); color: #ffffff; font-family: inherit; font-size: 1.1rem; font-weight: 600; padding: 14px 28px; border-radius: 10px; border: 1px solid rgba(255, 255, 255, 0.12); cursor: pointer; transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4); }
+.kawa-main-menu-content { position: relative; z-index: 2; display: flex; flex-direction: column; align-items: center; justify-content: center; width: 90%; max-width: 600px; max-height: 96%; height: auto; text-align: center; padding: 12px 16px; overflow-y: auto; scrollbar-width: thin; scrollbar-color: rgba(244, 63, 94, 0.4) transparent; }
+.kawa-main-menu-content::-webkit-scrollbar { width: 4px; }
+.kawa-main-menu-content::-webkit-scrollbar-thumb { background: rgba(244, 63, 94, 0.4); border-radius: 4px; }
+.kawa-main-menu-header { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.kawa-main-menu-logo { max-height: clamp(36px, 7vh, 60px); width: auto; object-fit: contain; }
+.kawa-main-menu-title { margin: 0; font-size: clamp(1.8rem, 4.5vh, 2.6rem); font-weight: 800; background: linear-gradient(135deg, #ffffff 0%, #fda4af 50%, var(--kawa-primary-accent) 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+.kawa-main-menu-subtitle { font-size: clamp(0.8rem, 1.6vh, 0.95rem); color: #94a3b8; font-weight: 500; letter-spacing: 0.05em; text-transform: uppercase; }
+.kawa-main-menu-nav { display: flex; flex-direction: column; gap: clamp(6px, 1.2vh, 10px); width: 100%; max-width: 300px; margin: clamp(10px, 1.8vh, 16px) 0; }
+.kawa-main-menu-btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; background: rgba(30, 41, 59, 0.75); backdrop-filter: blur(12px); color: #ffffff; font-family: inherit; font-size: clamp(0.9rem, 1.6vh, 1.05rem); font-weight: 600; padding: clamp(8px, 1.4vh, 12px) 20px; border-radius: 10px; border: 1px solid rgba(255, 255, 255, 0.12); cursor: pointer; transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4); }
 .kawa-main-menu-btn:hover:not(.disabled) { background: var(--kawa-primary-accent); transform: translateY(-2px) scale(1.02); }
 .kawa-main-menu-btn.disabled { opacity: 0.4; cursor: not-allowed; pointer-events: none; }
-.kawa-main-menu-footer { font-size: 0.85rem; color: #64748b; font-weight: 500; }
+.kawa-main-menu-footer { font-size: clamp(0.75rem, 1.4vh, 0.85rem); color: #64748b; font-weight: 500; }
 .kawa-about-card { max-width: 480px; }
 .kawa-about-content { display: flex; flex-direction: column; align-items: center; text-align: center; }
 .kawa-about-logo-badge { font-size: 2.5rem; margin-bottom: 8px; }
@@ -138,10 +140,16 @@ export function getInlineRuntimeScript(assetPrefix = '/'): string {
         .replace(/&/g, '&amp;')
         .replace(/</g, '&lt;')
         .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;')
         .replace(/\\{b\\}(.*?)\\{\\/b\\}/gi, '<strong class="kawa-bold">$1</strong>')
         .replace(/\\{i\\}(.*?)\\{\\/i\\}/gi, '<em class="kawa-italic">$1</em>')
-        .replace(/\\{color=([^}]+)\\}(.*?)\\{\\/color\\}/gi, '<span style="color:$1">$2</span>')
-        .replace(/\\{size=([^}]+)\\}(.*?)\\{\\/size\\}/gi, '<span style="font-size:$1">$2</span>');
+        .replace(/\\{color=([#a-zA-Z0-9_().,\\s-]+)\\}(.*?)\\{\\/color\\}/gi, function(_, colorVal, inner) {
+          return '<span style="color:' + colorVal.replace(/[^#a-zA-Z0-9_().,\\s-]/g, '').trim() + '">' + inner + '</span>';
+        })
+        .replace(/\\{size=([0-9.]+(?:px|em|rem|%|vw|vh)?)\\}(.*?)\\{\\/size\\}/gi, function(_, sizeVal, inner) {
+          return '<span style="font-size:' + sizeVal.replace(/[^0-9.a-z%]/gi, '').trim() + '">' + inner + '</span>';
+        });
     }
 
     class MemoryStorageAdapter {
@@ -177,10 +185,47 @@ export function getInlineRuntimeScript(assetPrefix = '/'): string {
         return slots;
       }
     }
+    function findOpOutsideQuotes(str, ops) {
+      let inQuote = null;
+      for (let i = 0; i < str.length; i++) {
+        const ch = str[i];
+        if (inQuote) {
+          if (ch === inQuote && str[i - 1] !== '\\\\') inQuote = null;
+          continue;
+        }
+        if (ch === '"' || ch === "'") { inQuote = ch; continue; }
+        for (const op of ops) {
+          if (str.startsWith(op, i)) {
+            if (op === 'and' || op === 'or') {
+              const before = i === 0 ? ' ' : str[i - 1];
+              const after = i + op.length >= str.length ? ' ' : str[i + op.length];
+              if (/\\s/.test(before) && /\\s/.test(after)) return { op, index: i };
+            } else {
+              return { op, index: i };
+            }
+          }
+        }
+      }
+      return null;
+    }
+    function isTruthy(val) {
+      if (val === false || val === 'false' || val === 0 || val === '0' || val === undefined || val === null || val === '') return false;
+      return Boolean(val);
+    }
     function evaluateCondition(cond, vars) {
       const t = (cond || '').trim();
       if (!t || t === 'true') return true;
       if (t === 'false') return false;
+
+      const orMatch = findOpOutsideQuotes(t, ['||', 'or']);
+      if (orMatch) {
+        return evaluateCondition(t.slice(0, orMatch.index), vars) || evaluateCondition(t.slice(orMatch.index + orMatch.op.length), vars);
+      }
+      const andMatch = findOpOutsideQuotes(t, ['&&', 'and']);
+      if (andMatch) {
+        return evaluateCondition(t.slice(0, andMatch.index), vars) && evaluateCondition(t.slice(andMatch.index + andMatch.op.length), vars);
+      }
+
       const toNum = (v) => {
         if (typeof v === 'number') return v;
         if (v === true) return 1;
@@ -189,39 +234,44 @@ export function getInlineRuntimeScript(assetPrefix = '/'): string {
         return isNaN(n) ? 0 : n;
       };
       const ops = ['>=', '<=', '!=', '==', '>', '<'];
-      for (const op of ops) {
-        const idx = t.indexOf(op);
-        if (idx !== -1) {
-          const l = resolveVal(t.slice(0, idx), vars);
-          const r = resolveVal(t.slice(idx + op.length), vars);
-          if (op === '>=') return toNum(l) >= toNum(r);
-          if (op === '<=') return toNum(l) <= toNum(r);
-          if (op === '>') return toNum(l) > toNum(r);
-          if (op === '<') return toNum(l) < toNum(r);
-          if (op === '==') return l === r || String(l) === String(r);
-          if (op === '!=') return l !== r && String(l) !== String(r);
-        }
+      const cmpMatch = findOpOutsideQuotes(t, ops);
+      if (cmpMatch) {
+        const op = cmpMatch.op;
+        const l = resolveVal(t.slice(0, cmpMatch.index), vars);
+        const r = resolveVal(t.slice(cmpMatch.index + op.length), vars);
+        const isLNum = typeof l === 'number' || (!isNaN(Number(l)) && typeof l === 'string' && l.trim() !== '');
+        const isRNum = typeof r === 'number' || (!isNaN(Number(r)) && typeof r === 'string' && r.trim() !== '');
+
+        if (op === '==') return l === r || String(l) === String(r);
+        if (op === '!=') return l !== r && String(l) !== String(r);
+        if (op === '>=') return (isLNum && isRNum) ? toNum(l) >= toNum(r) : String(l || '') >= String(r || '');
+        if (op === '<=') return (isLNum && isRNum) ? toNum(l) <= toNum(r) : String(l || '') <= String(r || '');
+        if (op === '>') return (isLNum && isRNum) ? toNum(l) > toNum(r) : String(l || '') > String(r || '');
+        if (op === '<') return (isLNum && isRNum) ? toNum(l) < toNum(r) : String(l || '') < String(r || '');
       }
       if (t.startsWith('!')) {
-        const v = vars[t.slice(1).trim()];
-        return v === false || v === 'false' || v === 0 || v === '0' || v === undefined || v === null || v === '';
+        return !evaluateCondition(t.slice(1).trim(), vars);
       }
       const val = t in vars ? vars[t] : resolveVal(t, vars);
-      if (val === false || val === 'false' || val === 0 || val === '0' || val === undefined || val === null || val === '') return false;
-      return Boolean(val);
+      return isTruthy(val);
     }
-    function resolveVal(token, vars) {
+    function resolveVal(token, vars, isVariable) {
       const t = token.trim();
       if (t === 'true') return true;
       if (t === 'false') return false;
       if (!isNaN(Number(t)) && t !== '') return Number(t);
       if ((t.startsWith('"') && t.endsWith('"')) || (t.startsWith("'") && t.endsWith("'"))) return t.slice(1, -1);
+      if (isVariable === false) return t;
       if (t in vars) return vars[t];
+      if (/^[a-zA-Z_][a-zA-Z0-9_-]*$/.test(t)) return undefined;
       return t;
     }
-    function applySetOp(curr, op, val, vars) {
-      const res = (typeof val === 'string' && val in vars) ? vars[val] : val;
-      if (op === '+=') return Number(curr || 0) + Number(res);
+    function applySetOp(curr, op, val, vars, isVariable) {
+      const res = (isVariable !== false && typeof val === 'string' && val in vars) ? vars[val] : val;
+      if (op === '+=') {
+        if (typeof curr === 'string' || typeof res === 'string') return String(curr || '') + String(res || '');
+        return Number(curr || 0) + Number(res);
+      }
       if (op === '-=') return Number(curr || 0) - Number(res);
       return res;
     }
@@ -253,11 +303,21 @@ export function getInlineRuntimeScript(assetPrefix = '/'): string {
       onStateChange(cb) { this.listeners.add(cb); return () => this.listeners.delete(cb); }
       onAudioEvent(cb) { this.audioListeners.add(cb); return () => this.audioListeners.delete(cb); }
       start() {
-        this.state.currentLabel = this.story.meta.startLabel || 'start';
-        this.state.instructionPointer = 0;
-        this.state.isFinished = false;
-        this.state.isWaitingForInput = false;
+        const startLabel = (this.story && this.story.meta && this.story.meta.startLabel) || 'start';
+        this.state = {
+          currentLabel: startLabel,
+          instructionPointer: 0,
+          callStack: [],
+          variables: {},
+          visual: { background: null, transition: null, characters: {} },
+          audio: { music: null, voice: null },
+          dialogue: null,
+          choices: null,
+          isWaitingForInput: false,
+          isFinished: false
+        };
         this.snapshotStack = [];
+        this.history = [];
         this.execute();
       }
       jump(target) {
@@ -431,7 +491,7 @@ export function getInlineRuntimeScript(assetPrefix = '/'): string {
           }
           case 'set': {
             const cur = this.state.variables[inst.variable];
-            this.state.variables[inst.variable] = applySetOp(cur, inst.operator || '=', inst.value, this.state.variables);
+            this.state.variables[inst.variable] = applySetOp(cur, inst.operator || '=', inst.value, this.state.variables, inst.isVariable);
             break;
           }
           case 'call': {

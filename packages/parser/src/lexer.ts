@@ -59,8 +59,8 @@ export class Lexer {
         continue;
       }
 
-      // Hex Color literal (#f43f5e, #fff, etc.)
-      if (ch === '#' && this.isHexColorAhead()) {
+      // Hex Color literal (#f43f5e, #fff, etc.) - only after tokens have appeared on the line
+      if (ch === '#' && this.hasTokensOnCurrentLine && this.isHexColorAhead()) {
         this.hasTokensOnCurrentLine = true;
         return this.readHexColor();
       }
@@ -137,6 +137,14 @@ export class Lexer {
             loc: createLocation(this.file, startLoc, this.getCurrentPosition())
           };
         }
+        if (this.isDigit(this.peek())) {
+          return this.readNumber('+', startLoc);
+        }
+        return {
+          type: 'PLUS',
+          value: '+',
+          loc: createLocation(this.file, startLoc, this.getCurrentPosition())
+        };
       }
 
       if (ch === '-') {
@@ -150,6 +158,14 @@ export class Lexer {
             loc: createLocation(this.file, startLoc, this.getCurrentPosition())
           };
         }
+        if (this.isDigit(this.peek())) {
+          return this.readNumber('-', startLoc);
+        }
+        return {
+          type: 'MINUS',
+          value: '-',
+          loc: createLocation(this.file, startLoc, this.getCurrentPosition())
+        };
       }
 
       if (ch === '=') {
@@ -369,9 +385,8 @@ export class Lexer {
     };
   }
 
-  private readNumber(): Token {
-    const startLoc = this.getCurrentPosition();
-    let numStr = '';
+  private readNumber(prefix = '', startPosition = this.getCurrentPosition()): Token {
+    let numStr = prefix;
 
     while (!this.isEof() && (this.isDigit(this.peek()) || this.peek() === '.')) {
       numStr += this.advance();
@@ -380,7 +395,7 @@ export class Lexer {
     return {
       type: 'NUMBER',
       value: numStr,
-      loc: createLocation(this.file, startLoc, this.getCurrentPosition())
+      loc: createLocation(this.file, startPosition, this.getCurrentPosition())
     };
   }
 

@@ -3,7 +3,14 @@ import { SVG_ICONS } from '../icons.js';
 export interface SettingsModalOptions {
   typewriterSpeed: number;
   autoDelayMs: number;
-  onSettingsChange: (settings: { typewriterSpeed: number; autoDelayMs: number }) => void;
+  musicVolume?: number;
+  soundVolume?: number;
+  onSettingsChange: (settings: {
+    typewriterSpeed: number;
+    autoDelayMs: number;
+    musicVolume?: number;
+    soundVolume?: number;
+  }) => void;
 }
 
 export function showSettingsModal(rootEl: HTMLElement, options: SettingsModalOptions): void {
@@ -12,6 +19,8 @@ export function showSettingsModal(rootEl: HTMLElement, options: SettingsModalOpt
 
   let currentSpeed = options.typewriterSpeed;
   let currentDelay = options.autoDelayMs;
+  let currentMusic = options.musicVolume ?? 0.8;
+  let currentSound = options.soundVolume ?? 1.0;
 
   const overlay = document.createElement('div');
   overlay.className = 'kawa-modal-overlay';
@@ -41,6 +50,15 @@ export function showSettingsModal(rootEl: HTMLElement, options: SettingsModalOpt
   const body = document.createElement('div');
   body.className = 'kawa-modal-body';
 
+  const notifyChange = () => {
+    options.onSettingsChange({
+      typewriterSpeed: currentSpeed,
+      autoDelayMs: currentDelay,
+      musicVolume: currentMusic,
+      soundVolume: currentSound
+    });
+  };
+
   // 1. Text Speed
   const speedRow = document.createElement('div');
   speedRow.className = 'kawa-setting-row';
@@ -56,7 +74,7 @@ export function showSettingsModal(rootEl: HTMLElement, options: SettingsModalOpt
   speedInput.addEventListener('input', () => {
     currentSpeed = Number(speedInput.value);
     speedValEl.textContent = currentSpeed === 0 ? 'Instant' : `${currentSpeed}ms`;
-    options.onSettingsChange({ typewriterSpeed: currentSpeed, autoDelayMs: currentDelay });
+    notifyChange();
   });
 
   // 2. Auto Forward Delay
@@ -75,29 +93,45 @@ export function showSettingsModal(rootEl: HTMLElement, options: SettingsModalOpt
   autoInput.addEventListener('input', () => {
     currentDelay = Number(autoInput.value);
     autoValEl.textContent = `${(currentDelay / 1000).toFixed(1)}s`;
-    options.onSettingsChange({ typewriterSpeed: currentSpeed, autoDelayMs: currentDelay });
+    notifyChange();
   });
 
   // 3. Audio Volume Sliders
   const musicRow = document.createElement('div');
   musicRow.className = 'kawa-setting-row';
+  const musicPercent = Math.round(currentMusic * 100);
   musicRow.innerHTML = `
     <div class="kawa-setting-header">
       <span>${SVG_ICONS.volumeOn} Music Volume</span>
-      <span class="kawa-setting-value" id="kawa-music-val">80%</span>
+      <span class="kawa-setting-value" id="kawa-music-val">${musicPercent}%</span>
     </div>
-    <input type="range" class="kawa-slider" id="kawa-music-slider" min="0" max="100" step="5" value="80">
+    <input type="range" class="kawa-slider" id="kawa-music-slider" min="0" max="100" step="5" value="${musicPercent}">
   `;
+  const musicInput = musicRow.querySelector('#kawa-music-slider') as HTMLInputElement;
+  const musicValEl = musicRow.querySelector('#kawa-music-val') as HTMLElement;
+  musicInput.addEventListener('input', () => {
+    currentMusic = Number(musicInput.value) / 100;
+    musicValEl.textContent = `${musicInput.value}%`;
+    notifyChange();
+  });
 
   const sfxRow = document.createElement('div');
   sfxRow.className = 'kawa-setting-row';
+  const sfxPercent = Math.round(currentSound * 100);
   sfxRow.innerHTML = `
     <div class="kawa-setting-header">
       <span>${SVG_ICONS.volumeOn} Sound & Voice Volume</span>
-      <span class="kawa-setting-value" id="kawa-sfx-val">100%</span>
+      <span class="kawa-setting-value" id="kawa-sfx-val">${sfxPercent}%</span>
     </div>
-    <input type="range" class="kawa-slider" id="kawa-sfx-slider" min="0" max="100" step="5" value="100">
+    <input type="range" class="kawa-slider" id="kawa-sfx-slider" min="0" max="100" step="5" value="${sfxPercent}">
   `;
+  const sfxInput = sfxRow.querySelector('#kawa-sfx-slider') as HTMLInputElement;
+  const sfxValEl = sfxRow.querySelector('#kawa-sfx-val') as HTMLElement;
+  sfxInput.addEventListener('input', () => {
+    currentSound = Number(sfxInput.value) / 100;
+    sfxValEl.textContent = `${sfxInput.value}%`;
+    notifyChange();
+  });
 
   body.appendChild(speedRow);
   body.appendChild(autoRow);

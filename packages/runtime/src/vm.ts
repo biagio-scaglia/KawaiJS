@@ -285,9 +285,13 @@ export class StoryVM {
       }
 
       case 'choice': {
+        const availableChoices = inst.choices.filter(choice => {
+          if (!choice.condition) return true;
+          return evaluateCondition(choice.condition, this.state.variables);
+        });
         this.state = {
           ...this.state,
-          choices: inst.choices,
+          choices: availableChoices,
           isWaitingForInput: true
         };
         break;
@@ -304,7 +308,7 @@ export class StoryVM {
 
       case 'set': {
         const currentVal = this.state.variables[inst.variable];
-        const nextVal = applySetOperation(currentVal, inst.operator, inst.value, this.state.variables);
+        const nextVal = applySetOperation(currentVal, inst.operator, inst.value, this.state.variables, inst.isVariable);
         this.state = {
           ...this.state,
           variables: {

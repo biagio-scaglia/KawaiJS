@@ -110,6 +110,7 @@ export interface SetStmtNode extends BaseNode {
   readonly variable: string;
   readonly operator: '=' | '+=' | '-=';
   readonly value: unknown;
+  readonly isVariable?: boolean;
 }
 
 export interface ElifBranchNode extends BaseNode {

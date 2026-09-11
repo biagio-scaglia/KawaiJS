@@ -4,6 +4,7 @@ import {
   type DOMRendererOptions,
   type MainMenuOptions,
   type AssetType,
+  type AudioManagerLike,
   defaultAssetResolver
 } from './types.js';
 import { StageLayerComponent } from './components/stage-layer.js';
@@ -35,8 +36,11 @@ export class DOMRenderer {
   private readonly container: HTMLElement;
   private typewriterSpeed: number;
   private autoDelayMs: number;
+  private musicVolume: number;
+  private soundVolume: number;
   private readonly assetResolver: (path: string, type: AssetType) => string;
   private readonly mainMenuOptions?: MainMenuOptions;
+  private readonly audioManager?: AudioManagerLike;
 
   private rootEl!: HTMLDivElement;
   private stageLayer!: StageLayerComponent;
@@ -60,6 +64,9 @@ export class DOMRenderer {
     this.autoDelayMs = options.autoDelayMs ?? 1800;
     this.assetResolver = options.assetResolver ?? defaultAssetResolver;
     this.mainMenuOptions = options.mainMenu;
+    this.audioManager = options.audioManager;
+    this.musicVolume = options.audioManager?.getMusicVolume?.() ?? 0.8;
+    this.soundVolume = options.audioManager?.getSoundVolume?.() ?? 1.0;
 
     // Load saved settings if present
     if (typeof localStorage !== 'undefined') {
@@ -69,6 +76,14 @@ export class DOMRenderer {
           const parsed = JSON.parse(saved);
           if (typeof parsed.typewriterSpeed === 'number') this.typewriterSpeed = parsed.typewriterSpeed;
           if (typeof parsed.autoDelayMs === 'number') this.autoDelayMs = parsed.autoDelayMs;
+          if (typeof parsed.musicVolume === 'number') {
+            this.musicVolume = parsed.musicVolume;
+            this.audioManager?.setMusicVolume(this.musicVolume);
+          }
+          if (typeof parsed.soundVolume === 'number') {
+            this.soundVolume = parsed.soundVolume;
+            this.audioManager?.setSoundVolume(this.soundVolume);
+          }
         }
       } catch {}
     }
@@ -209,9 +224,19 @@ export class DOMRenderer {
     showSettingsModal(this.rootEl, {
       typewriterSpeed: this.typewriterSpeed,
       autoDelayMs: this.autoDelayMs,
+      musicVolume: this.musicVolume,
+      soundVolume: this.soundVolume,
       onSettingsChange: (s) => {
         this.typewriterSpeed = s.typewriterSpeed;
         this.autoDelayMs = s.autoDelayMs;
+        if (s.musicVolume !== undefined) {
+          this.musicVolume = s.musicVolume;
+          this.audioManager?.setMusicVolume(this.musicVolume);
+        }
+        if (s.soundVolume !== undefined) {
+          this.soundVolume = s.soundVolume;
+          this.audioManager?.setSoundVolume(this.soundVolume);
+        }
         this.dialogueBox.setTypewriterSpeed(this.typewriterSpeed);
         this.saveSettings();
       }
@@ -315,9 +340,19 @@ export class DOMRenderer {
         getSettingsConfig: () => ({
           typewriterSpeed: this.typewriterSpeed,
           autoDelayMs: this.autoDelayMs,
+          musicVolume: this.musicVolume,
+          soundVolume: this.soundVolume,
           onSettingsChange: (s) => {
             this.typewriterSpeed = s.typewriterSpeed;
             this.autoDelayMs = s.autoDelayMs;
+            if (s.musicVolume !== undefined) {
+              this.musicVolume = s.musicVolume;
+              this.audioManager?.setMusicVolume(this.musicVolume);
+            }
+            if (s.soundVolume !== undefined) {
+              this.soundVolume = s.soundVolume;
+              this.audioManager?.setSoundVolume(this.soundVolume);
+            }
             this.dialogueBox.setTypewriterSpeed(this.typewriterSpeed);
             this.saveSettings();
           }
@@ -332,8 +367,19 @@ export class DOMRenderer {
   }
 
   private bindEvents(): void {
-    // Clicking on dialogue box advances or finishes typewriter
-    this.dialogueBox.el.addEventListener('click', () => {
+    // Clicking on stage or dialogue box advances or finishes typewriter
+    this.stageLayer.stageEl.addEventListener('click', (e) => {
+      if (this.isMainMenuActive()) return;
+      const target = e.target as HTMLElement;
+      if (
+        target.closest('button') ||
+        target.closest('.kawa-quick-menu') ||
+        target.closest('.kawa-choice-container') ||
+        target.closest('.kawa-modal-overlay') ||
+        target.closest('.kawa-ending-card')
+      ) {
+        return;
+      }
       if (this.isAutoMode) this.toggleAutoMode(false);
       if (this.isSkipMode) this.toggleSkipMode(false);
       this.handleUserAdvance();
@@ -352,7 +398,12 @@ export class DOMRenderer {
       }
 
       if (e.code === 'Space' || e.code === 'Enter') {
-        if (document.activeElement && document.activeElement.tagName === 'BUTTON') {
+        if (
+          document.activeElement &&
+          (document.activeElement.tagName === 'BUTTON' ||
+            document.activeElement.tagName === 'INPUT' ||
+            document.activeElement.tagName === 'TEXTAREA')
+        ) {
           return;
         }
         e.preventDefault();
@@ -392,9 +443,15 @@ export class DOMRenderer {
 
     if (this.dialogueBox.getIsTypewriting()) {
       this.dialogueBox.finishTypewriter();
-    } else {
-      this.vm.next();
+      return;
     }
+
+    const state = this.vm.getState();
+    if (state.choices && state.choices.length > 0) {
+      return;
+    }
+
+    this.vm.next();
   }
 
   private render(state: StoryState): void {
@@ -469,7 +526,9 @@ export class DOMRenderer {
           'kawaijs_settings',
           JSON.stringify({
             typewriterSpeed: this.typewriterSpeed,
-            autoDelayMs: this.autoDelayMs
+            autoDelayMs: this.autoDelayMs,
+            musicVolume: this.musicVolume,
+            soundVolume: this.soundVolume
           })
         );
       } catch {}

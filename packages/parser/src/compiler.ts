@@ -66,7 +66,8 @@ export class Compiler {
   private compileBlock(
     currentLabel: string,
     statements: StatementNode[],
-    labels: Record<string, Instruction[]>
+    labels: Record<string, Instruction[]>,
+    continuationLabel?: string
   ): Instruction[] {
     const instructions: Instruction[] = [];
 
@@ -123,12 +124,10 @@ export class Compiler {
             this.anonymousLabelCounter += 1;
             const syntheticLabel = `__choice_${currentLabel}_${this.anonymousLabelCounter}`;
 
-            const choiceInstructions = this.compileBlock(syntheticLabel, choice.body, labels);
-            if (hasRemaining || choice.body.length === 0) {
-              const lastInst = choiceInstructions[choiceInstructions.length - 1];
-              if (!lastInst || (lastInst.type !== 'jump' && lastInst.type !== 'return')) {
-                choiceInstructions.push({ type: 'jump', targetLabel: mergeLabel });
-              }
+            const choiceInstructions = this.compileBlock(syntheticLabel, choice.body, labels, mergeLabel);
+            const lastInst = choiceInstructions[choiceInstructions.length - 1];
+            if (!lastInst || (lastInst.type !== 'jump' && lastInst.type !== 'return')) {
+              choiceInstructions.push({ type: 'jump', targetLabel: mergeLabel });
             }
             labels[syntheticLabel] = choiceInstructions;
 
@@ -147,9 +146,11 @@ export class Compiler {
           });
 
           if (hasRemaining) {
-            labels[mergeLabel] = this.compileBlock(mergeLabel, remainingStatements, labels);
+            labels[mergeLabel] = this.compileBlock(mergeLabel, remainingStatements, labels, continuationLabel);
+          } else if (continuationLabel) {
+            labels[mergeLabel] = [{ type: 'jump', targetLabel: continuationLabel }];
           } else {
-            labels[mergeLabel] = [];
+            labels[mergeLabel] = [{ type: 'return' }];
           }
           return instructions;
         }
@@ -175,6 +176,7 @@ export class Compiler {
             variable: stmt.variable,
             operator: stmt.operator,
             value: stmt.value,
+            isVariable: stmt.isVariable,
             loc: stmt.loc
           });
           break;
@@ -188,12 +190,10 @@ export class Compiler {
           // Compile Then Branch
           this.anonymousLabelCounter += 1;
           const thenLabel = `__if_then_${currentLabel}_${this.anonymousLabelCounter}`;
-          const thenInstructions = this.compileBlock(thenLabel, stmt.thenBranch, labels);
-          if (hasRemaining || stmt.thenBranch.length === 0) {
-            const lastInst = thenInstructions[thenInstructions.length - 1];
-            if (!lastInst || (lastInst.type !== 'jump' && lastInst.type !== 'return')) {
-              thenInstructions.push({ type: 'jump', targetLabel: mergeLabel });
-            }
+          const thenInstructions = this.compileBlock(thenLabel, stmt.thenBranch, labels, mergeLabel);
+          const lastThen = thenInstructions[thenInstructions.length - 1];
+          if (!lastThen || (lastThen.type !== 'jump' && lastThen.type !== 'return')) {
+            thenInstructions.push({ type: 'jump', targetLabel: mergeLabel });
           }
           labels[thenLabel] = thenInstructions;
 
@@ -203,12 +203,10 @@ export class Compiler {
           if (stmt.elseBranch) {
             this.anonymousLabelCounter += 1;
             const elseLabel = `__if_else_${currentLabel}_${this.anonymousLabelCounter}`;
-            const elseInstructions = this.compileBlock(elseLabel, stmt.elseBranch.body, labels);
-            if (hasRemaining || stmt.elseBranch.body.length === 0) {
-              const lastInst = elseInstructions[elseInstructions.length - 1];
-              if (!lastInst || (lastInst.type !== 'jump' && lastInst.type !== 'return')) {
-                elseInstructions.push({ type: 'jump', targetLabel: mergeLabel });
-              }
+            const elseInstructions = this.compileBlock(elseLabel, stmt.elseBranch.body, labels, mergeLabel);
+            const lastElse = elseInstructions[elseInstructions.length - 1];
+            if (!lastElse || (lastElse.type !== 'jump' && lastElse.type !== 'return')) {
+              elseInstructions.push({ type: 'jump', targetLabel: mergeLabel });
             }
             labels[elseLabel] = elseInstructions;
             currentBranchTarget = elseLabel;
@@ -221,12 +219,10 @@ export class Compiler {
             const elifThenLabel = `__elif_then_${currentLabel}_${this.anonymousLabelCounter}`;
             const elifTestLabel = `__elif_test_${currentLabel}_${this.anonymousLabelCounter}`;
 
-            const elifThenInst = this.compileBlock(elifThenLabel, elif.body, labels);
-            if (hasRemaining || elif.body.length === 0) {
-              const lastInst = elifThenInst[elifThenInst.length - 1];
-              if (!lastInst || (lastInst.type !== 'jump' && lastInst.type !== 'return')) {
-                elifThenInst.push({ type: 'jump', targetLabel: mergeLabel });
-              }
+            const elifThenInst = this.compileBlock(elifThenLabel, elif.body, labels, mergeLabel);
+            const lastElif = elifThenInst[elifThenInst.length - 1];
+            if (!lastElif || (lastElif.type !== 'jump' && lastElif.type !== 'return')) {
+              elifThenInst.push({ type: 'jump', targetLabel: mergeLabel });
             }
             labels[elifThenLabel] = elifThenInst;
 
@@ -251,9 +247,11 @@ export class Compiler {
           });
 
           if (hasRemaining) {
-            labels[mergeLabel] = this.compileBlock(mergeLabel, remainingStatements, labels);
+            labels[mergeLabel] = this.compileBlock(mergeLabel, remainingStatements, labels, continuationLabel);
+          } else if (continuationLabel) {
+            labels[mergeLabel] = [{ type: 'jump', targetLabel: continuationLabel }];
           } else {
-            labels[mergeLabel] = [];
+            labels[mergeLabel] = [{ type: 'return' }];
           }
           return instructions;
         }

@@ -76,4 +76,18 @@ if score >= 10:
     expect(tokens[0]?.type).toBe('STRING');
     expect(tokens[0]?.value).toBe('Hello "world"\nLine 2');
   });
+
+  it('tokenizes negative numbers and standalone plus/minus operators', () => {
+    const code = `set score = -42
+set offset = +10
+`;
+    const lexer = new Lexer(code);
+    const tokens = lexer.tokenize();
+
+    const numTokens = tokens.filter(t => t.type === 'NUMBER');
+    expect(numTokens.length).toBe(2);
+    expect(numTokens[0]?.value).toBe('-42');
+    expect(numTokens[1]?.value).toBe('+10');
+  });
 });
+

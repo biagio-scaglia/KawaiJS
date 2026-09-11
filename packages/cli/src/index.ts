@@ -5,6 +5,7 @@ export * from '@kawaijs/renderer-dom';
 export * from '@kawaijs/audio';
 export * from '@kawaijs/vite-plugin';
 
+import * as fs from 'node:fs';
 import { createProject } from './commands/create.js';
 import { validateProject } from './commands/validate.js';
 import { startDevServer } from './commands/dev.js';
@@ -49,7 +50,13 @@ export function runCLI(args: string[]): void {
     case 'version':
     case '-v':
     case '--version': {
-      console.log('Kawaijs v0.1.2');
+      try {
+        const pkgUrl = new URL('../package.json', import.meta.url);
+        const pkg = JSON.parse(fs.readFileSync(pkgUrl, 'utf-8'));
+        console.log(`Kawaijs v${pkg.version}`);
+      } catch {
+        console.log('Kawaijs v0.1.11');
+      }
       break;
     }
 

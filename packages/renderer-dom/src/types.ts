@@ -90,10 +90,19 @@ export interface MainMenuOptions {
   onQuit?: () => void;
 }
 
+export interface AudioManagerLike {
+  setMusicVolume(val: number): void;
+  setSoundVolume(val: number): void;
+  setMasterVolume?(val: number): void;
+  getMusicVolume?(): number;
+  getSoundVolume?(): number;
+}
+
 export interface DOMRendererOptions {
   container: HTMLElement;
   typewriterSpeed?: number; // ms per character, 0 for instant
   autoDelayMs?: number; // delay before auto-advancing
   assetResolver?: (path: string, type: AssetType) => string;
   mainMenu?: MainMenuOptions;
+  audioManager?: AudioManagerLike;
 }

@@ -74,5 +74,52 @@ label start:
       expect(err.diagnostic.hint).toContain("Did you mean 'roof_top'?");
     }
   });
+
+  it('ensures choice blocks without trailing statements jump to merge label with return', () => {
+    const code = `label start:
+    menu:
+        "Choice A":
+            "You picked A"
+        "Choice B":
+            "You picked B"
+`;
+    const story = compileScript(code);
+    const startInsts = story.labels['start']!;
+    expect(startInsts[0]?.type).toBe('choice');
+    const choiceInst = startInsts[0] as any;
+    expect(choiceInst.choices.length).toBe(2);
+
+    const targetA = choiceInst.choices[0].targetLabel;
+    const instsA = story.labels[targetA]!;
+    expect(instsA[0]?.type).toBe('dialogue');
+    // The last instruction must be a jump to merge label, not falling off
+    expect(instsA[1]?.type).toBe('jump');
+
+    const mergeLabel = instsA[1]?.targetLabel;
+    expect(story.labels[mergeLabel]).toBeDefined();
+    expect(story.labels[mergeLabel]![0]?.type).toBe('return');
+  });
+
+  it('ensures statements after a menu continue execution via merge label', () => {
+    const code = `label start:
+    menu:
+        "Yes":
+            set agreed = true
+        "No":
+            set agreed = false
+    "Story continues here"
+`;
+    const story = compileScript(code);
+    const startInsts = story.labels['start']!;
+    const choiceInst = startInsts[0] as any;
+    const targetA = choiceInst.choices[0].targetLabel;
+    const instsA = story.labels[targetA]!;
+    const mergeLabel = instsA[1]?.targetLabel;
+
+    const mergeInsts = story.labels[mergeLabel]!;
+    expect(mergeInsts[0]?.type).toBe('dialogue');
+    expect((mergeInsts[0] as any).text).toBe('Story continues here');
+  });
 });
+
 

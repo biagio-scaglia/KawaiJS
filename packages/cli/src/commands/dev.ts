@@ -11,9 +11,30 @@ export interface DevServerOptions {
 
 export function startDevServer(projectDir = '.', options: DevServerOptions = {}): void {
   const rootDir = path.resolve(process.cwd(), projectDir);
-  const scriptPath = path.join(rootDir, 'game', 'script.kawa');
-  const stylePath = path.join(rootDir, 'game', 'style.css');
-  const assetsDir = path.join(rootDir, 'game', 'assets');
+  let scriptPath = path.join(rootDir, 'game', 'script.kawa');
+  if (!fs.existsSync(scriptPath)) {
+    const rootCandidate = path.join(rootDir, 'script.kawa');
+    if (fs.existsSync(rootCandidate)) {
+      scriptPath = rootCandidate;
+    }
+  }
+
+  let stylePath = path.join(rootDir, 'game', 'style.css');
+  if (!fs.existsSync(stylePath)) {
+    const rootCandidate = path.join(rootDir, 'style.css');
+    if (fs.existsSync(rootCandidate)) {
+      stylePath = rootCandidate;
+    }
+  }
+
+  let assetsDir = path.join(rootDir, 'game', 'assets');
+  if (!fs.existsSync(assetsDir)) {
+    const rootCandidate = path.join(rootDir, 'assets');
+    if (fs.existsSync(rootCandidate)) {
+      assetsDir = rootCandidate;
+    }
+  }
+
   let port = options.port ?? 3000;
 
   if (!fs.existsSync(scriptPath)) {
@@ -110,7 +131,15 @@ export function startDevServer(projectDir = '.', options: DevServerOptions = {})
     if (url.startsWith('/assets/')) {
       const cleanUrl = url.split('?')[0]!;
       const relPath = decodeURIComponent(cleanUrl.replace(/^\/?assets\//, ''));
-      let filePath = path.join(assetsDir, relPath);
+      const resolvedAssetsDir = path.resolve(assetsDir);
+      let filePath = path.resolve(assetsDir, relPath);
+
+      // Security: Prevent path traversal
+      if (!filePath.startsWith(resolvedAssetsDir + path.sep) && filePath !== resolvedAssetsDir) {
+        res.writeHead(403, { 'Content-Type': 'text/plain' });
+        res.end('Access denied');
+        return;
+      }
 
       if (!fs.existsSync(filePath) || !fs.statSync(filePath).isFile()) {
         const parsed = path.parse(filePath);
@@ -118,8 +147,8 @@ export function startDevServer(projectDir = '.', options: DevServerOptions = {})
         
         for (const nameCandidate of [parsed.name, cleanName]) {
           for (const ext of ['', '.svg', '.png', '.webp', '.jpg', '.jpeg', '.mp3', '.ogg', '.wav']) {
-            const candidate = path.join(parsed.dir, nameCandidate + ext);
-            if (fs.existsSync(candidate) && fs.statSync(candidate).isFile()) {
+            const candidate = path.resolve(parsed.dir, nameCandidate + ext);
+            if (candidate.startsWith(resolvedAssetsDir + path.sep) && fs.existsSync(candidate) && fs.statSync(candidate).isFile()) {
               filePath = candidate;
               break;
             }
@@ -128,7 +157,7 @@ export function startDevServer(projectDir = '.', options: DevServerOptions = {})
         }
       }
 
-      if (fs.existsSync(filePath) && fs.statSync(filePath).isFile()) {
+      if (fs.existsSync(filePath) && fs.statSync(filePath).isFile() && filePath.startsWith(resolvedAssetsDir + path.sep)) {
         const ext = path.extname(filePath).toLowerCase();
         const mimeTypes: Record<string, string> = {
           '.png': 'image/png',

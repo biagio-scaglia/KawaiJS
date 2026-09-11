@@ -203,5 +203,64 @@ label start:
     expect(vm.getState().dialogue?.text).toBe('Checkpoint 1');
     expect(vm.getState().visual.background).toBe('bg library');
   });
+
+  it('filters choices when condition evaluates to false', () => {
+    const code = `label start:
+    set has_key = false
+    set coins = 10
+    menu:
+        "Open door with key" if has_key:
+            "Unlocked door"
+        "Pay toll" if coins >= 5:
+            "Paid toll"
+        "Walk away":
+            "Walked away"
+`;
+    const story = compileScript(code);
+    const vm = new StoryVM(story);
+
+    vm.start();
+    const choices = vm.getState().choices;
+    expect(choices).toBeDefined();
+    expect(choices?.length).toBe(2);
+    expect(choices?.[0]?.text).toBe('Pay toll');
+    expect(choices?.[1]?.text).toBe('Walk away');
+  });
+
+  it('evaluates undeclared variables as falsy in conditions without throwing', () => {
+    const code = `label start:
+    if undeclared_flag:
+        "Should not happen"
+    else:
+        "Expected branch"
+`;
+    const story = compileScript(code);
+    const vm = new StoryVM(story);
+
+    vm.start();
+    expect(vm.getState().dialogue?.text).toBe('Expected branch');
+  });
+
+  it('concatenates strings with += and resets state cleanly on start()', () => {
+    const code = `label start:
+    set greeting = "Hello, "
+    set greeting += "World!"
+    set counter = 1
+    set counter += 5
+    "Done"
+`;
+    const story = compileScript(code);
+    const vm = new StoryVM(story);
+
+    vm.start();
+    expect(vm.getState().variables['greeting']).toBe('Hello, World!');
+    expect(vm.getState().variables['counter']).toBe(6);
+
+    // Calling start() again should reset variables and state cleanly
+    vm.start();
+    expect(vm.getState().variables['greeting']).toBe('Hello, World!');
+    expect(vm.getState().variables['counter']).toBe(6);
+  });
 });
+
 

@@ -9,9 +9,30 @@ export interface BuildOptions {
 
 export function buildProject(projectDir = '.', options: BuildOptions = {}): boolean {
   const rootDir = path.resolve(process.cwd(), projectDir);
-  const scriptPath = path.join(rootDir, 'game', 'script.kawa');
-  const stylePath = path.join(rootDir, 'game', 'style.css');
-  const assetsDir = path.join(rootDir, 'game', 'assets');
+  let scriptPath = path.join(rootDir, 'game', 'script.kawa');
+  if (!fs.existsSync(scriptPath)) {
+    const rootCandidate = path.join(rootDir, 'script.kawa');
+    if (fs.existsSync(rootCandidate)) {
+      scriptPath = rootCandidate;
+    }
+  }
+
+  let stylePath = path.join(rootDir, 'game', 'style.css');
+  if (!fs.existsSync(stylePath)) {
+    const rootCandidate = path.join(rootDir, 'style.css');
+    if (fs.existsSync(rootCandidate)) {
+      stylePath = rootCandidate;
+    }
+  }
+
+  let assetsDir = path.join(rootDir, 'game', 'assets');
+  if (!fs.existsSync(assetsDir)) {
+    const rootCandidate = path.join(rootDir, 'assets');
+    if (fs.existsSync(rootCandidate)) {
+      assetsDir = rootCandidate;
+    }
+  }
+
   const outDir = path.resolve(rootDir, options.outDir ?? 'dist');
 
   console.log(`\n📦 Building Kawaijs visual novel...`);

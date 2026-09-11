@@ -42,6 +42,8 @@ export type TokenType =
   | 'LESS_EQUALS'
   | 'GREATER'
   | 'LESS'
+  | 'PLUS'
+  | 'MINUS'
   | 'COMMA'
   // Layout tokens
   | 'NEWLINE'

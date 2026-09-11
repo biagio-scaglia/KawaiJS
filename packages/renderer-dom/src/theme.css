@@ -25,7 +25,7 @@
   --kawa-main-menu-btn-hover-bg: var(--kawa-primary-accent);
   --kawa-main-menu-btn-color: #ffffff;
   --kawa-main-menu-btn-radius: 10px;
-  --kawa-main-menu-btn-padding: 14px 28px;
+  --kawa-main-menu-btn-padding: clamp(8px, 1.4vh, 12px) 20px;
 }
 
 /* Base Reset & Root Container */
@@ -721,24 +721,35 @@ html, body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: space-between;
+  justify-content: center;
   width: 90%;
   max-width: 600px;
-  height: 85%;
-  max-height: 520px;
+  max-height: 96%;
+  height: auto;
   text-align: center;
-  padding: 24px 16px;
+  padding: 12px 16px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(244, 63, 94, 0.4) transparent;
+}
+
+.kawa-main-menu-content::-webkit-scrollbar {
+  width: 4px;
+}
+.kawa-main-menu-content::-webkit-scrollbar-thumb {
+  background: rgba(244, 63, 94, 0.4);
+  border-radius: 4px;
 }
 
 .kawa-main-menu-header {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 8px;
+  gap: 4px;
 }
 
 .kawa-main-menu-logo {
-  max-height: 70px;
+  max-height: clamp(36px, 7vh, 60px);
   width: auto;
   object-fit: contain;
   filter: drop-shadow(0 8px 16px rgba(0, 0, 0, 0.6));
@@ -746,7 +757,7 @@ html, body {
 
 .kawa-main-menu-title {
   margin: 0;
-  font-size: 2.8rem;
+  font-size: clamp(1.8rem, 4.5vh, 2.6rem);
   font-weight: 800;
   letter-spacing: -0.03em;
   line-height: 1.15;
@@ -757,7 +768,7 @@ html, body {
 }
 
 .kawa-main-menu-subtitle {
-  font-size: 1.1rem;
+  font-size: clamp(0.8rem, 1.6vh, 0.95rem);
   font-weight: 500;
   color: #94a3b8;
   letter-spacing: 0.05em;
@@ -767,22 +778,22 @@ html, body {
 .kawa-main-menu-nav {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: clamp(6px, 1.2vh, 10px);
   width: 100%;
-  max-width: 320px;
-  margin: 16px 0;
+  max-width: 300px;
+  margin: clamp(10px, 1.8vh, 16px) 0;
 }
 
 .kawa-main-menu-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 10px;
+  gap: 8px;
   background: var(--kawa-main-menu-btn-bg);
   backdrop-filter: blur(12px);
   color: var(--kawa-main-menu-btn-color);
   font-family: inherit;
-  font-size: 1.1rem;
+  font-size: clamp(0.9rem, 1.6vh, 1.05rem);
   font-weight: 600;
   padding: var(--kawa-main-menu-btn-padding);
   border-radius: var(--kawa-main-menu-btn-radius);
@@ -816,7 +827,7 @@ html, body {
 }
 
 .kawa-main-menu-footer {
-  font-size: 0.85rem;
+  font-size: clamp(0.75rem, 1.4vh, 0.85rem);
   color: #64748b;
   font-weight: 500;
 }

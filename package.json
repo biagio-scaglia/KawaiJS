@@ -29,9 +29,11 @@
   "author": "Biagio Scaglia",
   "license": "MIT",
   "devDependencies": {
+    "@esbuild/win32-x64": "^0.28.2",
+    "@rollup/rollup-win32-x64-msvc": "^4.63.1",
     "@types/node": "^26.5.0",
     "happy-dom": "^20.14.0",
     "typescript": "^5.7.3",
-    "vitest": "^3.0.7"
+    "vitest": "^5.0.0"
   }
 }

@@ -269,6 +269,26 @@ label start:
     renderer.destroy();
     expect(container.innerHTML).toBe('');
   });
+
+  it('sanitizes rich text markup against XSS and quotes', () => {
+    const xssScript = `label start:
+    "Test" "{b}bold{/b} <script>alert(1)</script> \\"quoted\\" {color=red}colored{/color}"
+`;
+    const story = compileScript(xssScript);
+    const vm = new StoryVM(story);
+    const renderer = new DOMRenderer(vm, { container, typewriterSpeed: 0, mainMenu: { enabled: false } });
+
+    vm.start();
+    const dialogueText = container.querySelector('.kawa-dialogue-text') as HTMLElement;
+    expect(dialogueText.innerHTML).toContain('&lt;script&gt;alert(1)&lt;/script&gt;');
+    expect(dialogueText.innerHTML).toContain('"quoted"');
+    expect(dialogueText.innerHTML).toContain('<strong class="kawa-bold">bold</strong>');
+    expect(dialogueText.innerHTML).toContain('style="color:red"');
+    expect(container.querySelector('script')).toBeNull();
+
+    renderer.destroy();
+  });
 });
+
 
 

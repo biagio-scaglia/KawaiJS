@@ -257,6 +257,10 @@ export class Parser {
       const spkTok = this.advance();
       speaker = spkTok.value;
       startLoc = spkTok.loc;
+    } else if (this.check('STRING') && this.peek(1).type === 'STRING') {
+      const spkTok = this.advance();
+      speaker = spkTok.value;
+      startLoc = spkTok.loc;
     }
 
     const textTok = this.consume('STRING', 'Expected dialogue string');
@@ -283,6 +287,10 @@ export class Parser {
       if (this.check('DEDENT') || this.isAtEnd()) break;
 
       const choiceTextTok = this.consume('STRING', 'Expected choice option string (e.g. "Say hello":)');
+      let condition: string | undefined;
+      if (this.match('IF')) {
+        condition = this.readUntilColon().trim();
+      }
       this.consume('COLON', 'Expected ":" after choice string');
       this.consumeOptionalNewline();
 
@@ -290,6 +298,7 @@ export class Parser {
       choices.push({
         type: 'ChoiceItem',
         text: choiceTextTok.value,
+        condition,
         body: choiceBody,
         loc: createLocation(this.file, choiceTextTok.loc.start, this.previousLocation().end)
       });
@@ -347,14 +356,17 @@ export class Parser {
     }
 
     let value: unknown;
+    let isVariable = false;
     if (this.check('STRING')) {
       value = this.advance().value;
+      isVariable = false;
     } else if (this.check('NUMBER')) {
       value = Number(this.advance().value);
     } else if (this.check('BOOLEAN')) {
       value = this.advance().value === 'true';
     } else if (this.check('IDENTIFIER')) {
       value = this.advance().value;
+      isVariable = true;
     } else {
       throw new KawaError({
         code: 'E0103',
@@ -370,6 +382,7 @@ export class Parser {
       variable: varTok.value,
       operator,
       value,
+      isVariable,
       loc: createLocation(this.file, startTok.loc.start, this.previousLocation().end)
     };
   }
@@ -432,7 +445,15 @@ export class Parser {
       });
     }
 
-    const trackTok = this.consume('IDENTIFIER', 'Expected audio track name');
+    if (!this.check('IDENTIFIER') && !this.check('STRING')) {
+      throw new KawaError({
+        code: 'E0104',
+        message: 'Expected audio track name (identifier or string literal) after audio channel',
+        severity: 'error',
+        loc: this.currentLocation()
+      });
+    }
+    const trackTok = this.advance();
     let fade: number | undefined;
     let loop: boolean | undefined = channelTok.type === 'MUSIC';
 
@@ -503,7 +524,12 @@ export class Parser {
   private readUntilColon(): string {
     const parts: string[] = [];
     while (!this.check('COLON') && !this.check('NEWLINE') && !this.isAtEnd()) {
-      parts.push(this.advance().value);
+      const tok = this.advance();
+      if (tok.type === 'STRING') {
+        parts.push(JSON.stringify(tok.value));
+      } else {
+        parts.push(tok.value);
+      }
     }
     return parts.join(' ');
   }

@@ -10,7 +10,18 @@ export interface MainMenuComponentCallbacks {
   onStartNewGame: () => void;
   onContinueGame: () => Promise<boolean>;
   assetResolver: (path: string, type: AssetType) => string;
-  getSettingsConfig: () => { typewriterSpeed: number; autoDelayMs: number; onSettingsChange: (s: { typewriterSpeed: number; autoDelayMs: number }) => void };
+  getSettingsConfig: () => {
+    typewriterSpeed: number;
+    autoDelayMs: number;
+    musicVolume?: number;
+    soundVolume?: number;
+    onSettingsChange: (s: {
+      typewriterSpeed: number;
+      autoDelayMs: number;
+      musicVolume?: number;
+      soundVolume?: number;
+    }) => void;
+  };
 }
 
 export class MainMenuComponent {
