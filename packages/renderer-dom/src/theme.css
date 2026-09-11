@@ -1,30 +1,36 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400;1,600&display=swap');
+
 :root {
-  --kawa-font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-  --kawa-bg-color: #0b0f19;
-  --kawa-text-color: #f3f4f6;
+  --kawa-font-heading: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --kawa-font-body: 'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --kawa-font-family: var(--kawa-font-body);
+  --kawa-bg-color: #080c16;
+  --kawa-text-color: #f8fafc;
   --kawa-primary-accent: #f43f5e;
-  --kawa-dialogue-bg: rgba(15, 23, 42, 0.85);
-  --kawa-dialogue-border: rgba(244, 63, 94, 0.3);
-  --kawa-dialogue-radius: 12px;
-  --kawa-dialogue-padding: 24px 32px;
-  --kawa-speaker-bg: #f43f5e;
+  --kawa-primary-glow: rgba(244, 63, 94, 0.45);
+  --kawa-secondary-accent: #38bdf8;
+  --kawa-dialogue-bg: linear-gradient(180deg, rgba(17, 24, 39, 0.88) 0%, rgba(10, 15, 29, 0.95) 100%);
+  --kawa-dialogue-border: rgba(244, 63, 94, 0.35);
+  --kawa-dialogue-radius: 16px;
+  --kawa-dialogue-padding: clamp(16px, 2.5vh, 26px) clamp(20px, 3vw, 36px);
+  --kawa-speaker-bg: linear-gradient(135deg, #f43f5e 0%, #e11d48 100%);
   --kawa-speaker-color: #ffffff;
-  --kawa-speaker-radius: 6px;
-  --kawa-choice-bg: rgba(30, 41, 59, 0.9);
-  --kawa-choice-hover-bg: rgba(244, 63, 94, 0.85);
+  --kawa-speaker-radius: 8px;
+  --kawa-choice-bg: linear-gradient(135deg, rgba(30, 41, 59, 0.88) 0%, rgba(15, 23, 42, 0.94) 100%);
+  --kawa-choice-hover-bg: linear-gradient(135deg, #f43f5e 0%, #e11d48 100%);
   --kawa-choice-color: #ffffff;
-  --kawa-choice-border: 1px solid rgba(255, 255, 255, 0.15);
-  --kawa-choice-radius: 8px;
-  --kawa-choice-padding: 14px 28px;
+  --kawa-choice-border: 1px solid rgba(255, 255, 255, 0.14);
+  --kawa-choice-radius: 12px;
+  --kawa-choice-padding: clamp(12px, 1.8vh, 16px) clamp(20px, 3vw, 32px);
   --kawa-menu-btn-bg: rgba(15, 23, 42, 0.6);
-  --kawa-menu-btn-hover-bg: rgba(244, 63, 94, 0.8);
+  --kawa-menu-btn-hover-bg: rgba(244, 63, 94, 0.85);
   --kawa-stage-aspect-ratio: 16 / 9;
   --kawa-main-menu-bg: radial-gradient(circle at 50% 50%, rgba(15, 23, 42, 0.95) 0%, rgba(2, 6, 23, 0.98) 100%);
-  --kawa-main-menu-title-color: #f3f4f6;
-  --kawa-main-menu-btn-bg: rgba(30, 41, 59, 0.75);
-  --kawa-main-menu-btn-hover-bg: var(--kawa-primary-accent);
+  --kawa-main-menu-title-color: #f8fafc;
+  --kawa-main-menu-btn-bg: linear-gradient(135deg, rgba(30, 41, 59, 0.75) 0%, rgba(15, 23, 42, 0.88) 100%);
+  --kawa-main-menu-btn-hover-bg: linear-gradient(135deg, #f43f5e 0%, #e11d48 100%);
   --kawa-main-menu-btn-color: #ffffff;
-  --kawa-main-menu-btn-radius: 10px;
+  --kawa-main-menu-btn-radius: 12px;
   --kawa-main-menu-btn-padding: clamp(8px, 1.4vh, 12px) 20px;
 }
 
@@ -36,6 +42,8 @@ html, body {
   height: 100%;
   background: #030712;
   overflow: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 .kawa-root {
@@ -65,7 +73,8 @@ html, body {
   aspect-ratio: var(--kawa-stage-aspect-ratio);
   background: radial-gradient(ellipse at center, #1e293b 0%, #0f172a 100%);
   overflow: hidden;
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 25px 60px -10px rgba(0, 0, 0, 0.85), 0 0 50px rgba(244, 63, 94, 0.12);
 }
 
 /* Screen Shake Effect */
@@ -114,7 +123,7 @@ html, body {
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
-  transition: opacity 0.4s ease-in-out;
+  transition: opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1);
   opacity: 0;
 }
 
@@ -132,11 +141,16 @@ html, body {
   align-items: flex-end;
 }
 
+@keyframes kawa-sprite-breathe {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-3px); }
+}
+
 .kawa-sprite {
   position: absolute;
   bottom: 0;
   height: 85%;
-  transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.35s ease;
+  transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.35s ease;
   display: flex;
   align-items: flex-end;
   justify-content: center;
@@ -146,7 +160,8 @@ html, body {
   max-height: 100%;
   width: auto;
   object-fit: contain;
-  filter: drop-shadow(0 10px 15px rgba(0, 0, 0, 0.5));
+  filter: drop-shadow(0 14px 28px rgba(0, 0, 0, 0.7));
+  animation: kawa-sprite-breathe 4s ease-in-out infinite;
 }
 
 .kawa-sprite.kawa-pos-left {
@@ -172,7 +187,7 @@ html, body {
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
-  padding: 32px 48px;
+  padding: clamp(20px, 3.5vh, 36px) clamp(24px, 4vw, 54px);
   pointer-events: none;
 }
 
@@ -182,53 +197,69 @@ html, body {
   width: 100%;
   min-height: 140px;
   background: var(--kawa-dialogue-bg);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
   border: 1px solid var(--kawa-dialogue-border);
   border-radius: var(--kawa-dialogue-radius);
   padding: var(--kawa-dialogue-padding);
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 20px 50px -10px rgba(0, 0, 0, 0.8), 0 0 25px rgba(244, 63, 94, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.15);
   pointer-events: auto;
   cursor: pointer;
-  transition: transform 0.15s ease;
+  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s ease;
 }
 
 .kawa-dialogue-box:hover {
   transform: translateY(-2px);
+  box-shadow: 0 24px 60px -10px rgba(0, 0, 0, 0.85), 0 0 35px rgba(244, 63, 94, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.25);
 }
 
 .kawa-speaker-tag {
-  display: inline-block;
-  font-weight: 700;
-  font-size: 1.1rem;
-  letter-spacing: 0.03em;
+  display: inline-flex;
+  align-items: center;
+  font-family: var(--kawa-font-heading);
+  font-weight: 800;
+  font-size: 1.05rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
   color: var(--kawa-speaker-color);
-  background-color: var(--kawa-speaker-bg);
-  padding: 4px 14px;
+  background: var(--kawa-speaker-bg);
+  padding: 5px 16px;
   border-radius: var(--kawa-speaker-radius);
-  margin-bottom: 10px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  margin-bottom: 12px;
+  box-shadow: 0 4px 14px rgba(244, 63, 94, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 .kawa-dialogue-text {
-  font-size: 1.15rem;
-  line-height: 1.65;
+  font-family: var(--kawa-font-body);
+  font-size: clamp(1.05rem, 1.8vh, 1.25rem);
+  line-height: 1.75;
+  letter-spacing: 0.01em;
   color: var(--kawa-text-color);
   word-break: break-word;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.7);
 }
 
 .kawa-continue-indicator {
   position: absolute;
   right: 24px;
   bottom: 16px;
-  font-size: 1rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: rgba(244, 63, 94, 0.2);
+  border: 1px solid rgba(244, 63, 94, 0.5);
   color: var(--kawa-primary-accent);
-  animation: kawa-bounce 1.2s infinite ease-in-out;
+  animation: kawa-indicator-pulse 1.4s infinite ease-in-out;
+  box-shadow: 0 0 12px rgba(244, 63, 94, 0.35);
 }
 
-@keyframes kawa-bounce {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(4px); }
+@keyframes kawa-indicator-pulse {
+  0%, 100% { transform: translateY(0) scale(1); box-shadow: 0 0 8px rgba(244, 63, 94, 0.3); }
+  50% { transform: translateY(4px) scale(1.08); box-shadow: 0 0 16px rgba(244, 63, 94, 0.6); }
 }
 
 /* Choice Buttons Container */
@@ -240,31 +271,60 @@ html, body {
   display: flex;
   flex-direction: column;
   gap: 14px;
-  width: 80%;
-  max-width: 500px;
+  width: 85%;
+  max-width: 520px;
   pointer-events: auto;
   z-index: 20;
+  animation: kawa-choice-appear 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes kawa-choice-appear {
+  from { opacity: 0; transform: translate(-50%, -46%) scale(0.96); }
+  to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
 }
 
 .kawa-choice-btn {
+  position: relative;
+  overflow: hidden;
   background: var(--kawa-choice-bg);
-  backdrop-filter: blur(8px);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
   color: var(--kawa-choice-color);
   border: var(--kawa-choice-border);
+  border-left: 4px solid var(--kawa-primary-accent);
   border-radius: var(--kawa-choice-radius);
   padding: var(--kawa-choice-padding);
-  font-size: 1.05rem;
+  font-family: var(--kawa-font-heading);
+  font-size: 1.08rem;
   font-weight: 600;
+  letter-spacing: 0.02em;
   cursor: pointer;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
   text-align: center;
+}
+
+.kawa-choice-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.18), transparent);
+  transition: left 0.5s ease;
+}
+
+.kawa-choice-btn:hover::before {
+  left: 100%;
 }
 
 .kawa-choice-btn:hover {
   background: var(--kawa-choice-hover-bg);
-  transform: translateY(-2px) scale(1.02);
-  box-shadow: 0 8px 20px rgba(244, 63, 94, 0.4);
+  border-color: rgba(255, 255, 255, 0.35);
+  border-left-color: #ffffff;
+  transform: translateY(-3px) scale(1.02);
+  box-shadow: 0 12px 30px rgba(244, 63, 94, 0.5), 0 0 20px rgba(244, 63, 94, 0.3);
 }
 
 .kawa-choice-btn:active {
@@ -273,24 +333,34 @@ html, body {
 
 /* Quick Menu Bar */
 .kawa-quick-menu {
-  display: flex;
-  gap: 8px;
+  display: inline-flex;
+  gap: 6px;
   justify-content: flex-end;
-  margin-top: 10px;
+  margin-top: 12px;
   pointer-events: auto;
   align-items: center;
+  background: rgba(10, 15, 29, 0.72);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  padding: 4px 8px;
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+  align-self: flex-end;
 }
 
 .kawa-btn {
-  background: var(--kawa-menu-btn-bg);
+  background: transparent;
   color: #cbd5e1;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 6px;
+  border: none;
+  border-radius: 12px;
   padding: 6px 12px;
-  font-size: 0.85rem;
-  font-weight: 500;
+  font-family: var(--kawa-font-heading);
+  font-size: 0.82rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -304,16 +374,15 @@ html, body {
 }
 
 .kawa-btn:hover {
-  background: var(--kawa-menu-btn-hover-bg);
+  background: rgba(244, 63, 94, 0.2);
   color: #ffffff;
-  border-color: rgba(244, 63, 94, 0.4);
+  transform: translateY(-1px);
 }
 
 .kawa-btn.active {
   background: var(--kawa-primary-accent);
   color: #ffffff;
-  border-color: var(--kawa-primary-accent);
-  box-shadow: 0 0 10px rgba(244, 63, 94, 0.5);
+  box-shadow: 0 0 12px rgba(244, 63, 94, 0.55);
 }
 
 .kawa-btn:disabled {
@@ -460,8 +529,9 @@ html, body {
 .kawa-modal-overlay {
   position: absolute;
   inset: 0;
-  background: rgba(0, 0, 0, 0.82);
-  backdrop-filter: blur(8px);
+  background: rgba(0, 0, 0, 0.84);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   z-index: 100;
   display: flex;
   align-items: center;
@@ -471,21 +541,29 @@ html, body {
 }
 
 @keyframes kawa-modal-fade {
-  from { opacity: 0; transform: scale(0.98); }
-  to { opacity: 1; transform: scale(1); }
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes kawa-modal-pop {
+  0% { opacity: 0; transform: scale(0.94) translateY(12px); }
+  100% { opacity: 1; transform: scale(1) translateY(0); }
 }
 
 .kawa-modal-card {
-  background: #1e293b;
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  border-radius: 14px;
+  background: linear-gradient(180deg, rgba(20, 28, 48, 0.95) 0%, rgba(10, 15, 29, 0.98) 100%);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 18px;
   width: 90%;
-  max-width: 750px;
+  max-width: 760px;
   max-height: 85%;
   display: flex;
   flex-direction: column;
-  padding: 24px 28px;
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8);
+  padding: 26px 32px;
+  box-shadow: 0 30px 70px -15px rgba(0, 0, 0, 0.85), 0 0 40px rgba(244, 63, 94, 0.14), inset 0 1px 0 rgba(255, 255, 255, 0.18);
+  animation: kawa-modal-pop 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .kawa-modal-header {
@@ -494,16 +572,18 @@ html, body {
   align-items: center;
   margin-bottom: 20px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-  padding-bottom: 12px;
+  padding-bottom: 14px;
 }
 
 .kawa-modal-title {
-  font-size: 1.35rem;
-  font-weight: 700;
+  font-family: var(--kawa-font-heading);
+  font-size: 1.4rem;
+  font-weight: 800;
+  letter-spacing: -0.01em;
   color: #ffffff;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
 }
 
 .kawa-modal-body {
@@ -511,34 +591,47 @@ html, body {
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 14px;
   padding-right: 6px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(244, 63, 94, 0.4) transparent;
+}
+
+.kawa-modal-body::-webkit-scrollbar {
+  width: 4px;
+}
+.kawa-modal-body::-webkit-scrollbar-thumb {
+  background: rgba(244, 63, 94, 0.4);
+  border-radius: 4px;
 }
 
 /* Slots Grid for Save/Load UI */
 .kawa-slots-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
   gap: 16px;
   padding: 4px 0;
 }
 
 .kawa-slot-card {
-  background: rgba(15, 23, 42, 0.7);
+  position: relative;
+  background: linear-gradient(135deg, rgba(15, 23, 42, 0.75) 0%, rgba(30, 41, 59, 0.55) 100%);
   border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 10px;
+  border-radius: 12px;
   padding: 16px;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  min-height: 130px;
-  transition: all 0.2s ease;
+  min-height: 140px;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
 }
 
 .kawa-slot-card:hover {
-  border-color: var(--kawa-primary-accent);
-  background: rgba(15, 23, 42, 0.9);
-  transform: translateY(-2px);
+  border-color: rgba(244, 63, 94, 0.6);
+  background: linear-gradient(135deg, rgba(20, 28, 48, 0.9) 0%, rgba(35, 48, 72, 0.75) 100%);
+  transform: translateY(-3px);
+  box-shadow: 0 10px 25px rgba(244, 63, 94, 0.25);
 }
 
 .kawa-slot-header {
@@ -549,23 +642,26 @@ html, body {
 }
 
 .kawa-slot-badge {
-  font-size: 0.8rem;
-  font-weight: 700;
-  background: var(--kawa-primary-accent);
-  color: #fff;
-  padding: 2px 8px;
-  border-radius: 4px;
+  font-family: var(--kawa-font-heading);
+  font-size: 0.82rem;
+  font-weight: 800;
+  background: linear-gradient(135deg, #f43f5e 0%, #e11d48 100%);
+  color: #ffffff;
+  padding: 3px 10px;
+  border-radius: 6px;
+  box-shadow: 0 2px 8px rgba(244, 63, 94, 0.4);
 }
 
 .kawa-slot-time {
   font-size: 0.75rem;
   color: #94a3b8;
+  font-weight: 500;
 }
 
 .kawa-slot-preview {
   font-size: 0.85rem;
   color: #cbd5e1;
-  line-height: 1.4;
+  line-height: 1.45;
   margin-bottom: 12px;
   word-break: break-word;
   max-height: 48px;
@@ -586,13 +682,14 @@ html, body {
 
 .kawa-slot-btn {
   flex: 1;
-  padding: 6px 10px;
-  border-radius: 4px;
+  padding: 7px 10px;
+  border-radius: 6px;
   border: none;
-  font-size: 0.8rem;
-  font-weight: 600;
+  font-family: var(--kawa-font-heading);
+  font-size: 0.82rem;
+  font-weight: 700;
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -600,36 +697,53 @@ html, body {
 }
 
 .kawa-slot-btn-save {
-  background: #3b82f6;
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
   color: #ffffff;
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.35);
 }
-.kawa-slot-btn-save:hover { background: #2563eb; }
+.kawa-slot-btn-save:hover {
+  background: #1d4ed8;
+  transform: translateY(-1px);
+}
 
 .kawa-slot-btn-load {
-  background: var(--kawa-primary-accent);
+  background: linear-gradient(135deg, #f43f5e 0%, #e11d48 100%);
   color: #ffffff;
+  box-shadow: 0 2px 8px rgba(244, 63, 94, 0.35);
 }
-.kawa-slot-btn-load:hover { background: #e11d48; }
+.kawa-slot-btn-load:hover {
+  background: #be123c;
+  transform: translateY(-1px);
+}
 
 .kawa-slot-btn-del {
-  background: rgba(239, 68, 68, 0.2);
+  background: rgba(239, 68, 68, 0.15);
   color: #f87171;
-  border: 1px solid rgba(239, 68, 68, 0.3);
+  border: 1px solid rgba(239, 68, 68, 0.25);
   padding: 6px 8px;
   flex: 0 0 auto;
 }
-.kawa-slot-btn-del:hover { background: rgba(239, 68, 68, 0.4); }
+.kawa-slot-btn-del:hover {
+  background: rgba(239, 68, 68, 0.3);
+  color: #ffffff;
+}
 
 .kawa-history-item {
-  padding: 10px 14px;
-  border-radius: 8px;
+  padding: 12px 16px;
+  border-radius: 10px;
   background: rgba(15, 23, 42, 0.65);
   font-size: 0.95rem;
+  line-height: 1.6;
   border-left: 3px solid var(--kawa-primary-accent);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }
 
 .kawa-history-speaker {
-  font-weight: 700;
+  font-family: var(--kawa-font-heading);
+  font-weight: 800;
+  font-size: 0.9rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
   color: var(--kawa-primary-accent);
   margin-bottom: 4px;
 }
@@ -640,31 +754,38 @@ html, body {
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  background: rgba(15, 23, 42, 0.9);
-  backdrop-filter: blur(16px);
-  border: 1px solid rgba(244, 63, 94, 0.4);
-  border-radius: 16px;
-  padding: 32px 48px;
+  background: linear-gradient(180deg, rgba(20, 28, 48, 0.95) 0%, rgba(10, 15, 29, 0.98) 100%);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(244, 63, 94, 0.45);
+  border-radius: 20px;
+  padding: 36px 54px;
   display: flex;
   flex-direction: column;
   align-items: center;
   text-align: center;
-  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.7), 0 0 30px rgba(244, 63, 94, 0.2);
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.85), 0 0 45px rgba(244, 63, 94, 0.25);
   z-index: 50;
-  animation: kawa-fade-in 0.6s ease-out;
+  animation: kawa-modal-pop 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .kawa-ending-title {
-  font-size: 2rem;
-  font-weight: 800;
-  color: var(--kawa-primary-accent);
-  margin-bottom: 8px;
+  font-family: var(--kawa-font-heading);
+  font-size: 2.3rem;
+  font-weight: 900;
+  letter-spacing: -0.02em;
+  background: linear-gradient(135deg, #ffffff 0%, #fda4af 50%, var(--kawa-primary-accent) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  margin-bottom: 6px;
+  filter: drop-shadow(0 4px 14px rgba(244, 63, 94, 0.4));
 }
 
 .kawa-ending-subtitle {
-  font-size: 1.1rem;
+  font-size: 1.05rem;
   color: #cbd5e1;
-  margin-bottom: 16px;
+  margin-bottom: 20px;
+  font-weight: 500;
 }
 
 /* Accessible Focus States */
@@ -710,9 +831,33 @@ html, body {
 .kawa-main-menu-backdrop {
   position: absolute;
   inset: 0;
-  background: radial-gradient(ellipse at center, rgba(15, 23, 42, 0.45) 0%, rgba(2, 6, 23, 0.85) 100%);
+  background: radial-gradient(ellipse at center, rgba(15, 23, 42, 0.45) 0%, rgba(2, 6, 23, 0.88) 100%);
   backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   z-index: 1;
+  overflow: hidden;
+}
+
+/* Floating ambient light motes / sakura drift */
+.kawa-main-menu-backdrop::after {
+  content: '';
+  position: absolute;
+  inset: -60%;
+  background-image: 
+    radial-gradient(2px 2px at 20% 30%, rgba(253, 164, 175, 0.6), transparent),
+    radial-gradient(3px 3px at 40% 70%, rgba(244, 63, 94, 0.5), transparent),
+    radial-gradient(2px 2px at 60% 20%, rgba(255, 255, 255, 0.7), transparent),
+    radial-gradient(3px 3px at 80% 60%, rgba(251, 113, 133, 0.5), transparent),
+    radial-gradient(2px 2px at 90% 90%, rgba(244, 63, 94, 0.6), transparent);
+  background-size: 550px 550px;
+  animation: kawa-ambient-drift 28s linear infinite;
+  opacity: 0.7;
+  pointer-events: none;
+}
+
+@keyframes kawa-ambient-drift {
+  0% { transform: translateY(0) rotate(0deg); }
+  100% { transform: translateY(550px) rotate(15deg); }
 }
 
 .kawa-main-menu-content {
@@ -752,26 +897,27 @@ html, body {
   max-height: clamp(36px, 7vh, 60px);
   width: auto;
   object-fit: contain;
-  filter: drop-shadow(0 8px 16px rgba(0, 0, 0, 0.6));
+  filter: drop-shadow(0 8px 18px rgba(244, 63, 94, 0.5));
 }
 
 .kawa-main-menu-title {
   margin: 0;
-  font-size: clamp(1.8rem, 4.5vh, 2.6rem);
-  font-weight: 800;
+  font-family: var(--kawa-font-heading);
+  font-size: clamp(2rem, 5vh, 2.8rem);
+  font-weight: 900;
   letter-spacing: -0.03em;
   line-height: 1.15;
-  background: linear-gradient(135deg, #ffffff 0%, #fda4af 50%, var(--kawa-primary-accent) 100%);
+  background: linear-gradient(135deg, #ffffff 0%, #fecdd3 35%, var(--kawa-primary-accent) 75%, #fda4af 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
-  filter: drop-shadow(0 4px 12px rgba(244, 63, 94, 0.35));
+  filter: drop-shadow(0 4px 14px rgba(244, 63, 94, 0.4));
 }
 
 .kawa-main-menu-subtitle {
   font-size: clamp(0.8rem, 1.6vh, 0.95rem);
-  font-weight: 500;
+  font-weight: 600;
   color: #94a3b8;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
 }
 
@@ -780,34 +926,36 @@ html, body {
   flex-direction: column;
   gap: clamp(6px, 1.2vh, 10px);
   width: 100%;
-  max-width: 300px;
-  margin: clamp(10px, 1.8vh, 16px) 0;
+  max-width: 310px;
+  margin: clamp(10px, 1.8vh, 18px) 0;
 }
 
 .kawa-main-menu-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: 10px;
   background: var(--kawa-main-menu-btn-bg);
-  backdrop-filter: blur(12px);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
   color: var(--kawa-main-menu-btn-color);
-  font-family: inherit;
-  font-size: clamp(0.9rem, 1.6vh, 1.05rem);
-  font-weight: 600;
+  font-family: var(--kawa-font-heading);
+  font-size: clamp(0.92rem, 1.7vh, 1.08rem);
+  font-weight: 700;
+  letter-spacing: 0.02em;
   padding: var(--kawa-main-menu-btn-padding);
   border-radius: var(--kawa-main-menu-btn-radius);
   border: 1px solid rgba(255, 255, 255, 0.12);
   cursor: pointer;
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4);
+  transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.1);
 }
 
 .kawa-main-menu-btn:hover:not(.disabled) {
   background: var(--kawa-main-menu-btn-hover-bg);
-  transform: translateY(-2px) scale(1.02);
-  border-color: rgba(255, 255, 255, 0.3);
-  box-shadow: 0 8px 24px rgba(244, 63, 94, 0.45);
+  transform: translateY(-2px) scale(1.03);
+  border-color: rgba(255, 255, 255, 0.35);
+  box-shadow: 0 10px 28px rgba(244, 63, 94, 0.55), 0 0 20px rgba(244, 63, 94, 0.3);
 }
 
 .kawa-main-menu-btn:active:not(.disabled) {
@@ -845,19 +993,21 @@ html, body {
 }
 
 .kawa-about-logo-badge {
-  font-size: 2.5rem;
+  font-size: 2.8rem;
   margin-bottom: 8px;
+  filter: drop-shadow(0 4px 12px rgba(244, 63, 94, 0.5));
 }
 
 .kawa-about-game-title {
-  font-size: 1.6rem;
+  font-family: var(--kawa-font-heading);
+  font-size: 1.7rem;
   font-weight: 800;
   margin: 0 0 4px 0;
   color: #ffffff;
 }
 
 .kawa-about-game-sub {
-  font-size: 1rem;
+  font-size: 0.95rem;
   color: #94a3b8;
   margin: 0 0 16px 0;
 }
@@ -868,6 +1018,7 @@ html, body {
   background: var(--kawa-primary-accent);
   border-radius: 2px;
   margin-bottom: 16px;
+  box-shadow: 0 0 10px rgba(244, 63, 94, 0.6);
 }
 
 .kawa-about-info {
@@ -880,7 +1031,9 @@ html, body {
 .kawa-about-footer-text {
   font-size: 0.85rem;
   color: #64748b;
+  font-weight: 500;
 }
+
 
 
 

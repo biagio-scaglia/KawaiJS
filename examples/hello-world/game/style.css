@@ -1,31 +1,30 @@
 /* Hello World Custom Kawaijs Theme */
 :root {
-  --kawa-font-family: 'Inter', system-ui, -apple-system, sans-serif;
   --kawa-primary-accent: #f43f5e;
-  --kawa-dialogue-bg: rgba(15, 23, 42, 0.88);
-  --kawa-dialogue-border: rgba(244, 63, 94, 0.45);
+  --kawa-primary-glow: rgba(244, 63, 94, 0.45);
   --kawa-dialogue-radius: 18px;
-  --kawa-choice-bg: rgba(30, 41, 59, 0.95);
-  --kawa-choice-hover-bg: #f43f5e;
   --kawa-choice-radius: 12px;
 }
 
 /* Custom Dialogue Box Glassmorphism */
+.kawa-dialogue-box,
 .kawa-dialogue {
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
-  border: 1px solid var(--kawa-dialogue-border);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  box-shadow: 0 24px 60px -10px rgba(0, 0, 0, 0.8), 0 0 30px rgba(244, 63, 94, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(244, 63, 94, 0.4);
 }
 
 /* Custom Choice Buttons */
+.kawa-choice-btn,
 .kawa-choice {
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-  font-weight: 700;
+  transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
   letter-spacing: 0.02em;
 }
 
+.kawa-choice-btn:hover,
 .kawa-choice:hover {
-  transform: translateY(-3px) scale(1.03);
-  box-shadow: 0 10px 25px rgba(244, 63, 94, 0.4);
+  transform: translateY(-3px) scale(1.025);
+  box-shadow: 0 12px 30px rgba(244, 63, 94, 0.5), 0 0 20px rgba(244, 63, 94, 0.3);
 }
+

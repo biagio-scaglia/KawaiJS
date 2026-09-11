@@ -21,93 +21,125 @@ export function getBaseThemeCss(): string {
 
   // Built-in fallback base CSS
   return `
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400;1,600&display=swap');
 :root {
-  --kawa-font-family: 'Inter', system-ui, -apple-system, sans-serif;
-  --kawa-bg-color: #0b0f19;
-  --kawa-text-color: #f3f4f6;
+  --kawa-font-heading: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --kawa-font-body: 'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --kawa-font-family: var(--kawa-font-body);
+  --kawa-bg-color: #080c16;
+  --kawa-text-color: #f8fafc;
   --kawa-primary-accent: #f43f5e;
-  --kawa-dialogue-bg: rgba(15, 23, 42, 0.85);
-  --kawa-dialogue-border: rgba(244, 63, 94, 0.3);
-  --kawa-dialogue-radius: 12px;
-  --kawa-dialogue-padding: 24px 32px;
-  --kawa-speaker-bg: #f43f5e;
+  --kawa-primary-glow: rgba(244, 63, 94, 0.45);
+  --kawa-secondary-accent: #38bdf8;
+  --kawa-dialogue-bg: linear-gradient(180deg, rgba(17, 24, 39, 0.88) 0%, rgba(10, 15, 29, 0.95) 100%);
+  --kawa-dialogue-border: rgba(244, 63, 94, 0.35);
+  --kawa-dialogue-radius: 16px;
+  --kawa-dialogue-padding: clamp(16px, 2.5vh, 26px) clamp(20px, 3vw, 36px);
+  --kawa-speaker-bg: linear-gradient(135deg, #f43f5e 0%, #e11d48 100%);
   --kawa-speaker-color: #ffffff;
-  --kawa-speaker-radius: 6px;
-  --kawa-choice-bg: rgba(30, 41, 59, 0.9);
-  --kawa-choice-hover-bg: rgba(244, 63, 94, 0.85);
+  --kawa-speaker-radius: 8px;
+  --kawa-choice-bg: linear-gradient(135deg, rgba(30, 41, 59, 0.88) 0%, rgba(15, 23, 42, 0.94) 100%);
+  --kawa-choice-hover-bg: linear-gradient(135deg, #f43f5e 0%, #e11d48 100%);
   --kawa-choice-color: #ffffff;
-  --kawa-choice-border: 1px solid rgba(255, 255, 255, 0.15);
-  --kawa-choice-radius: 8px;
-  --kawa-choice-padding: 14px 28px;
+  --kawa-choice-border: 1px solid rgba(255, 255, 255, 0.14);
+  --kawa-choice-radius: 12px;
+  --kawa-choice-padding: clamp(12px, 1.8vh, 16px) clamp(20px, 3vw, 32px);
   --kawa-menu-btn-bg: rgba(15, 23, 42, 0.6);
-  --kawa-menu-btn-hover-bg: rgba(244, 63, 94, 0.8);
+  --kawa-menu-btn-hover-bg: rgba(244, 63, 94, 0.85);
   --kawa-stage-aspect-ratio: 16 / 9;
+  --kawa-main-menu-bg: radial-gradient(circle at 50% 50%, rgba(15, 23, 42, 0.95) 0%, rgba(2, 6, 23, 0.98) 100%);
+  --kawa-main-menu-title-color: #f8fafc;
+  --kawa-main-menu-btn-bg: linear-gradient(135deg, rgba(30, 41, 59, 0.75) 0%, rgba(15, 23, 42, 0.88) 100%);
+  --kawa-main-menu-btn-hover-bg: linear-gradient(135deg, #f43f5e 0%, #e11d48 100%);
+  --kawa-main-menu-btn-color: #ffffff;
+  --kawa-main-menu-btn-radius: 12px;
+  --kawa-main-menu-btn-padding: clamp(8px, 1.4vh, 12px) 20px;
 }
-html, body { margin: 0; padding: 0; width: 100%; height: 100%; background: #030712; overflow: hidden; }
+html, body { margin: 0; padding: 0; width: 100%; height: 100%; background: #030712; overflow: hidden; -webkit-font-smoothing: antialiased; }
 .kawa-root { position: relative; width: 100vw; height: 100vh; background: radial-gradient(circle at 50% 50%, #0f172a 0%, #020617 100%); color: var(--kawa-text-color); font-family: var(--kawa-font-family); display: flex; align-items: center; justify-content: center; overflow: hidden; user-select: none; box-sizing: border-box; }
 .kawa-root * { box-sizing: border-box; }
-.kawa-stage { position: relative; width: 100%; max-width: calc(100vh * (16 / 9)); aspect-ratio: var(--kawa-stage-aspect-ratio); background: radial-gradient(ellipse at center, #1e293b 0%, #0f172a 100%); overflow: hidden; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8); }
+.kawa-stage { position: relative; width: 100%; max-width: calc(100vh * (16 / 9)); aspect-ratio: var(--kawa-stage-aspect-ratio); background: radial-gradient(ellipse at center, #1e293b 0%, #0f172a 100%); overflow: hidden; border: 1px solid rgba(255, 255, 255, 0.08); box-shadow: 0 25px 60px -10px rgba(0, 0, 0, 0.85), 0 0 50px rgba(244, 63, 94, 0.12); }
 .kawa-background { position: absolute; inset: 0; z-index: 1; background: radial-gradient(ellipse at center, #1e293b 0%, #0f172a 100%); overflow: hidden; }
-.kawa-bg-layer { position: absolute; inset: 0; background-size: cover; background-position: center; background-repeat: no-repeat; transition: opacity 0.4s ease-in-out; opacity: 0; }
+.kawa-bg-layer { position: absolute; inset: 0; background-size: cover; background-position: center; background-repeat: no-repeat; transition: opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1); opacity: 0; }
 .kawa-bg-layer.active { opacity: 1; }
 .kawa-characters { position: absolute; inset: 0; pointer-events: none; z-index: 2; display: flex; align-items: flex-end; }
-.kawa-sprite { position: absolute; bottom: 0; height: 85%; transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.35s ease; display: flex; align-items: flex-end; justify-content: center; }
-.kawa-sprite img { max-height: 100%; width: auto; object-fit: contain; filter: drop-shadow(0 10px 15px rgba(0, 0, 0, 0.5)); }
+@keyframes kawa-sprite-breathe { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }
+.kawa-sprite { position: absolute; bottom: 0; height: 85%; transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.35s ease; display: flex; align-items: flex-end; justify-content: center; }
+.kawa-sprite img { max-height: 100%; width: auto; object-fit: contain; filter: drop-shadow(0 14px 28px rgba(0, 0, 0, 0.7)); animation: kawa-sprite-breathe 4s ease-in-out infinite; }
 .kawa-sprite.kawa-pos-left { left: 15%; transform: translateX(-50%); }
 .kawa-sprite.kawa-pos-center { left: 50%; transform: translateX(-50%); }
 .kawa-sprite.kawa-pos-right { left: 85%; transform: translateX(-50%); }
-.kawa-ui-layer { position: absolute; inset: 0; z-index: 10; display: flex; flex-direction: column; justify-content: flex-end; padding: 32px 48px; pointer-events: none; }
-.kawa-dialogue-box { position: relative; width: 100%; min-height: 140px; background: var(--kawa-dialogue-bg); backdrop-filter: blur(12px); border: 1px solid var(--kawa-dialogue-border); border-radius: var(--kawa-dialogue-radius); padding: var(--kawa-dialogue-padding); box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4); pointer-events: auto; cursor: pointer; }
-.kawa-speaker-tag { display: inline-block; font-weight: 700; font-size: 1.1rem; color: var(--kawa-speaker-color); background-color: var(--kawa-speaker-bg); padding: 4px 14px; border-radius: var(--kawa-speaker-radius); margin-bottom: 10px; }
-.kawa-dialogue-text { font-size: 1.15rem; line-height: 1.65; color: var(--kawa-text-color); word-break: break-word; }
-.kawa-continue-indicator { position: absolute; right: 24px; bottom: 16px; font-size: 1rem; color: var(--kawa-primary-accent); animation: kawa-bounce 1.2s infinite ease-in-out; }
-@keyframes kawa-bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(4px); } }
-.kawa-choice-container { position: absolute; top: 45%; left: 50%; transform: translate(-50%, -50%); display: flex; flex-direction: column; gap: 14px; width: 80%; max-width: 500px; pointer-events: auto; z-index: 20; }
-.kawa-choice-btn { background: var(--kawa-choice-bg); backdrop-filter: blur(8px); color: var(--kawa-choice-color); border: var(--kawa-choice-border); border-radius: var(--kawa-choice-radius); padding: var(--kawa-choice-padding); font-size: 1.05rem; font-weight: 600; cursor: pointer; text-align: center; }
-.kawa-choice-btn:hover { background: var(--kawa-choice-hover-bg); transform: translateY(-2px) scale(1.02); }
-.kawa-quick-menu { display: flex; gap: 10px; justify-content: flex-end; margin-top: 10px; pointer-events: auto; }
-.kawa-btn { background: var(--kawa-menu-btn-bg); color: #cbd5e1; border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 4px; padding: 4px 12px; font-size: 0.85rem; font-weight: 500; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
-.kawa-btn:hover { background: var(--kawa-menu-btn-hover-bg); color: #ffffff; }
-.kawa-btn.active { background: var(--kawa-primary-accent); color: #ffffff; }
+.kawa-ui-layer { position: absolute; inset: 0; z-index: 10; display: flex; flex-direction: column; justify-content: flex-end; padding: clamp(20px, 3.5vh, 36px) clamp(24px, 4vw, 54px); pointer-events: none; }
+.kawa-dialogue-box { position: relative; width: 100%; min-height: 140px; background: var(--kawa-dialogue-bg); backdrop-filter: blur(20px) saturate(180%); -webkit-backdrop-filter: blur(20px) saturate(180%); border: 1px solid var(--kawa-dialogue-border); border-radius: var(--kawa-dialogue-radius); padding: var(--kawa-dialogue-padding); box-shadow: 0 20px 50px -10px rgba(0, 0, 0, 0.8), 0 0 25px rgba(244, 63, 94, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.15); pointer-events: auto; cursor: pointer; transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s ease; }
+.kawa-dialogue-box:hover { transform: translateY(-2px); box-shadow: 0 24px 60px -10px rgba(0, 0, 0, 0.85), 0 0 35px rgba(244, 63, 94, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.25); }
+.kawa-speaker-tag { display: inline-flex; align-items: center; font-family: var(--kawa-font-heading); font-weight: 800; font-size: 1.05rem; letter-spacing: 0.05em; text-transform: uppercase; color: var(--kawa-speaker-color); background: var(--kawa-speaker-bg); padding: 5px 16px; border-radius: var(--kawa-speaker-radius); margin-bottom: 12px; box-shadow: 0 4px 14px rgba(244, 63, 94, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.25); border: 1px solid rgba(255, 255, 255, 0.2); }
+.kawa-dialogue-text { font-family: var(--kawa-font-body); font-size: clamp(1.05rem, 1.8vh, 1.25rem); line-height: 1.75; letter-spacing: 0.01em; color: var(--kawa-text-color); word-break: break-word; text-shadow: 0 1px 3px rgba(0, 0, 0, 0.7); }
+.kawa-continue-indicator { position: absolute; right: 24px; bottom: 16px; display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 50%; background: rgba(244, 63, 94, 0.2); border: 1px solid rgba(244, 63, 94, 0.5); color: var(--kawa-primary-accent); animation: kawa-indicator-pulse 1.4s infinite ease-in-out; box-shadow: 0 0 12px rgba(244, 63, 94, 0.35); }
+@keyframes kawa-indicator-pulse { 0%, 100% { transform: translateY(0) scale(1); box-shadow: 0 0 8px rgba(244, 63, 94, 0.3); } 50% { transform: translateY(4px) scale(1.08); box-shadow: 0 0 16px rgba(244, 63, 94, 0.6); } }
+.kawa-choice-container { position: absolute; top: 45%; left: 50%; transform: translate(-50%, -50%); display: flex; flex-direction: column; gap: 14px; width: 85%; max-width: 520px; pointer-events: auto; z-index: 20; animation: kawa-choice-appear 0.35s cubic-bezier(0.16, 1, 0.3, 1); }
+@keyframes kawa-choice-appear { from { opacity: 0; transform: translate(-50%, -46%) scale(0.96); } to { opacity: 1; transform: translate(-50%, -50%) scale(1); } }
+.kawa-choice-btn { position: relative; overflow: hidden; background: var(--kawa-choice-bg); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); color: var(--kawa-choice-color); border: var(--kawa-choice-border); border-left: 4px solid var(--kawa-primary-accent); border-radius: var(--kawa-choice-radius); padding: var(--kawa-choice-padding); font-family: var(--kawa-font-heading); font-size: 1.08rem; font-weight: 600; letter-spacing: 0.02em; cursor: pointer; transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1); box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45); text-align: center; }
+.kawa-choice-btn::before { content: ''; position: absolute; top: 0; left: -100%; width: 100%; height: 100%; background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.18), transparent); transition: left 0.5s ease; }
+.kawa-choice-btn:hover::before { left: 100%; }
+.kawa-choice-btn:hover { background: var(--kawa-choice-hover-bg); border-color: rgba(255, 255, 255, 0.35); border-left-color: #ffffff; transform: translateY(-3px) scale(1.02); box-shadow: 0 12px 30px rgba(244, 63, 94, 0.5), 0 0 20px rgba(244, 63, 94, 0.3); }
+.kawa-choice-btn:active { transform: translateY(0) scale(0.99); }
+.kawa-quick-menu { display: inline-flex; gap: 6px; justify-content: flex-end; margin-top: 12px; pointer-events: auto; align-items: center; background: rgba(10, 15, 29, 0.72); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); padding: 4px 8px; border-radius: 20px; border: 1px solid rgba(255, 255, 255, 0.08); box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4); align-self: flex-end; }
+.kawa-btn { background: transparent; color: #cbd5e1; border: none; border-radius: 12px; padding: 6px 12px; font-family: var(--kawa-font-heading); font-size: 0.82rem; font-weight: 600; letter-spacing: 0.02em; cursor: pointer; transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); display: inline-flex; align-items: center; gap: 6px; line-height: 1; }
+.kawa-btn:hover { background: rgba(244, 63, 94, 0.2); color: #ffffff; transform: translateY(-1px); }
+.kawa-btn.active { background: var(--kawa-primary-accent); color: #ffffff; box-shadow: 0 0 12px rgba(244, 63, 94, 0.55); }
+.kawa-btn:disabled { opacity: 0.4; cursor: not-allowed; }
 .kawa-mode-badge { position: absolute; top: 20px; right: 24px; z-index: 30; background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(6px); border: 1px solid var(--kawa-primary-accent); border-radius: 20px; padding: 6px 14px; font-size: 0.85rem; font-weight: 700; letter-spacing: 0.05em; color: var(--kawa-primary-accent); display: inline-flex; align-items: center; gap: 6px; }
-.kawa-modal-overlay { position: absolute; inset: 0; background: rgba(0, 0, 0, 0.82); backdrop-filter: blur(8px); z-index: 100; display: flex; align-items: center; justify-content: center; pointer-events: auto; }
-.kawa-modal-card { background: #1e293b; border: 1px solid rgba(255, 255, 255, 0.15); border-radius: 14px; width: 90%; max-width: 750px; max-height: 85%; display: flex; flex-direction: column; padding: 24px 28px; }
-.kawa-modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid rgba(255, 255, 255, 0.1); padding-bottom: 12px; }
-.kawa-modal-title { font-size: 1.35rem; font-weight: 700; color: #ffffff; display: flex; align-items: center; gap: 8px; }
-.kawa-modal-body { overflow-y: auto; flex: 1; display: flex; flex-direction: column; gap: 12px; }
-.kawa-slots-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 16px; }
-.kawa-slot-card { background: rgba(15, 23, 42, 0.7); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 10px; padding: 16px; display: flex; flex-direction: column; justify-content: space-between; min-height: 130px; }
-.kawa-ending-card { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(15, 23, 42, 0.9); backdrop-filter: blur(16px); border: 1px solid rgba(244, 63, 94, 0.4); border-radius: 16px; padding: 32px 48px; display: flex; flex-direction: column; align-items: center; text-align: center; z-index: 50; }
-.kawa-ending-title { font-size: 2rem; font-weight: 800; color: var(--kawa-primary-accent); margin-bottom: 8px; }
-.kawa-ending-subtitle { font-size: 1.1rem; color: #cbd5e1; margin-bottom: 16px; }
+.kawa-modal-overlay { position: absolute; inset: 0; background: rgba(0, 0, 0, 0.84); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); z-index: 100; display: flex; align-items: center; justify-content: center; pointer-events: auto; }
+@keyframes kawa-modal-pop { 0% { opacity: 0; transform: scale(0.94) translateY(12px); } 100% { opacity: 1; transform: scale(1) translateY(0); } }
+.kawa-modal-card { background: linear-gradient(180deg, rgba(20, 28, 48, 0.95) 0%, rgba(10, 15, 29, 0.98) 100%); backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px); border: 1px solid rgba(255, 255, 255, 0.14); border-radius: 18px; width: 90%; max-width: 760px; max-height: 85%; display: flex; flex-direction: column; padding: 26px 32px; box-shadow: 0 30px 70px -15px rgba(0, 0, 0, 0.85), 0 0 40px rgba(244, 63, 94, 0.14), inset 0 1px 0 rgba(255, 255, 255, 0.18); animation: kawa-modal-pop 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
+.kawa-modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid rgba(255, 255, 255, 0.1); padding-bottom: 14px; }
+.kawa-modal-title { font-family: var(--kawa-font-heading); font-size: 1.4rem; font-weight: 800; letter-spacing: -0.01em; color: #ffffff; display: flex; align-items: center; gap: 10px; }
+.kawa-modal-body { overflow-y: auto; flex: 1; display: flex; flex-direction: column; gap: 14px; }
+.kawa-slots-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 16px; }
+.kawa-slot-card { position: relative; background: linear-gradient(135deg, rgba(15, 23, 42, 0.75) 0%, rgba(30, 41, 59, 0.55) 100%); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 12px; padding: 16px; display: flex; flex-direction: column; justify-content: space-between; min-height: 140px; transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35); }
+.kawa-slot-card:hover { border-color: rgba(244, 63, 94, 0.6); background: linear-gradient(135deg, rgba(20, 28, 48, 0.9) 0%, rgba(35, 48, 72, 0.75) 100%); transform: translateY(-3px); box-shadow: 0 10px 25px rgba(244, 63, 94, 0.25); }
+.kawa-slot-badge { font-family: var(--kawa-font-heading); font-size: 0.82rem; font-weight: 800; background: linear-gradient(135deg, #f43f5e 0%, #e11d48 100%); color: #ffffff; padding: 3px 10px; border-radius: 6px; box-shadow: 0 2px 8px rgba(244, 63, 94, 0.4); }
+.kawa-slot-time { font-size: 0.75rem; color: #94a3b8; font-weight: 500; }
+.kawa-slot-preview { font-size: 0.85rem; color: #cbd5e1; line-height: 1.45; margin-bottom: 12px; word-break: break-word; max-height: 48px; overflow: hidden; }
+.kawa-slot-btn { flex: 1; padding: 7px 10px; border-radius: 6px; border: none; font-family: var(--kawa-font-heading); font-size: 0.82rem; font-weight: 700; cursor: pointer; transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); display: inline-flex; align-items: center; justify-content: center; gap: 4px; }
+.kawa-slot-btn-save { background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); color: #ffffff; }
+.kawa-slot-btn-load { background: linear-gradient(135deg, #f43f5e 0%, #e11d48 100%); color: #ffffff; }
+.kawa-slot-btn-del { background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.25); }
+.kawa-ending-card { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: linear-gradient(180deg, rgba(20, 28, 48, 0.95) 0%, rgba(10, 15, 29, 0.98) 100%); backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px); border: 1px solid rgba(244, 63, 94, 0.45); border-radius: 20px; padding: 36px 54px; display: flex; flex-direction: column; align-items: center; text-align: center; box-shadow: 0 25px 60px rgba(0, 0, 0, 0.85), 0 0 45px rgba(244, 63, 94, 0.25); z-index: 50; animation: kawa-modal-pop 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
+.kawa-ending-title { font-family: var(--kawa-font-heading); font-size: 2.3rem; font-weight: 900; letter-spacing: -0.02em; background: linear-gradient(135deg, #ffffff 0%, #fda4af 50%, var(--kawa-primary-accent) 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 6px; filter: drop-shadow(0 4px 14px rgba(244, 63, 94, 0.4)); }
+.kawa-ending-subtitle { font-size: 1.05rem; color: #cbd5e1; margin-bottom: 20px; font-weight: 500; }
 .kawa-setting-row { display: flex; flex-direction: column; gap: 6px; background: rgba(15, 23, 42, 0.6); padding: 12px 16px; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.08); }
 .kawa-setting-header { display: flex; justify-content: space-between; align-items: center; font-size: 0.95rem; font-weight: 600; color: #e2e8f0; }
 .kawa-setting-value { font-size: 0.85rem; color: var(--kawa-primary-accent); font-weight: 700; }
-.kawa-slider { width: 100%; height: 6px; border-radius: 3px; background: #334155; outline: none; cursor: pointer; }
+.kawa-slider { -webkit-appearance: none; appearance: none; width: 100%; height: 8px; border-radius: 4px; background: #334155; outline: none; cursor: pointer; }
+.kawa-slider::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 18px; height: 18px; border-radius: 50%; background: var(--kawa-primary-accent); border: 2px solid #ffffff; cursor: pointer; box-shadow: 0 0 10px rgba(244, 63, 94, 0.7); transition: transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1); }
+.kawa-slider::-webkit-slider-thumb:hover { transform: scale(1.25); box-shadow: 0 0 16px rgba(244, 63, 94, 0.9); }
 .kawa-bold { font-weight: 700; }
 .kawa-italic { font-style: italic; }
-.kawa-main-menu { position: absolute; inset: 0; z-index: 40; display: flex; align-items: center; justify-content: center; background: radial-gradient(circle at 50% 50%, rgba(15, 23, 42, 0.95) 0%, rgba(2, 6, 23, 0.98) 100%); animation: kawa-fade-in 0.4s ease-out; user-select: none; }
-.kawa-main-menu-backdrop { position: absolute; inset: 0; background: radial-gradient(ellipse at center, rgba(15, 23, 42, 0.45) 0%, rgba(2, 6, 23, 0.85) 100%); backdrop-filter: blur(8px); z-index: 1; }
+.kawa-main-menu { position: absolute; inset: 0; z-index: 40; display: flex; align-items: center; justify-content: center; background: var(--kawa-main-menu-bg); background-size: cover; background-position: center; animation: kawa-fade-in 0.4s ease-out; user-select: none; }
+.kawa-main-menu-backdrop { position: absolute; inset: 0; background: radial-gradient(ellipse at center, rgba(15, 23, 42, 0.45) 0%, rgba(2, 6, 23, 0.88) 100%); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); z-index: 1; overflow: hidden; }
+.kawa-main-menu-backdrop::after { content: ''; position: absolute; inset: -60%; background-image: radial-gradient(2px 2px at 20% 30%, rgba(253, 164, 175, 0.6), transparent), radial-gradient(3px 3px at 40% 70%, rgba(244, 63, 94, 0.5), transparent), radial-gradient(2px 2px at 60% 20%, rgba(255, 255, 255, 0.7), transparent), radial-gradient(3px 3px at 80% 60%, rgba(251, 113, 133, 0.5), transparent), radial-gradient(2px 2px at 90% 90%, rgba(244, 63, 94, 0.6), transparent); background-size: 550px 550px; animation: kawa-ambient-drift 28s linear infinite; opacity: 0.7; pointer-events: none; }
+@keyframes kawa-ambient-drift { 0% { transform: translateY(0) rotate(0deg); } 100% { transform: translateY(550px) rotate(15deg); } }
 .kawa-main-menu-content { position: relative; z-index: 2; display: flex; flex-direction: column; align-items: center; justify-content: center; width: 90%; max-width: 600px; max-height: 96%; height: auto; text-align: center; padding: 12px 16px; overflow-y: auto; scrollbar-width: thin; scrollbar-color: rgba(244, 63, 94, 0.4) transparent; }
 .kawa-main-menu-content::-webkit-scrollbar { width: 4px; }
 .kawa-main-menu-content::-webkit-scrollbar-thumb { background: rgba(244, 63, 94, 0.4); border-radius: 4px; }
 .kawa-main-menu-header { display: flex; flex-direction: column; align-items: center; gap: 4px; }
-.kawa-main-menu-logo { max-height: clamp(36px, 7vh, 60px); width: auto; object-fit: contain; }
-.kawa-main-menu-title { margin: 0; font-size: clamp(1.8rem, 4.5vh, 2.6rem); font-weight: 800; background: linear-gradient(135deg, #ffffff 0%, #fda4af 50%, var(--kawa-primary-accent) 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-.kawa-main-menu-subtitle { font-size: clamp(0.8rem, 1.6vh, 0.95rem); color: #94a3b8; font-weight: 500; letter-spacing: 0.05em; text-transform: uppercase; }
-.kawa-main-menu-nav { display: flex; flex-direction: column; gap: clamp(6px, 1.2vh, 10px); width: 100%; max-width: 300px; margin: clamp(10px, 1.8vh, 16px) 0; }
-.kawa-main-menu-btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; background: rgba(30, 41, 59, 0.75); backdrop-filter: blur(12px); color: #ffffff; font-family: inherit; font-size: clamp(0.9rem, 1.6vh, 1.05rem); font-weight: 600; padding: clamp(8px, 1.4vh, 12px) 20px; border-radius: 10px; border: 1px solid rgba(255, 255, 255, 0.12); cursor: pointer; transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4); }
-.kawa-main-menu-btn:hover:not(.disabled) { background: var(--kawa-primary-accent); transform: translateY(-2px) scale(1.02); }
+.kawa-main-menu-logo { max-height: clamp(36px, 7vh, 60px); width: auto; object-fit: contain; filter: drop-shadow(0 8px 18px rgba(244, 63, 94, 0.5)); }
+.kawa-main-menu-title { margin: 0; font-family: var(--kawa-font-heading); font-size: clamp(2rem, 5vh, 2.8rem); font-weight: 900; letter-spacing: -0.03em; line-height: 1.15; background: linear-gradient(135deg, #ffffff 0%, #fecdd3 35%, var(--kawa-primary-accent) 75%, #fda4af 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; filter: drop-shadow(0 4px 14px rgba(244, 63, 94, 0.4)); }
+.kawa-main-menu-subtitle { font-size: clamp(0.8rem, 1.6vh, 0.95rem); font-weight: 600; color: #94a3b8; letter-spacing: 0.08em; text-transform: uppercase; }
+.kawa-main-menu-nav { display: flex; flex-direction: column; gap: clamp(6px, 1.2vh, 10px); width: 100%; max-width: 310px; margin: clamp(10px, 1.8vh, 18px) 0; }
+.kawa-main-menu-btn { display: inline-flex; align-items: center; justify-content: center; gap: 10px; background: var(--kawa-main-menu-btn-bg); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); color: var(--kawa-main-menu-btn-color); font-family: var(--kawa-font-heading); font-size: clamp(0.92rem, 1.7vh, 1.08rem); font-weight: 700; letter-spacing: 0.02em; padding: var(--kawa-main-menu-btn-padding); border-radius: var(--kawa-main-menu-btn-radius); border: 1px solid rgba(255, 255, 255, 0.12); cursor: pointer; transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1); box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.1); }
+.kawa-main-menu-btn:hover:not(.disabled) { background: var(--kawa-main-menu-btn-hover-bg); transform: translateY(-2px) scale(1.03); border-color: rgba(255, 255, 255, 0.35); box-shadow: 0 10px 28px rgba(244, 63, 94, 0.55), 0 0 20px rgba(244, 63, 94, 0.3); }
 .kawa-main-menu-btn.disabled { opacity: 0.4; cursor: not-allowed; pointer-events: none; }
 .kawa-main-menu-footer { font-size: clamp(0.75rem, 1.4vh, 0.85rem); color: #64748b; font-weight: 500; }
 .kawa-about-card { max-width: 480px; }
 .kawa-about-content { display: flex; flex-direction: column; align-items: center; text-align: center; }
-.kawa-about-logo-badge { font-size: 2.5rem; margin-bottom: 8px; }
-.kawa-about-game-title { font-size: 1.5rem; font-weight: 800; margin: 0 0 4px 0; color: #ffffff; }
-.kawa-about-game-sub { font-size: 0.95rem; color: #94a3b8; margin: 0 0 14px 0; }
-.kawa-about-divider { width: 50px; height: 2px; background: var(--kawa-primary-accent); margin-bottom: 14px; }
-.kawa-about-info { font-size: 0.9rem; color: #cbd5e1; line-height: 1.5; margin: 0 0 14px 0; }
-.kawa-about-footer-text { font-size: 0.8rem; color: #64748b; }
+.kawa-about-logo-badge { font-size: 2.8rem; margin-bottom: 8px; filter: drop-shadow(0 4px 12px rgba(244, 63, 94, 0.5)); }
+.kawa-about-game-title { font-family: var(--kawa-font-heading); font-size: 1.7rem; font-weight: 800; margin: 0 0 4px 0; color: #ffffff; }
+.kawa-about-game-sub { font-size: 0.95rem; color: #94a3b8; margin: 0 0 16px 0; }
+.kawa-about-divider { width: 60px; height: 2px; background: var(--kawa-primary-accent); border-radius: 2px; margin-bottom: 16px; box-shadow: 0 0 10px rgba(244, 63, 94, 0.6); }
+.kawa-about-info { font-size: 0.95rem; color: #cbd5e1; line-height: 1.6; margin: 0 0 16px 0; }
+.kawa-about-footer-text { font-size: 0.85rem; color: #64748b; font-weight: 500; }
 `;
 }
 
