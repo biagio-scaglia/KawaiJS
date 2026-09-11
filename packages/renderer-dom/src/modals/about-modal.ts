@@ -39,7 +39,7 @@ export function showAboutModal(rootEl: HTMLElement, options?: MainMenuOptions): 
 
   body.innerHTML = `
     <div class="kawa-about-content">
-      <div class="kawa-about-logo-badge">🌸</div>
+      <div class="kawa-about-logo-badge">${SVG_ICONS.sakura}</div>
       <h2 class="kawa-about-game-title">${gameTitle}</h2>
       <p class="kawa-about-game-sub">${gameSub}</p>
       <div class="kawa-about-divider"></div>

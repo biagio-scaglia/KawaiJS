@@ -249,7 +249,7 @@ export class MainMenuComponent {
 
     const footerEl = document.createElement('footer');
     footerEl.className = 'kawa-main-menu-footer';
-    footerEl.innerHTML = this.options?.customFooter || '🌸 Powered by Kawaijs Engine';
+    footerEl.innerHTML = this.options?.customFooter || `${SVG_ICONS.sakura} <span>Powered by Kawaijs Engine</span>`;
 
     contentEl.appendChild(headerEl);
     contentEl.appendChild(navEl);

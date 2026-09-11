@@ -135,7 +135,34 @@ label start:
     await renderer.showSaveLoadModal('save');
     modal = container.querySelector('.kawa-modal-overlay');
     expect(modal).not.toBeNull();
-    expect(modal?.querySelectorAll('.kawa-slot-card').length).toBe(6);
+    const slotCards = modal?.querySelectorAll('.kawa-slot-card')!;
+    expect(slotCards.length).toBe(6);
+
+    // Verify empty slot card elements and icons (no emojis)
+    const firstEmptyCard = slotCards[0];
+    expect(firstEmptyCard.classList.contains('kawa-slot-empty')).toBe(true);
+    expect(firstEmptyCard.querySelector('.kawa-slot-badge')?.innerHTML).toContain('svg');
+    expect(firstEmptyCard.querySelector('.kawa-slot-badge')?.textContent).toContain('Slot 1');
+    expect(firstEmptyCard.querySelector('.kawa-slot-time')?.textContent).toBe('Empty');
+    expect(firstEmptyCard.querySelector('.kawa-slot-empty-content')).not.toBeNull();
+    expect(firstEmptyCard.querySelector('.kawa-slot-btn-save')?.textContent).toContain('Save Here');
+
+    // Click Save Here on Slot 1
+    (firstEmptyCard.querySelector('.kawa-slot-btn-save') as HTMLButtonElement).click();
+    await new Promise(r => setTimeout(r, 50));
+
+    // Re-open Save Modal and check occupied state
+    await renderer.showSaveLoadModal('save');
+    modal = container.querySelector('.kawa-modal-overlay');
+    const updatedCards = modal?.querySelectorAll('.kawa-slot-card')!;
+    const savedCard = updatedCards[0];
+    expect(savedCard.classList.contains('kawa-slot-occupied')).toBe(true);
+    expect(savedCard.querySelector('.kawa-slot-badge')?.classList.contains('kawa-slot-badge-occupied')).toBe(true);
+    expect(savedCard.querySelector('.kawa-slot-time')?.innerHTML).toContain('svg'); // Clock icon
+    expect(savedCard.querySelector('.kawa-slot-preview')).not.toBeNull();
+    expect(savedCard.querySelector('.kawa-slot-preview-icon')?.innerHTML).toContain('svg'); // Quote icon
+    expect(savedCard.querySelector('.kawa-slot-btn-save')?.textContent).toContain('Overwrite');
+    expect(savedCard.querySelector('.kawa-slot-btn-del')?.innerHTML).toContain('svg'); // Trash icon
 
     // Close save modal
     (modal?.querySelector('.kawa-btn') as HTMLButtonElement).click();
