@@ -100,11 +100,18 @@ export interface MainMenuOptions {
 }
 
 export interface AudioManagerLike {
+  playMusic?(src: string, options?: { fadein?: number; loop?: boolean; volume?: number }): void;
+  stopMusic?(options?: { fadeout?: number }): void;
+  playSound?(src: string, volume?: number): void;
+  stopSound?(): void;
+  playVoice?(src: string, volume?: number): void;
+  stopVoice?(): void;
   setMusicVolume(val: number): void;
   setSoundVolume(val: number): void;
   setMasterVolume?(val: number): void;
   getMusicVolume?(): number;
   getSoundVolume?(): number;
+  destroy?(): void;
 }
 
 export interface VirtualCanvasOptions {

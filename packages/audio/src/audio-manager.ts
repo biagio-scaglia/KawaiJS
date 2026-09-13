@@ -40,20 +40,28 @@ export class AudioManager {
     this.voiceVolume = options.voiceVolume ?? 1.0;
 
     if (typeof window !== 'undefined') {
-      const unlock = () => {
-        this.isUnlocked = true;
-        if (this.pendingMusic) {
-          const { src, options } = this.pendingMusic;
-          this.pendingMusic = null;
-          this.playMusic(src, options);
-        }
-        this.removeUnlockListeners();
-      };
-      this.unlockHandler = unlock;
-      window.addEventListener('click', unlock, { passive: true });
-      window.addEventListener('keydown', unlock, { passive: true });
-      window.addEventListener('touchstart', unlock, { passive: true });
+      this.addUnlockListeners();
     }
+  }
+
+  private addUnlockListeners(): void {
+    if (typeof window === 'undefined' || this.unlockHandler) return;
+
+    const unlock = () => {
+      this.isUnlocked = true;
+      if (this.pendingMusic) {
+        const { src, options } = this.pendingMusic;
+        this.pendingMusic = null;
+        this.playMusic(src, options);
+      }
+      this.removeUnlockListeners();
+    };
+
+    this.unlockHandler = unlock;
+    window.addEventListener('click', unlock, { passive: true, once: true });
+    window.addEventListener('keydown', unlock, { passive: true, once: true });
+    window.addEventListener('touchstart', unlock, { passive: true, once: true });
+    window.addEventListener('pointerdown', unlock, { passive: true, once: true });
   }
 
   private removeUnlockListeners(): void {
@@ -61,6 +69,7 @@ export class AudioManager {
       window.removeEventListener('click', this.unlockHandler);
       window.removeEventListener('keydown', this.unlockHandler);
       window.removeEventListener('touchstart', this.unlockHandler);
+      window.removeEventListener('pointerdown', this.unlockHandler);
       this.unlockHandler = null;
     }
   }
@@ -132,16 +141,29 @@ export class AudioManager {
 
     const audio = new Audio(src);
     audio.loop = loop;
+    audio.preload = 'auto';
     this.currentMusicAudio = audio;
     this.currentMusicTrack = src;
 
+    const startPlay = () => {
+      const playPromise = audio.play();
+      if (playPromise !== undefined) {
+        playPromise.catch(() => {
+          // Autoplay blocked by browser policy; save pending music and listen for user gesture
+          this.isUnlocked = false;
+          this.pendingMusic = { src, options };
+          this.addUnlockListeners();
+        });
+      }
+    };
+
     if (fadein > 0) {
       audio.volume = 0;
-      audio.play().catch(() => {});
+      startPlay();
       this.fadeVolume(audio, 0, targetVolume, fadein * 1000);
     } else {
       audio.volume = targetVolume;
-      audio.play().catch(() => {});
+      startPlay();
     }
   }
 

@@ -1,5 +1,6 @@
 import type { StoryPackage } from '@kawaijs/ast';
-import type { StoryVM, StoryState, SaveSlot } from '@kawaijs/runtime';
+import type { StoryVM, StoryState, SaveSlot, AudioEvent } from '@kawaijs/runtime';
+import { AudioManager } from '@kawaijs/audio';
 import { SVG_ICONS } from './icons.js';
 import {
   type DOMRendererOptions,
@@ -88,6 +89,7 @@ export class DOMRenderer {
 
   private unsubscribeVMState?: () => void;
   private unsubscribeCamera?: () => void;
+  private unsubscribeAudio?: () => void;
   private unsubscribeError?: () => void;
   private boundKeyHandler?: (e: KeyboardEvent) => void;
 
@@ -111,9 +113,9 @@ export class DOMRenderer {
     }
     this.mainMenuOptions = finalMainMenu;
 
-    this.audioManager = options.audioManager;
-    this.musicVolume = options.audioManager?.getMusicVolume?.() ?? 0.8;
-    this.soundVolume = options.audioManager?.getSoundVolume?.() ?? 1.0;
+    this.audioManager = options.audioManager ?? (typeof window !== 'undefined' ? new AudioManager() : undefined);
+    this.musicVolume = this.audioManager?.getMusicVolume?.() ?? 0.8;
+    this.soundVolume = this.audioManager?.getSoundVolume?.() ?? 1.0;
 
     // Load saved settings if present
     if (typeof localStorage !== 'undefined') {
@@ -150,6 +152,29 @@ export class DOMRenderer {
       }
     });
 
+    this.unsubscribeAudio = this.vm.onAudioEvent((event: AudioEvent) => {
+      if (!this.audioManager) return;
+
+      if (event.action === 'play' && event.track) {
+        const url = this.assetResolver(event.track, 'audio');
+        if (event.channel === 'music') {
+          this.audioManager.playMusic?.(url, { fadein: event.fade, loop: event.loop });
+        } else if (event.channel === 'sound') {
+          this.audioManager.playSound?.(url);
+        } else if (event.channel === 'voice') {
+          this.audioManager.playVoice?.(url);
+        }
+      } else if (event.action === 'stop') {
+        if (event.channel === 'music') {
+          this.audioManager.stopMusic?.({ fadeout: event.fade });
+        } else if (event.channel === 'sound') {
+          this.audioManager.stopSound?.();
+        } else if (event.channel === 'voice') {
+          this.audioManager.stopVoice?.();
+        }
+      }
+    });
+
     this.unsubscribeError = this.vm.onError((err) => {
       this.showErrorToast(err.message);
       this.options.onError?.(err);
@@ -169,6 +194,12 @@ export class DOMRenderer {
     }
     if (this.unsubscribeCamera) {
       this.unsubscribeCamera();
+    }
+    if (this.unsubscribeAudio) {
+      this.unsubscribeAudio();
+    }
+    if (this.audioManager && typeof this.audioManager.destroy === 'function') {
+      this.audioManager.destroy();
     }
     if (this.unsubscribeError) {
       this.unsubscribeError();

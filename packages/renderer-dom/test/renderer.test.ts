@@ -393,6 +393,53 @@ label start:
 
     renderer.destroy();
   });
+
+  it('handles audio playback events (play music, play sound, stop music) via AudioManager', () => {
+    const audioScript = `label start:
+    play music "theme" fade 2 loop
+    play sound "bell"
+    "Music playing!"
+    stop music fade 1
+    "Music stopped."
+`;
+    const story = compileScript(audioScript);
+    const vm = new StoryVM(story);
+
+    const playedMusic: Array<{ src: string; options?: unknown }> = [];
+    const playedSounds: string[] = [];
+    let stoppedMusic = false;
+
+    const mockAudioManager = {
+      playMusic: (src: string, options?: unknown) => {
+        playedMusic.push({ src, options });
+      },
+      playSound: (src: string) => {
+        playedSounds.push(src);
+      },
+      stopMusic: () => {
+        stoppedMusic = true;
+      },
+      setMusicVolume: () => {},
+      setSoundVolume: () => {}
+    };
+
+    const renderer = new DOMRenderer(vm, {
+      container,
+      audioManager: mockAudioManager,
+      mainMenu: { enabled: false }
+    });
+
+    vm.start();
+    expect(playedMusic.length).toBe(1);
+    expect(playedMusic[0]?.src).toContain('assets/audio/theme.mp3');
+    expect(playedSounds.length).toBe(1);
+    expect(playedSounds[0]).toContain('assets/audio/bell.mp3');
+
+    vm.next();
+    expect(stoppedMusic).toBe(true);
+
+    renderer.destroy();
+  });
 });
 
 

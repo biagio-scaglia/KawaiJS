@@ -27,6 +27,7 @@
   },
   "dependencies": {
     "@kawaijs/ast": "^0.1.11",
+    "@kawaijs/audio": "^0.1.11",
     "@kawaijs/runtime": "^0.1.11"
   },
   "keywords": [

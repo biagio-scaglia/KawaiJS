@@ -7,7 +7,8 @@
   },
   "references": [
     { "path": "../ast" },
-    { "path": "../runtime" }
+    { "path": "../runtime" },
+    { "path": "../audio" }
   ],
   "include": ["src/**/*"]
 }
