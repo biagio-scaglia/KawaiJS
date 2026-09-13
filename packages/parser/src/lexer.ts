@@ -1,5 +1,5 @@
 import { createLocation, createPosition } from '@kawaijs/ast';
-import { KEYWORDS, type Token } from './token.js';
+import { KEYWORDS_MAP, type Token } from './token.js';
 import { KawaError } from './diagnostic.js';
 
 export interface LexerOptions {
@@ -407,7 +407,7 @@ export class Lexer {
       idStr += this.advance();
     }
 
-    const keywordType = KEYWORDS[idStr];
+    const keywordType = KEYWORDS_MAP.get(idStr);
     return {
       type: keywordType ?? 'IDENTIFIER',
       value: idStr,

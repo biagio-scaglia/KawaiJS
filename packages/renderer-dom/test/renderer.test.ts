@@ -299,7 +299,7 @@ label start:
 
   it('sanitizes rich text markup against XSS and quotes', () => {
     const xssScript = `label start:
-    "Test" "{b}bold{/b} <script>alert(1)</script> \\"quoted\\" {color=red}colored{/color}"
+    "{b}bold{/b} <script>alert(1)</script> \\"quoted\\" {color=red}colored{/color}"
 `;
     const story = compileScript(xssScript);
     const vm = new StoryVM(story);

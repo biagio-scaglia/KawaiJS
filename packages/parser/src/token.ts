@@ -57,31 +57,33 @@ export interface Token {
   readonly loc: SourceLocation;
 }
 
-export const KEYWORDS: Record<string, TokenType> = Object.assign(Object.create(null), {
-  character: 'CHARACTER',
-  label: 'LABEL',
-  scene: 'SCENE',
-  show: 'SHOW',
-  hide: 'HIDE',
-  at: 'AT',
-  with: 'WITH',
-  menu: 'MENU',
-  jump: 'JUMP',
-  return: 'RETURN',
-  set: 'SET',
-  if: 'IF',
-  elif: 'ELIF',
-  else: 'ELSE',
-  play: 'PLAY',
-  stop: 'STOP',
-  music: 'MUSIC',
-  sound: 'SOUND',
-  voice: 'VOICE',
-  fadein: 'FADEIN',
-  fadeout: 'FADEOUT',
-  fade: 'FADEIN',
-  loop: 'LOOP',
-  narrator: 'NARRATOR',
-  true: 'BOOLEAN',
-  false: 'BOOLEAN'
-});
+export const KEYWORDS_MAP = new Map<string, TokenType>([
+  ['character', 'CHARACTER'],
+  ['label', 'LABEL'],
+  ['scene', 'SCENE'],
+  ['show', 'SHOW'],
+  ['hide', 'HIDE'],
+  ['at', 'AT'],
+  ['with', 'WITH'],
+  ['menu', 'MENU'],
+  ['jump', 'JUMP'],
+  ['return', 'RETURN'],
+  ['set', 'SET'],
+  ['if', 'IF'],
+  ['elif', 'ELIF'],
+  ['else', 'ELSE'],
+  ['play', 'PLAY'],
+  ['stop', 'STOP'],
+  ['music', 'MUSIC'],
+  ['sound', 'SOUND'],
+  ['voice', 'VOICE'],
+  ['fadein', 'FADEIN'],
+  ['fadeout', 'FADEOUT'],
+  ['fade', 'FADEIN'],
+  ['loop', 'LOOP'],
+  ['narrator', 'NARRATOR'],
+  ['true', 'BOOLEAN'],
+  ['false', 'BOOLEAN']
+]);
+
+export const KEYWORDS: Record<string, TokenType> = Object.fromEntries(KEYWORDS_MAP.entries());
