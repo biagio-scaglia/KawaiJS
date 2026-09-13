@@ -70,10 +70,10 @@ export function startDevServer(projectDir = '.', options: DevServerOptions = {})
   }
 
   const server = http.createServer((req, res) => {
-    const url = req.url ?? '/';
+    const cleanUrl = (req.url ?? '/').split('?')[0]!;
 
     // 1. SSE Live Reload Endpoint
-    if (url === '/__kawa_reload') {
+    if (cleanUrl === '/__kawa_reload') {
       res.writeHead(200, {
         'Content-Type': 'text/event-stream',
         'Cache-Control': 'no-cache',
@@ -86,7 +86,7 @@ export function startDevServer(projectDir = '.', options: DevServerOptions = {})
     }
 
     // 2. Dynamic Story JSON API
-    if (url === '/api/story.json') {
+    if (cleanUrl === '/api/story.json') {
       try {
         const source = fs.readFileSync(scriptPath, 'utf-8');
         const story = compileScript(source, path.basename(scriptPath));
@@ -113,23 +113,22 @@ export function startDevServer(projectDir = '.', options: DevServerOptions = {})
     }
 
     // 3. User & Default Stylesheet
-    if (url === '/style.css') {
+    let combinedCss = `/* Kawaijs Base Theme */\n` + getBaseThemeCss() + '\n\n';
+    if (fs.existsSync(stylePath)) {
+      combinedCss += `/* User Custom Styles */\n` + fs.readFileSync(stylePath, 'utf-8');
+    }
+
+    if (cleanUrl === '/style.css') {
       res.writeHead(200, {
-        'Content-Type': 'text/css',
+        'Content-Type': 'text/css; charset=utf-8',
         'Cache-Control': 'no-cache, no-store, must-revalidate'
       });
-      let combinedCss = `/* Kawaijs Base Theme */\n` + getBaseThemeCss() + '\n\n';
-
-      if (fs.existsSync(stylePath)) {
-        combinedCss += `/* User Custom Styles */\n` + fs.readFileSync(stylePath, 'utf-8');
-      }
       res.end(combinedCss);
       return;
     }
 
     // 4. Game Assets (/assets/*)
-    if (url.startsWith('/assets/')) {
-      const cleanUrl = url.split('?')[0]!;
+    if (cleanUrl.startsWith('/assets/')) {
       const relPath = decodeURIComponent(cleanUrl.replace(/^\/?assets\//, ''));
       const resolvedAssetsDir = path.resolve(assetsDir);
       let filePath = path.resolve(assetsDir, relPath);
@@ -208,9 +207,16 @@ export function startDevServer(projectDir = '.', options: DevServerOptions = {})
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Kawaijs Visual Novel</title>
-  <link rel="stylesheet" href="/style.css">
   <style>
-    body { margin: 0; padding: 0; background: #000; overflow: hidden; }
+    ${combinedCss}
+    html, body, #app {
+      width: 100vw;
+      height: 100vh;
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      background: #000;
+    }
     #error-overlay {
       display: ${initialError ? 'block' : 'none'}; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.95);
       color: #f43f5e; font-family: monospace; padding: 32px; z-index: 9999;
