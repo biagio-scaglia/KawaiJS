@@ -88,6 +88,7 @@ export class DOMRenderer {
 
   private unsubscribeVMState?: () => void;
   private unsubscribeCamera?: () => void;
+  private unsubscribeError?: () => void;
   private boundKeyHandler?: (e: KeyboardEvent) => void;
 
   constructor(vm: StoryVM, options: DOMRendererOptions) {
@@ -149,6 +150,11 @@ export class DOMRenderer {
       }
     });
 
+    this.unsubscribeError = this.vm.onError((err) => {
+      this.showErrorToast(err.message);
+      this.options.onError?.(err);
+    });
+
     // Default: Show Ren'Py-style Main Menu before entering story, unless explicitly disabled
     if (this.mainMenuOptions?.enabled !== false) {
       this.showMainMenu();
@@ -163,6 +169,9 @@ export class DOMRenderer {
     }
     if (this.unsubscribeCamera) {
       this.unsubscribeCamera();
+    }
+    if (this.unsubscribeError) {
+      this.unsubscribeError();
     }
     if (this.dialogueBox) {
       this.dialogueBox.destroy();
@@ -183,6 +192,29 @@ export class DOMRenderer {
       window.removeEventListener('keydown', this.boundKeyHandler);
     }
     this.container.innerHTML = '';
+  }
+
+  public showErrorToast(message: string): void {
+    const existing = this.rootEl.querySelector('.kawa-error-toast');
+    if (existing) existing.remove();
+
+    const toast = document.createElement('div');
+    toast.className = 'kawa-error-toast';
+    toast.setAttribute('role', 'alert');
+    toast.innerHTML = `
+      <span>⚠️</span>
+      <span class="kawa-error-toast-msg">${message}</span>
+      <button class="kawa-error-toast-close" aria-label="Dismiss error">${SVG_ICONS.close}</button>
+    `;
+
+    toast.querySelector('.kawa-error-toast-close')?.addEventListener('click', () => {
+      toast.remove();
+    });
+
+    this.rootEl.appendChild(toast);
+    setTimeout(() => {
+      if (toast.parentElement) toast.remove();
+    }, 8000);
   }
 
   public getViewportAdapter(): ViewportAdapter | undefined {

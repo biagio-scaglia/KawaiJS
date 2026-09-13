@@ -316,7 +316,78 @@ label start:
     expect(cameraEvents[1]?.action).toBe('flash');
     expect(vm.getState().dialogue?.text).toBe('Screen shook and flashed!');
   });
+
+  it('emits errors via onError and caps snapshot history to maxSnapshots', () => {
+    const code = `label start:
+    "Line 1"
+    "Line 2"
+    "Line 3"
+    "Line 4"
+    "Line 5"
+`;
+    const story = compileScript(code);
+    const vm = new StoryVM(story, { maxSnapshots: 2 });
+    const errors: Error[] = [];
+    vm.onError((err) => errors.push(err));
+
+    vm.start();
+    vm.next();
+    vm.next();
+    vm.next();
+    vm.next();
+
+    // With maxSnapshots: 2, only 1 rollback step is available
+    expect(vm.rollback()).toBe(true);
+    expect(vm.rollback()).toBe(false);
+    expect(errors.length).toBe(0);
+  });
+
+  it('handles subroutine calls and returns correctly', () => {
+    const story = {
+      meta: { title: 'Test', author: 'Author' },
+      characters: {},
+      startLabel: 'start',
+      labels: {
+        start: [
+          { type: 'dialogue' as const, speaker: 'narrator', text: 'Before call' },
+          { type: 'call' as const, targetLabel: 'subroutine' },
+          { type: 'dialogue' as const, speaker: 'narrator', text: 'After return' },
+        ],
+        subroutine: [
+          { type: 'dialogue' as const, speaker: 'narrator', text: 'Inside subroutine' },
+          { type: 'return' as const },
+        ],
+      },
+    };
+
+    const vm = new StoryVM(story);
+    vm.start();
+    expect(vm.getState().dialogue?.text).toBe('Before call');
+    vm.next();
+    expect(vm.getState().dialogue?.text).toBe('Inside subroutine');
+    vm.next();
+    expect(vm.getState().dialogue?.text).toBe('After return');
+  });
+
+  it('catches missing jump targets and emits error without crashing', () => {
+    const story = {
+      meta: { title: 'Test', author: 'Author' },
+      characters: {},
+      startLabel: 'start',
+      labels: {
+        start: [
+          { type: 'jump' as const, targetLabel: 'non_existent_label' },
+        ],
+      },
+    };
+
+    const vm = new StoryVM(story);
+    const errors: Error[] = [];
+    vm.onError((err) => errors.push(err));
+
+    vm.start();
+    expect(errors.length).toBe(1);
+    expect(errors[0]?.message).toContain('non_existent_label');
+    expect(vm.getState().isFinished).toBe(true);
+  });
 });
-
-
-

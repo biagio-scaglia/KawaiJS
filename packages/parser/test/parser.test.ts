@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { Parser } from '../src/parser.js';
 import { formatDiagnostic, KawaError } from '../src/diagnostic.js';
+import { validateScript } from '../src/validator.js';
 
 describe('Parser', () => {
   it('parses character declarations, labels, dialogue, and narrator', () => {
@@ -122,5 +123,27 @@ label start:
         expect(msg).toContain('script.kawa');
       }
     }
+  });
+
+  it('performs semantic validation and catches undefined labels and undeclared characters', () => {
+    const scriptWithErrors = `character yumia "Yumia"
+
+label start:
+    scene bg classroom
+    yumia "Hello!"
+    unknown_char "I am not declared!"
+    jump mistyped_lable
+
+label mistyped_label:
+    "Found it!"
+`;
+    const report = validateScript(scriptWithErrors, 'test.kawa');
+    expect(report.isValid).toBe(false);
+    expect(report.errors.length).toBe(1);
+    expect(report.errors[0]?.message).toContain("Jump target label 'mistyped_lable' is not defined");
+    expect(report.errors[0]?.hint).toContain("Did you mean 'mistyped_label'?");
+
+    expect(report.warnings.length).toBeGreaterThan(0);
+    expect(report.warnings[0]?.message).toContain("Character 'unknown_char' used in dialogue is not declared");
   });
 });

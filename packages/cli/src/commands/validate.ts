@@ -1,6 +1,6 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import { compileScript, formatDiagnostic, KawaError } from '@kawaijs/parser';
+import { compileScript, validateStory, formatDiagnostic, KawaError } from '@kawaijs/parser';
 
 export function validateProject(targetPath = '.'): boolean {
   const resolvedPath = path.resolve(targetPath);
@@ -27,15 +27,31 @@ export function validateProject(targetPath = '.'): boolean {
   try {
     const source = fs.readFileSync(scriptFile, 'utf-8');
     const story = compileScript(source, path.basename(scriptFile));
-    
-    const charCount = Object.keys(story.characters).length;
-    const labelCount = Object.keys(story.labels).filter(l => !l.startsWith('__')).length;
-    
+    const report = validateStory(story);
+
+    if (report.warnings.length > 0) {
+      console.log(`⚠️  Script Warnings (${report.warnings.length}):`);
+      for (const w of report.warnings) {
+        console.warn(formatDiagnostic(w, source));
+        console.log('');
+      }
+    }
+
+    if (!report.isValid) {
+      console.error(`❌ Script Validation Failed (${report.errors.length} error${report.errors.length > 1 ? 's' : ''}):`);
+      for (const e of report.errors) {
+        console.error(formatDiagnostic(e, source));
+        console.log('');
+      }
+      return false;
+    }
+
     console.log(`✅ Script validation successful!`);
     console.log(`   - File: ${path.basename(scriptFile)}`);
-    console.log(`   - Characters declared: ${charCount}`);
-    console.log(`   - Story labels: ${labelCount}`);
-    console.log(`   - Start label: '${story.meta.startLabel}'`);
+    console.log(`   - Characters declared: ${report.characterCount}`);
+    console.log(`   - Story labels: ${report.labelCount}`);
+    console.log(`   - Instructions: ${report.instructionCount}`);
+    console.log(`   - Start label: '${story.meta.startLabel ?? 'start'}'`);
     return true;
   } catch (err: unknown) {
     if (err instanceof KawaError) {

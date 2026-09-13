@@ -136,6 +136,15 @@ export class StageLayerComponent {
         const img = document.createElement('img');
         img.src = primaryUrl;
         img.alt = `${id} ${expr ?? ''}`;
+        img.onerror = () => {
+          img.style.display = 'none';
+          if (!div.querySelector('.kawa-sprite-placeholder')) {
+            const ph = document.createElement('div');
+            ph.className = 'kawa-sprite-placeholder';
+            ph.innerHTML = `<span class="kawa-sprite-placeholder-icon">👤</span><span class="kawa-sprite-placeholder-name">${id}</span>`;
+            div.appendChild(ph);
+          }
+        };
 
         div.appendChild(img);
         this.charactersEl.appendChild(div);
@@ -152,8 +161,11 @@ export class StageLayerComponent {
 
         // Expression change
         if (existing.expression !== expr) {
+          existing.img.style.display = 'block';
           existing.img.src = primaryUrl;
           existing.expression = expr;
+          const ph = existing.div.querySelector('.kawa-sprite-placeholder');
+          if (ph) ph.remove();
           if (expr) {
             existing.div.dataset.expression = expr;
           } else {

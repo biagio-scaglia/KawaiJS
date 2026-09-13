@@ -23,6 +23,9 @@ export class VfxLayerComponent {
   private tintEl: HTMLDivElement;
   private fogEl: HTMLDivElement;
 
+  private boundResizeHandler?: () => void;
+  private boundVisibilityHandler?: () => void;
+
   constructor() {
     this.el = document.createElement('div');
     this.el.className = 'kawa-vfx-layer';
@@ -44,7 +47,7 @@ export class VfxLayerComponent {
     this.el.appendChild(this.fogEl);
     this.el.appendChild(this.tintEl);
 
-    this.initResize();
+    this.initListeners();
   }
 
   public setVfx(vfxState: VfxState | null): void {
@@ -91,23 +94,39 @@ export class VfxLayerComponent {
 
   public destroy(): void {
     this.clear();
+    if (typeof window !== 'undefined' && this.boundResizeHandler) {
+      window.removeEventListener('resize', this.boundResizeHandler);
+    }
+    if (typeof document !== 'undefined' && this.boundVisibilityHandler) {
+      document.removeEventListener('visibilitychange', this.boundVisibilityHandler);
+    }
     this.el.remove();
   }
 
-  private initResize(): void {
-    const updateSize = () => {
-      const rect = this.el.getBoundingClientRect();
-      const w = rect.width || 1280;
-      const h = rect.height || 720;
-      if (this.canvas.width !== w || this.canvas.height !== h) {
-        this.canvas.width = w;
-        this.canvas.height = h;
-      }
-    };
-
+  private initListeners(): void {
     if (typeof window !== 'undefined') {
-      window.addEventListener('resize', updateSize);
-      setTimeout(updateSize, 50);
+      this.boundResizeHandler = () => {
+        const rect = this.el.getBoundingClientRect();
+        const w = rect.width || 1280;
+        const h = rect.height || 720;
+        if (this.canvas.width !== w || this.canvas.height !== h) {
+          this.canvas.width = w;
+          this.canvas.height = h;
+        }
+      };
+      window.addEventListener('resize', this.boundResizeHandler);
+      setTimeout(this.boundResizeHandler, 50);
+    }
+
+    if (typeof document !== 'undefined') {
+      this.boundVisibilityHandler = () => {
+        if (document.hidden) {
+          this.stopParticleLoop();
+        } else if (this.currentEffect && this.currentEffect !== 'tint' && this.currentEffect !== 'fog') {
+          this.startParticleEffect(this.currentEffect);
+        }
+      };
+      document.addEventListener('visibilitychange', this.boundVisibilityHandler);
     }
   }
 

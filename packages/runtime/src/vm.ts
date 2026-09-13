@@ -21,6 +21,13 @@ export type StateChangeListener = (state: StoryState) => void;
 export type AudioEventListener = (event: AudioEvent) => void;
 export type CameraEventListener = (event: CameraEvent) => void;
 export type TickListener = (deltaMs: number, totalTimeMs: number) => void;
+export type ErrorListener = (error: Error) => void;
+
+export interface VMOptions {
+  readonly saveManager?: SaveManager;
+  readonly maxSnapshots?: number;
+  readonly maxCallDepth?: number;
+}
 
 export class StoryVM {
   public readonly storyHash: string;
@@ -29,23 +36,45 @@ export class StoryVM {
   private snapshotStack: Snapshot[] = [];
   private readonly historyManager: HistoryManager;
   private readonly saveManager: SaveManager;
+  private readonly maxSnapshots: number;
+  private readonly maxCallDepth: number;
 
   private stateChangeListeners = new Set<StateChangeListener>();
   private audioEventListeners = new Set<AudioEventListener>();
   private cameraEventListeners = new Set<CameraEventListener>();
+  private errorListeners = new Set<ErrorListener>();
   private tickListeners = new Set<TickListener>();
 
   private executionTrace: string[] = [];
   private virtualTimeMs = 0;
   private isExecuting = false;
 
-  constructor(story: StoryPackage, saveManager?: SaveManager) {
+  constructor(story: StoryPackage, saveManagerOrOptions?: SaveManager | VMOptions) {
     this.story = story;
     this.storyHash = computeStoryHash(story);
     const startLabel = story.meta?.startLabel ?? 'start';
     this.state = createInitialState(startLabel);
     this.historyManager = new HistoryManager();
-    this.saveManager = saveManager ?? new SaveManager();
+
+    let sm: SaveManager | undefined;
+    let maxSnaps = 250;
+    let maxDepth = 100;
+
+    if (saveManagerOrOptions instanceof SaveManager) {
+      sm = saveManagerOrOptions;
+    } else if (saveManagerOrOptions) {
+      sm = saveManagerOrOptions.saveManager;
+      if (typeof saveManagerOrOptions.maxSnapshots === 'number') {
+        maxSnaps = saveManagerOrOptions.maxSnapshots;
+      }
+      if (typeof saveManagerOrOptions.maxCallDepth === 'number') {
+        maxDepth = saveManagerOrOptions.maxCallDepth;
+      }
+    }
+
+    this.saveManager = sm ?? new SaveManager();
+    this.maxSnapshots = Math.max(1, maxSnaps);
+    this.maxCallDepth = Math.max(1, maxDepth);
   }
 
   public getState(): StoryState {
@@ -108,9 +137,22 @@ export class StoryVM {
     return () => this.cameraEventListeners.delete(listener);
   }
 
+  public onError(listener: ErrorListener): () => void {
+    this.errorListeners.add(listener);
+    return () => this.errorListeners.delete(listener);
+  }
+
   private emitCameraEvent(event: CameraEvent): void {
     for (const listener of this.cameraEventListeners) {
       listener(event);
+    }
+  }
+
+  private emitError(error: Error): void {
+    for (const listener of this.errorListeners) {
+      try {
+        listener(error);
+      } catch {}
     }
   }
 
@@ -431,10 +473,59 @@ export class StoryVM {
       }
 
       case 'jump': {
-        this.recordTrace(`JUMP ${inst.targetLabel}`);
+        const target = inst.targetLabel;
+        this.recordTrace(`JUMP ${target}`);
+        if (!this.story.labels[target]) {
+          const err = new Error(`Runtime Error: Jump target label '${target}' is not defined in story.`);
+          this.emitError(err);
+          this.state = {
+            ...this.state,
+            isFinished: true,
+            isWaitingForInput: false
+          };
+          break;
+        }
         this.state = {
           ...this.state,
-          currentLabel: inst.targetLabel,
+          currentLabel: target,
+          instructionPointer: 0
+        };
+        break;
+      }
+
+      case 'call': {
+        const target = (inst as { readonly targetLabel: string }).targetLabel;
+        this.recordTrace(`CALL ${target}`);
+        if (this.state.callStack.length >= this.maxCallDepth) {
+          const err = new Error(`Runtime Error: Maximum call stack depth of ${this.maxCallDepth} exceeded.`);
+          this.emitError(err);
+          this.state = {
+            ...this.state,
+            isFinished: true,
+            isWaitingForInput: false
+          };
+          break;
+        }
+        if (!this.story.labels[target]) {
+          const err = new Error(`Runtime Error: Call target label '${target}' is not defined in story.`);
+          this.emitError(err);
+          this.state = {
+            ...this.state,
+            isFinished: true,
+            isWaitingForInput: false
+          };
+          break;
+        }
+        this.state = {
+          ...this.state,
+          callStack: [
+            ...this.state.callStack,
+            {
+              returnLabel: this.state.currentLabel,
+              returnPointer: this.state.instructionPointer
+            }
+          ],
+          currentLabel: target,
           instructionPointer: 0
         };
         break;
@@ -459,6 +550,16 @@ export class StoryVM {
         const conditionVal = evaluateCondition(inst.condition, this.state.variables);
         const targetLabel = conditionVal ? inst.thenLabel : (inst.elseLabel ?? inst.thenLabel);
         this.recordTrace(`BRANCH ${inst.condition} (${conditionVal}) -> ${targetLabel}`);
+        if (!this.story.labels[targetLabel]) {
+          const err = new Error(`Runtime Error: Branch target label '${targetLabel}' is not defined in story.`);
+          this.emitError(err);
+          this.state = {
+            ...this.state,
+            isFinished: true,
+            isWaitingForInput: false
+          };
+          break;
+        }
         this.state = {
           ...this.state,
           currentLabel: targetLabel,
@@ -541,8 +642,7 @@ export class StoryVM {
   private recordSnapshot(): void {
     const snap = this.captureSnapshot();
     this.snapshotStack.push(snap);
-    // Limit snapshot history to last 50 steps
-    if (this.snapshotStack.length > 50) {
+    if (this.snapshotStack.length > this.maxSnapshots) {
       this.snapshotStack.shift();
     }
   }

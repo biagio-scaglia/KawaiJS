@@ -120,4 +120,5 @@ export interface DOMRendererOptions {
   mainMenu?: MainMenuOptions;
   audioManager?: AudioManagerLike;
   virtualCanvas?: VirtualCanvasOptions;
+  onError?: (error: Error) => void;
 }

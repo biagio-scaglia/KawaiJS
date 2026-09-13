@@ -27,6 +27,7 @@ export type Instruction =
   | { readonly type: 'camera'; readonly action: 'shake' | 'vpunch' | 'hpunch' | 'flash'; readonly duration?: number; readonly loc?: SourceLocation }
   | { readonly type: 'pause'; readonly duration?: number; readonly loc?: SourceLocation }
   | { readonly type: 'cg'; readonly image: string; readonly unlockId?: string; readonly loc?: SourceLocation }
+  | { readonly type: 'call'; readonly targetLabel: string; readonly loc?: SourceLocation }
   | { readonly type: 'return'; readonly loc?: SourceLocation };
 
 export interface StoryMeta {
