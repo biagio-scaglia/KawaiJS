@@ -180,6 +180,24 @@ export function startDevServer(projectDir = '.', options: DevServerOptions = {})
     }
 
     // 5. HTML Shell & Web Runtime
+    let storyJson = 'null';
+    let initialError = '';
+
+    try {
+      const source = fs.readFileSync(scriptPath, 'utf-8');
+      const compiledStory = compileScript(source, path.basename(scriptPath));
+      storyJson = JSON.stringify(compiledStory);
+    } catch (err: unknown) {
+      if (err instanceof KawaError) {
+        const source = fs.readFileSync(scriptPath, 'utf-8');
+        initialError = formatDiagnostic(err.diagnostic, source);
+      } else if (err instanceof Error) {
+        initialError = err.message;
+      } else {
+        initialError = String(err);
+      }
+    }
+
     res.writeHead(200, {
       'Content-Type': 'text/html; charset=utf-8',
       'Cache-Control': 'no-cache, no-store, must-revalidate'
@@ -194,37 +212,47 @@ export function startDevServer(projectDir = '.', options: DevServerOptions = {})
   <style>
     body { margin: 0; padding: 0; background: #000; overflow: hidden; }
     #error-overlay {
-      display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.95);
+      display: ${initialError ? 'block' : 'none'}; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.95);
       color: #f43f5e; font-family: monospace; padding: 32px; z-index: 9999;
-      white-space: pre-wrap; font-size: 1.1rem; line-height: 1.5;
+      white-space: pre-wrap; font-size: 1.1rem; line-height: 1.5; overflow: auto;
     }
   </style>
 </head>
 <body>
-  <div id="error-overlay"></div>
+  <div id="error-overlay">${initialError ? initialError.replace(/</g, '&lt;').replace(/>/g, '&gt;') : ''}</div>
   <div id="app"></div>
 
   <script type="module">
     // Live Reload Connection
-    const sse = new EventSource('/__kawa_reload');
-    sse.onmessage = (e) => {
-      if (e.data === 'reload') window.location.reload();
-    };
+    try {
+      const sse = new EventSource('/__kawa_reload');
+      sse.onmessage = (e) => {
+        if (e.data === 'reload') window.location.reload();
+      };
+    } catch {}
+
+    // Inline runtime VM + DOM Renderer with Start Menu
+    ${getInlineRuntimeScript('/')}
 
     // Load story and mount game app
     async function init() {
       const errorEl = document.getElementById('error-overlay');
-      try {
-        const res = await fetch('/api/story.json');
-        const story = await res.json();
-        if (story.error) {
-          errorEl.style.display = 'block';
-          errorEl.textContent = story.error;
-          return;
-        }
+      if (errorEl.style.display === 'block' && errorEl.textContent.trim()) {
+        return;
+      }
 
-        // Inline runtime VM + DOM Renderer with Start Menu
-        ${getInlineRuntimeScript('/')}
+      try {
+        let story = ${storyJson};
+        if (!story) {
+          const res = await fetch('/api/story.json');
+          if (!res.ok) throw new Error('Failed to load story: HTTP ' + res.status);
+          story = await res.json();
+          if (story.error) {
+            errorEl.style.display = 'block';
+            errorEl.textContent = story.error;
+            return;
+          }
+        }
 
         const app = mountKawaApp(story, document.getElementById('app'));
         window.__kawa_app = app;
