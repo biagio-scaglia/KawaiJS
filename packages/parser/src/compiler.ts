@@ -275,6 +275,42 @@ export class Compiler {
             loc: stmt.loc
           });
           break;
+
+        case 'VfxStmt':
+          instructions.push({
+            type: 'vfx',
+            effect: stmt.effect,
+            intensity: stmt.intensity,
+            color: stmt.color,
+            loc: stmt.loc
+          });
+          break;
+
+        case 'CameraStmt':
+          instructions.push({
+            type: 'camera',
+            action: stmt.action,
+            duration: stmt.duration,
+            loc: stmt.loc
+          });
+          break;
+
+        case 'PauseStmt':
+          instructions.push({
+            type: 'pause',
+            duration: stmt.duration,
+            loc: stmt.loc
+          });
+          break;
+
+        case 'CgStmt':
+          instructions.push({
+            type: 'cg',
+            image: stmt.image,
+            unlockId: stmt.unlockId,
+            loc: stmt.loc
+          });
+          break;
       }
     }
 

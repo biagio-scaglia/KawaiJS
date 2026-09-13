@@ -23,6 +23,10 @@ export type Instruction =
   | { readonly type: 'branch'; readonly condition: string; readonly thenLabel: string; readonly elseLabel?: string; readonly loc?: SourceLocation }
   | { readonly type: 'play_audio'; readonly channel: 'music' | 'sound' | 'voice'; readonly track: string; readonly fade?: number; readonly loop?: boolean; readonly loc?: SourceLocation }
   | { readonly type: 'stop_audio'; readonly channel: 'music' | 'sound' | 'voice'; readonly fade?: number; readonly loc?: SourceLocation }
+  | { readonly type: 'vfx'; readonly effect: 'rain' | 'snow' | 'sakura' | 'fog' | 'tint' | 'stop'; readonly intensity?: number | string; readonly color?: string; readonly loc?: SourceLocation }
+  | { readonly type: 'camera'; readonly action: 'shake' | 'vpunch' | 'hpunch' | 'flash'; readonly duration?: number; readonly loc?: SourceLocation }
+  | { readonly type: 'pause'; readonly duration?: number; readonly loc?: SourceLocation }
+  | { readonly type: 'cg'; readonly image: string; readonly unlockId?: string; readonly loc?: SourceLocation }
   | { readonly type: 'return'; readonly loc?: SourceLocation };
 
 export interface StoryMeta {

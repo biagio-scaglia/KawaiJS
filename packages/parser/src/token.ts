@@ -25,6 +25,11 @@ export type TokenType =
   | 'FADEOUT'
   | 'LOOP'
   | 'NARRATOR'
+  | 'VFX'
+  | 'CAMERA'
+  | 'PAUSE'
+  | 'CG'
+  | 'AS'
   // Literals & Identifiers
   | 'IDENTIFIER'
   | 'STRING'
@@ -82,6 +87,11 @@ export const KEYWORDS_MAP = new Map<string, TokenType>([
   ['fade', 'FADEIN'],
   ['loop', 'LOOP'],
   ['narrator', 'NARRATOR'],
+  ['vfx', 'VFX'],
+  ['camera', 'CAMERA'],
+  ['pause', 'PAUSE'],
+  ['cg', 'CG'],
+  ['as', 'AS'],
   ['true', 'BOOLEAN'],
   ['false', 'BOOLEAN']
 ]);

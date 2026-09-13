@@ -17,7 +17,11 @@ export type ASTNodeType =
   | 'ElifBranch'
   | 'ElseBranch'
   | 'PlayStmt'
-  | 'StopStmt';
+  | 'StopStmt'
+  | 'VfxStmt'
+  | 'CameraStmt'
+  | 'PauseStmt'
+  | 'CgStmt';
 
 export interface BaseNode {
   readonly type: ASTNodeType;
@@ -42,7 +46,11 @@ export type StatementNode =
   | SetStmtNode
   | IfStmtNode
   | PlayStmtNode
-  | StopStmtNode;
+  | StopStmtNode
+  | VfxStmtNode
+  | CameraStmtNode
+  | PauseStmtNode
+  | CgStmtNode;
 
 export interface CharacterDeclNode extends BaseNode {
   readonly type: 'CharacterDecl';
@@ -145,3 +153,28 @@ export interface StopStmtNode extends BaseNode {
   readonly channel: 'music' | 'sound' | 'voice';
   readonly fade?: number;
 }
+
+export interface VfxStmtNode extends BaseNode {
+  readonly type: 'VfxStmt';
+  readonly effect: 'rain' | 'snow' | 'sakura' | 'fog' | 'tint' | 'stop';
+  readonly intensity?: number | string;
+  readonly color?: string;
+}
+
+export interface CameraStmtNode extends BaseNode {
+  readonly type: 'CameraStmt';
+  readonly action: 'shake' | 'vpunch' | 'hpunch' | 'flash';
+  readonly duration?: number;
+}
+
+export interface PauseStmtNode extends BaseNode {
+  readonly type: 'PauseStmt';
+  readonly duration?: number; // duration in seconds, or undefined for click-to-continue
+}
+
+export interface CgStmtNode extends BaseNode {
+  readonly type: 'CgStmt';
+  readonly image: string;
+  readonly unlockId?: string;
+}
+

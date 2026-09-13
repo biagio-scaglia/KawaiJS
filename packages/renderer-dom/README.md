@@ -41,12 +41,15 @@ const renderer = new DOMRenderer(vm, {
 
 ## Features
 
-- **Ren'Py-Style Start / Main Menu**: Start Game, Continue, Load, Preferences, About, and Quit. Fully customizable through `MainMenuOptions` or standard CSS.
+- **Ren'Py-Style Start / Main Menu**: Start Game, Continue, Load, CG Gallery, Preferences, About, and Quit. Fully customizable through `MainMenuOptions` or standard CSS.
+- **Atmospheric VFX Layer**: GPU-accelerated canvas particles (`sakura`, `rain`, `snow`, `fog`, `tint`).
+- **Camera Directives & Shakes**: `shake`, `vpunch`, `hpunch`, and screen `flash`.
+- **Unlockable CG Gallery & Lightbox**: Fullscreen illustration modal with progress tracking and lightbox viewer.
 - **Save & Load Modals**: Multi-slot save system with live state previews, slot deletion, and timestamps.
 - **Preferences Modal**: Interactive sliders for Typewriter speed, Auto-forward delay, Music and SFX volume.
 - **Dialogue History / Backlog**: Formatted log of all past speaker interactions.
 - **Responsive 16:9 Letterboxing**: Automatically scales to any screen aspect ratio.
-- **Rich Text Engine**: Built-in support for `{b}`, `{i}`, `{color=...}`, `{size=...}` tags with XSS sanitization.
+- **Rich Text & Interpolation**: Built-in support for dynamic variables `[var]`, `{b}`, `{i}`, `{color=...}`, `{size=...}` tags with XSS sanitization.
 - **Keyboard Navigation**: Full keyboard shortcut integration (<kbd>Space</kbd>, <kbd>Backspace</kbd>, <kbd>A</kbd>, <kbd>Tab</kbd>, <kbd>S</kbd>, <kbd>L</kbd>, <kbd>H</kbd>, <kbd>P</kbd>, <kbd>Esc</kbd>).
 
 ## License

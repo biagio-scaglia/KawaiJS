@@ -76,6 +76,33 @@ label start:
     }
   });
 
+  it('parses vfx, camera, pause, and cg directives', () => {
+    const code = `label start:
+    vfx sakura
+    vfx tint "rgba(255,100,100,0.3)"
+    camera shake 500
+    camera flash
+    pause 1200
+    cg "memories_sunset.jpg" as "cg_sunset"
+    vfx stop
+`;
+    const parser = Parser.fromSource(code);
+    const ast = parser.parse();
+
+    const labelDecl = ast.statements[0];
+    expect(labelDecl?.type).toBe('LabelDecl');
+    if (labelDecl?.type === 'LabelDecl') {
+      expect(labelDecl.body.length).toBe(7);
+      expect(labelDecl.body[0]?.type).toBe('VfxStmt');
+      expect(labelDecl.body[1]?.type).toBe('VfxStmt');
+      expect(labelDecl.body[2]?.type).toBe('CameraStmt');
+      expect(labelDecl.body[3]?.type).toBe('CameraStmt');
+      expect(labelDecl.body[4]?.type).toBe('PauseStmt');
+      expect(labelDecl.body[5]?.type).toBe('CgStmt');
+      expect(labelDecl.body[6]?.type).toBe('VfxStmt');
+    }
+  });
+
   it('formats helpful diagnostics on syntax error', () => {
     const invalidCode = `label start:
     jump

@@ -2,7 +2,7 @@ import type { Instruction, StoryPackage } from '@kawaijs/ast';
 import { cloneState, createInitialState, type Snapshot, type StoryState } from './state.js';
 import { HistoryManager } from './history.js';
 import { computeStoryHash, SaveManager, type SaveSlot, type LoadResult } from './save.js';
-import { applySetOperation, evaluateCondition, isSafeKey } from './evaluator.js';
+import { applySetOperation, evaluateCondition, interpolateVariables, isSafeKey } from './evaluator.js';
 
 export interface AudioEvent {
   readonly action: 'play' | 'stop';
@@ -12,8 +12,14 @@ export interface AudioEvent {
   readonly loop?: boolean;
 }
 
+export interface CameraEvent {
+  readonly action: 'shake' | 'vpunch' | 'hpunch' | 'flash';
+  readonly duration?: number;
+}
+
 export type StateChangeListener = (state: StoryState) => void;
 export type AudioEventListener = (event: AudioEvent) => void;
+export type CameraEventListener = (event: CameraEvent) => void;
 export type TickListener = (deltaMs: number, totalTimeMs: number) => void;
 
 export class StoryVM {
@@ -26,6 +32,7 @@ export class StoryVM {
 
   private stateChangeListeners = new Set<StateChangeListener>();
   private audioEventListeners = new Set<AudioEventListener>();
+  private cameraEventListeners = new Set<CameraEventListener>();
   private tickListeners = new Set<TickListener>();
 
   private executionTrace: string[] = [];
@@ -94,6 +101,17 @@ export class StoryVM {
   public onAudioEvent(listener: AudioEventListener): () => void {
     this.audioEventListeners.add(listener);
     return () => this.audioEventListeners.delete(listener);
+  }
+
+  public onCameraEvent(listener: CameraEventListener): () => void {
+    this.cameraEventListeners.add(listener);
+    return () => this.cameraEventListeners.delete(listener);
+  }
+
+  private emitCameraEvent(event: CameraEvent): void {
+    for (const listener of this.cameraEventListeners) {
+      listener(event);
+    }
   }
 
   public start(): void {
@@ -278,7 +296,9 @@ export class StoryVM {
           visual: {
             background: inst.background,
             transition: inst.transition ?? null,
-            characters: {} // Clear characters on new scene
+            characters: {}, // Clear characters on new scene
+            vfx: null,
+            activeCG: null
           }
         };
         break;
@@ -295,7 +315,8 @@ export class StoryVM {
               ...this.state.visual.characters,
               [inst.character]: {
                 expression: inst.expression ?? charDef.expression,
-                position: inst.position ?? charDef.position ?? 'center'
+                position: inst.position ?? charDef.position ?? 'center',
+                transition: inst.transition ?? charDef.transition
               }
             }
           }
@@ -321,7 +342,8 @@ export class StoryVM {
         const charDef = inst.speaker ? this.story.characters[inst.speaker] : undefined;
         const displayName = charDef?.name ?? inst.speaker;
         const color = charDef?.color;
-        this.recordTrace(`DIALOGUE ${displayName ? `[${displayName}] ` : ''}${inst.text}`);
+        const interpolatedText = interpolateVariables(inst.text, this.state.variables);
+        this.recordTrace(`DIALOGUE ${displayName ? `[${displayName}] ` : ''}${interpolatedText}`);
 
         this.state = {
           ...this.state,
@@ -329,25 +351,81 @@ export class StoryVM {
             speaker: inst.speaker,
             speakerDisplayName: displayName,
             speakerColor: color,
-            text: inst.text
+            text: interpolatedText
           },
           isWaitingForInput: true
         };
 
-        this.historyManager.addEntry(inst.speaker, displayName, inst.text);
+        this.historyManager.addEntry(inst.speaker, displayName, interpolatedText);
         break;
       }
 
       case 'choice': {
-        const availableChoices = inst.choices.filter(choice => {
-          if (!choice.condition) return true;
-          return evaluateCondition(choice.condition, this.state.variables);
-        });
+        const availableChoices = inst.choices
+          .filter(choice => {
+            if (!choice.condition) return true;
+            return evaluateCondition(choice.condition, this.state.variables);
+          })
+          .map(choice => ({
+            ...choice,
+            text: interpolateVariables(choice.text, this.state.variables)
+          }));
+
         this.recordTrace(`CHOICES [${availableChoices.map(c => c.text).join(', ')}]`);
         this.state = {
           ...this.state,
           choices: availableChoices,
           isWaitingForInput: true
+        };
+        break;
+      }
+
+      case 'vfx': {
+        this.recordTrace(`VFX ${inst.effect}${inst.intensity !== undefined ? ` ${inst.intensity}` : ''}${inst.color ? ` ${inst.color}` : ''}`);
+        this.state = {
+          ...this.state,
+          visual: {
+            ...this.state.visual,
+            vfx: inst.effect === 'stop' ? null : {
+              effect: inst.effect,
+              intensity: inst.intensity,
+              color: inst.color
+            }
+          }
+        };
+        break;
+      }
+
+      case 'camera': {
+        this.recordTrace(`CAMERA ${inst.action}${inst.duration !== undefined ? ` ${inst.duration}` : ''}`);
+        this.emitCameraEvent({
+          action: inst.action,
+          duration: inst.duration
+        });
+        break;
+      }
+
+      case 'pause': {
+        this.recordTrace(`PAUSE${inst.duration !== undefined ? ` ${inst.duration}` : ''}`);
+        this.state = {
+          ...this.state,
+          isWaitingForInput: true
+        };
+        break;
+      }
+
+      case 'cg': {
+        const unlockKey = inst.unlockId || inst.image;
+        this.recordTrace(`CG ${inst.image}`);
+        const nextUnlocked = Object.assign(Object.create(null), this.state.unlockedCGs);
+        nextUnlocked[unlockKey] = true;
+        this.state = {
+          ...this.state,
+          visual: {
+            ...this.state.visual,
+            activeCG: inst.image
+          },
+          unlockedCGs: nextUnlocked
         };
         break;
       }

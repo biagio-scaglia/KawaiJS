@@ -204,3 +204,16 @@ export function applySetOperation(
       return resolved;
   }
 }
+/**
+ * Interpolates variables in dialogue or prompt strings (e.g. "Hello [player_name]!").
+ */
+export function interpolateVariables(text: string, variables: Record<string, unknown>): string {
+  if (!text || !text.includes('[')) return text;
+  return text.replace(/\[([a-zA-Z_][a-zA-Z0-9_]*)\]/g, (match, varName) => {
+    if (hasVar(variables, varName)) {
+      const val = variables[varName];
+      return val !== undefined && val !== null ? String(val) : '';
+    }
+    return match;
+  });
+}

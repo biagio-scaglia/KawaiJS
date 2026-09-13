@@ -5,6 +5,7 @@ import { showSaveLoadModal } from '../modals/save-load-modal.js';
 import { showSettingsModal } from '../modals/settings-modal.js';
 import { showAboutModal } from '../modals/about-modal.js';
 import { showConfirmModal } from '../modals/confirm-modal.js';
+import { showGalleryModal } from '../modals/gallery-modal.js';
 
 export interface MainMenuComponentCallbacks {
   onStartNewGame: () => void;
@@ -94,7 +95,7 @@ export class MainMenuComponent {
   }
 
   public getDefaultMenuItems(): MainMenuItem[] {
-    return [
+    const items: MainMenuItem[] = [
       {
         id: 'start',
         label: 'Start Game',
@@ -112,7 +113,19 @@ export class MainMenuComponent {
         label: 'Load Game',
         icon: SVG_ICONS.load,
         action: 'load'
-      },
+      }
+    ];
+
+    if (this.options?.galleryItems && this.options.galleryItems.length > 0) {
+      items.push({
+        id: 'gallery',
+        label: 'CG Gallery',
+        icon: SVG_ICONS.image,
+        action: 'gallery'
+      });
+    }
+
+    items.push(
       {
         id: 'settings',
         label: 'Preferences',
@@ -131,7 +144,9 @@ export class MainMenuComponent {
         icon: SVG_ICONS.power,
         action: 'quit'
       }
-    ];
+    );
+
+    return items;
   }
 
   private buildDOM(): void {
@@ -219,6 +234,11 @@ export class MainMenuComponent {
           void showSaveLoadModal(this.rootEl, this.vm, 'load', () => {
             this.hide();
           });
+        } else if (item.action === 'gallery') {
+          const galleryItems = this.options?.galleryItems ?? [];
+          showGalleryModal(this.rootEl, this.vm, galleryItems, (path) =>
+            this.callbacks.assetResolver(path, 'background')
+          );
         } else if (item.action === 'settings') {
           showSettingsModal(this.rootEl, this.callbacks.getSettingsConfig());
         } else if (item.action === 'about') {

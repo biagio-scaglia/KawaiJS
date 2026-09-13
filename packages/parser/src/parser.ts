@@ -17,7 +17,11 @@ import type {
   ShowStmtNode,
   SourceLocation,
   StatementNode,
-  StopStmtNode
+  StopStmtNode,
+  VfxStmtNode,
+  CameraStmtNode,
+  PauseStmtNode,
+  CgStmtNode
 } from '@kawaijs/ast';
 import { createLocation } from '@kawaijs/ast';
 import { Token, TokenType } from './token.js';
@@ -92,6 +96,14 @@ export class Parser {
         return this.parsePlayStmt();
       case 'STOP':
         return this.parseStopStmt();
+      case 'VFX':
+        return this.parseVfxStmt();
+      case 'CAMERA':
+        return this.parseCameraStmt();
+      case 'PAUSE':
+        return this.parsePauseStmt();
+      case 'CG':
+        return this.parseCgStmt();
       case 'STRING':
         // Narration without speaker identifier
         return this.parseDialogueStmt();
@@ -498,6 +510,117 @@ export class Parser {
       type: 'StopStmt',
       channel: channelTok.value.toLowerCase() as 'music' | 'sound' | 'voice',
       fade,
+      loc: createLocation(this.file, startTok.loc.start, this.previousLocation().end)
+    };
+  }
+
+  private parseVfxStmt(): VfxStmtNode {
+    const startTok = this.consume('VFX', 'Expected "vfx" keyword');
+    const effectTok = this.advance();
+    const effectName = effectTok.value.toLowerCase();
+    const validEffects = ['rain', 'snow', 'sakura', 'fog', 'tint', 'stop'];
+
+    if (!validEffects.includes(effectName)) {
+      throw new KawaError({
+        code: 'E0107',
+        message: `Invalid VFX effect '${effectTok.value}'. Expected one of: ${validEffects.join(', ')}`,
+        severity: 'error',
+        loc: effectTok.loc
+      });
+    }
+
+    let intensity: number | string | undefined;
+    let color: string | undefined;
+
+    if (effectName === 'tint') {
+      if (this.check('COLOR')) {
+        color = this.advance().value;
+      } else if (this.check('STRING')) {
+        color = this.advance().value;
+      } else if (this.check('IDENTIFIER')) {
+        color = this.advance().value;
+      }
+    } else if (effectName !== 'stop') {
+      if (this.check('NUMBER')) {
+        intensity = Number(this.advance().value);
+      } else if (this.check('IDENTIFIER')) {
+        intensity = this.advance().value;
+      }
+    }
+
+    this.consumeOptionalNewline();
+    return {
+      type: 'VfxStmt',
+      effect: effectName as 'rain' | 'snow' | 'sakura' | 'fog' | 'tint' | 'stop',
+      intensity,
+      color,
+      loc: createLocation(this.file, startTok.loc.start, this.previousLocation().end)
+    };
+  }
+
+  private parseCameraStmt(): CameraStmtNode {
+    const startTok = this.consume('CAMERA', 'Expected "camera" keyword');
+    const actionTok = this.advance();
+    const actionName = actionTok.value.toLowerCase();
+    const validActions = ['shake', 'vpunch', 'hpunch', 'flash'];
+
+    if (!validActions.includes(actionName)) {
+      throw new KawaError({
+        code: 'E0108',
+        message: `Invalid camera action '${actionTok.value}'. Expected one of: ${validActions.join(', ')}`,
+        severity: 'error',
+        loc: actionTok.loc
+      });
+    }
+
+    let duration: number | undefined;
+    if (this.check('NUMBER')) {
+      duration = Number(this.advance().value);
+    }
+
+    this.consumeOptionalNewline();
+    return {
+      type: 'CameraStmt',
+      action: actionName as 'shake' | 'vpunch' | 'hpunch' | 'flash',
+      duration,
+      loc: createLocation(this.file, startTok.loc.start, this.previousLocation().end)
+    };
+  }
+
+  private parsePauseStmt(): PauseStmtNode {
+    const startTok = this.consume('PAUSE', 'Expected "pause" keyword');
+    let duration: number | undefined;
+
+    if (this.check('NUMBER')) {
+      duration = Number(this.advance().value);
+    }
+
+    this.consumeOptionalNewline();
+    return {
+      type: 'PauseStmt',
+      duration,
+      loc: createLocation(this.file, startTok.loc.start, this.previousLocation().end)
+    };
+  }
+
+  private parseCgStmt(): CgStmtNode {
+    const startTok = this.consume('CG', 'Expected "cg" keyword');
+    const imageTok = this.consume('STRING', 'Expected image filename or path in quotes after "cg"');
+
+    let unlockId: string | undefined;
+    if (this.match('AS')) {
+      if (this.check('STRING')) {
+        unlockId = this.advance().value;
+      } else {
+        unlockId = this.consume('IDENTIFIER', 'Expected unlock identifier after "as"').value;
+      }
+    }
+
+    this.consumeOptionalNewline();
+    return {
+      type: 'CgStmt',
+      image: imageTok.value,
+      unlockId,
       loc: createLocation(this.file, startTok.loc.start, this.previousLocation().end)
     };
   }

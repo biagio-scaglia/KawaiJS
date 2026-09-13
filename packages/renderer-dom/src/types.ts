@@ -62,11 +62,18 @@ export function preloadStoryAssets(story: StoryPackage, assetResolver: (path: st
   }
 }
 
+export interface GalleryItem {
+  readonly id: string;
+  readonly title: string;
+  readonly image: string;
+  readonly thumbnail?: string;
+}
+
 export interface MainMenuItem {
   id?: string;
   label: string;
   icon?: string;
-  action: 'start' | 'continue' | 'load' | 'settings' | 'about' | 'history' | 'quit' | (() => void);
+  action: 'start' | 'continue' | 'load' | 'gallery' | 'settings' | 'about' | 'history' | 'quit' | (() => void);
   condition?: () => boolean;
   className?: string;
 }
@@ -83,6 +90,7 @@ export interface MainMenuOptions {
   backgroundUrl?: string;
   bgmTrack?: string;
   items?: MainMenuItem[];
+  galleryItems?: readonly GalleryItem[];
   customFooter?: string;
   onStart?: () => void;
   onOpen?: () => void;

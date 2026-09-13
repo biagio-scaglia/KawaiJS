@@ -3,27 +3,31 @@ character yumia "Yumia" #f43f5e
 character kaori "Kaori" #0284c7
 
 label start:
+    set player_name = "Developer"
     set dev_score = 0
     set creative_score = 0
 
     play music bgm_ambient fade 2
 
     scene bg classroom
+    vfx sakura
     show yumia happy at left
     show kaori normal at right
 
-    yumia "Welcome to the {b}Game Development Club{/b}! I'm Yumia, the lead writer and designer."
+    yumia "Welcome to the {b}Game Development Club{/b}, [player_name]! I'm Yumia, the lead writer and designer."
     kaori "And I'm Kaori. I oversee the {color=#38bdf8}engine architecture{/color} and Web Audio pipeline."
 
     yumia "We're building our next visual novel using {b}Kawaijs{/b} — a modern, web-native scripting engine."
     kaori "It compiles human-friendly .kawa scripts directly into deterministic bytecode that runs smoothly in any browser."
 
     play sound sfx_sparkle
-    yumia "We need your help to choose our project's main direction! What is your biggest strength?"
+    camera flash
+    yumia "We need your help to choose our project's main direction, [player_name]! What is your biggest strength?"
 
     menu:
         "High-performance architecture & Web Audio":
             play sound sfx_click
+            camera shake
             set dev_score += 2
             show kaori happy at right
             show yumia normal at left

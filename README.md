@@ -123,17 +123,51 @@ label leave_early:
 | **Audio - Voice** | `play voice "<file>"` | `play voice "yumia_01.mp3"` |
 | **Stop Audio** | `stop music [fadeout <s>]` | `stop music fadeout 2.0` |
 | **Navigation** | `jump <label>` / `call <label>` / `return` | `jump next_chapter` |
+| **Variable Interpolation** | `"<text> [var_name] <text>"` | `"Hello [player_name], you have [gold] coins!"` |
+| **VFX Weather & Atmosphere** | `vfx <rain\|snow\|sakura\|fog\|tint\|stop> [<intensity\|color>]` | `vfx sakura` / `vfx tint "#f43f5e"` / `vfx stop` |
+| **Camera & Shake Effects** | `camera <shake\|vpunch\|hpunch\|flash> [<duration_ms>]` | `camera shake 600` / `camera flash` |
+| **Timed Pause** | `pause [<duration_ms>]` | `pause 1200` |
+| **Fullscreen Event CG** | `cg "<image>" [as "<unlock_id>"]` | `cg "cg_sunset.jpg" as "sunset"` |
 
 ---
 
-### 🖋️ Rich Text Formatting
+### 🖋️ Rich Text & Variable Interpolation
 
-Kawaijs supports inline text tags inside dialogue strings:
+Kawaijs supports inline text tags and dynamic variable interpolation:
 
-- `{b}Bold Text{/b}` ➔ **Bold Text**
-- `{i}Italic Text{/i}` ➔ *Italic Text*
-- `{color=#f43f5e}Custom Color{/color}` ➔ <span style="color:#f43f5e">Custom Color</span>
-- `{size=1.3rem}Sized Text{/size}` ➔ Custom font size
+- **Variables**: `"Hello, [player_name]! Your affinity is [affinity]."`
+- **Bold**: `{b}Bold Text{/b}` ➔ **Bold Text**
+- **Italic**: `{i}Italic Text{/i}` ➔ *Italic Text*
+- **Color**: `{color=#f43f5e}Custom Color{/color}` ➔ <span style="color:#f43f5e">Custom Color</span>
+- **Font Size**: `{size=1.3rem}Sized Text{/size}` ➔ Custom font size
+
+---
+
+### ✨ Visual Effects & Camera Directives
+
+Bring your scenes to life with hardware-accelerated ambient effects and camera dynamics:
+
+```kawa
+label dramatic_scene:
+    # 1. Weather particle systems
+    vfx rain
+    vfx sakura 50
+    vfx fog
+    vfx tint "#3b82f6"
+    vfx stop
+
+    # 2. Camera shakes and flashes
+    camera shake 500
+    camera vpunch
+    camera hpunch
+    camera flash
+
+    # 3. Timed dramatic pause
+    pause 1500
+
+    # 4. Fullscreen CG illustration & unlock in Gallery
+    cg "memories_under_rain.jpg" as "rain_cg"
+```
 
 ---
 
@@ -143,6 +177,7 @@ Kawaijs includes an out-of-the-box Ren'Py-style Main Menu with:
 - **Start Game** (New Game)
 - **Continue** (Quick-load latest save)
 - **Load Game** (Multi-slot save viewer with preview texts & timestamps)
+- **CG Gallery** (Unlockable event illustrations & lightbox viewer)
 - **Preferences** (Text display speed slider, Auto-forward delay, Music & SFX volumes)
 - **About** (Credits & metadata)
 - **Quit**

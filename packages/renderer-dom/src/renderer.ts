@@ -16,6 +16,7 @@ import { showSaveLoadModal } from './modals/save-load-modal.js';
 import { showSettingsModal } from './modals/settings-modal.js';
 import { showHistoryModal } from './modals/history-modal.js';
 import { showAboutModal } from './modals/about-modal.js';
+import { showGalleryModal } from './modals/gallery-modal.js';
 
 import { ViewportAdapter } from './layout/viewport-adapter.js';
 
@@ -27,12 +28,14 @@ export * from './modals/save-load-modal.js';
 export * from './modals/settings-modal.js';
 export * from './modals/history-modal.js';
 export * from './modals/about-modal.js';
+export * from './modals/gallery-modal.js';
 export * from './modals/confirm-modal.js';
 export * from './components/main-menu.js';
 export * from './components/dialogue-box.js';
 export * from './components/choice-menu.js';
 export * from './components/quick-menu.js';
 export * from './components/stage-layer.js';
+export * from './components/vfx-layer.js';
 
 export class DOMRenderer {
   private readonly vm: StoryVM;
@@ -60,6 +63,7 @@ export class DOMRenderer {
   private skipInterval: number | null = null;
 
   private unsubscribeVMState?: () => void;
+  private unsubscribeCamera?: () => void;
   private boundKeyHandler?: (e: KeyboardEvent) => void;
 
   constructor(vm: StoryVM, options: DOMRendererOptions) {
@@ -101,6 +105,14 @@ export class DOMRenderer {
       this.render(state);
     });
 
+    this.unsubscribeCamera = this.vm.onCameraEvent((e) => {
+      if (e.action === 'flash') {
+        this.flashScreen();
+      } else {
+        this.shakeScreen(e.action);
+      }
+    });
+
     // Default: Show Ren'Py-style Main Menu before entering story, unless explicitly disabled
     if (this.mainMenuOptions?.enabled !== false) {
       this.showMainMenu();
@@ -113,8 +125,14 @@ export class DOMRenderer {
     if (this.unsubscribeVMState) {
       this.unsubscribeVMState();
     }
+    if (this.unsubscribeCamera) {
+      this.unsubscribeCamera();
+    }
     if (this.dialogueBox) {
       this.dialogueBox.destroy();
+    }
+    if (this.stageLayer) {
+      this.stageLayer.destroy();
     }
     if (this.viewportAdapter) {
       this.viewportAdapter.destroy();
@@ -262,6 +280,13 @@ export class DOMRenderer {
 
   public showAboutModal(): void {
     showAboutModal(this.rootEl, this.mainMenuOptions);
+  }
+
+  public showGalleryModal(): void {
+    const galleryItems = this.mainMenuOptions?.galleryItems ?? [];
+    showGalleryModal(this.rootEl, this.vm, galleryItems, (path) =>
+      this.assetResolver(path, 'background')
+    );
   }
 
   private updateModeUI(): void {
@@ -482,17 +507,23 @@ export class DOMRenderer {
     // 2. Character sprites
     this.stageLayer.updateCharacters(state.visual.characters);
 
-    // 3. Branching Choice Menu
+    // 3. VFX & Atmospheric Layer
+    this.stageLayer.updateVfx(state.visual.vfx);
+
+    // 4. Fullscreen CG Layer
+    this.stageLayer.updateCG(state.visual.activeCG);
+
+    // 5. Branching Choice Menu
     this.choiceMenu.render(state.choices);
 
-    // 4. Dialogue Box
+    // 6. Dialogue Box
     this.dialogueBox.render(state.dialogue, () => {
       if (this.isAutoMode && !state.isFinished && (!state.choices || state.choices.length === 0)) {
         this.scheduleAutoAdvance();
       }
     });
 
-    // 5. Ending Screen if finished
+    // 7. Ending Screen if finished
     if (state.isFinished) {
       this.renderEndingCard();
     } else {

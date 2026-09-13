@@ -255,12 +255,68 @@ label start:
     vm.start();
     expect(vm.getState().variables['greeting']).toBe('Hello, World!');
     expect(vm.getState().variables['counter']).toBe(6);
+  });
 
-    // Calling start() again should reset variables and state cleanly
+  it('interpolates variables in dialogue and choices dynamically', () => {
+    const code = `label start:
+    set player_name = "Alex"
+    set gold = 50
+    "Welcome, [player_name]! You currently have [gold] coins."
+    menu:
+        "Give [gold] gold to [player_name]":
+            "Gave gold!"
+`;
+    const story = compileScript(code);
+    const vm = new StoryVM(story);
+
     vm.start();
-    expect(vm.getState().variables['greeting']).toBe('Hello, World!');
-    expect(vm.getState().variables['counter']).toBe(6);
+    expect(vm.getState().dialogue?.text).toBe('Welcome, Alex! You currently have 50 coins.');
+
+    vm.next();
+    expect(vm.getState().choices?.length).toBe(1);
+    expect(vm.getState().choices?.[0]?.text).toBe('Give 50 gold to Alex');
+  });
+
+  it('handles VFX states and CG unlocks seamlessly', () => {
+    const code = `label start:
+    vfx rain
+    cg "event_cg_1.jpg" as "beach_cg"
+    "Look at the rain!"
+    vfx stop
+    "Rain stopped."
+`;
+    const story = compileScript(code);
+    const vm = new StoryVM(story);
+
+    vm.start();
+    expect(vm.getState().visual.vfx?.effect).toBe('rain');
+    expect(vm.getState().visual.activeCG).toBe('event_cg_1.jpg');
+    expect(vm.getState().unlockedCGs?.['beach_cg']).toBe(true);
+
+    vm.next();
+    expect(vm.getState().visual.vfx).toBeNull();
+  });
+
+  it('triggers camera events for shake and flash', () => {
+    const code = `label start:
+    camera shake 600
+    camera flash
+    "Screen shook and flashed!"
+`;
+    const story = compileScript(code);
+    const vm = new StoryVM(story);
+    const cameraEvents: Array<{ action: string; duration?: number }> = [];
+
+    vm.onCameraEvent((e) => cameraEvents.push(e));
+
+    vm.start();
+    expect(cameraEvents.length).toBe(2);
+    expect(cameraEvents[0]?.action).toBe('shake');
+    expect(cameraEvents[0]?.duration).toBe(600);
+    expect(cameraEvents[1]?.action).toBe('flash');
+    expect(vm.getState().dialogue?.text).toBe('Screen shook and flashed!');
   });
 });
+
 
 

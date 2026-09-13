@@ -1194,6 +1194,325 @@ html, body {
   font-weight: 500;
 }
 
+/* ==========================================================================
+   VFX & Atmospheric Particle Layer
+   ========================================================================== */
+
+.kawa-vfx-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 5;
+  overflow: hidden;
+}
+
+.kawa-vfx-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.kawa-vfx-tint {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  transition: background-color 0.5s ease-in-out;
+  mix-blend-mode: multiply;
+}
+
+.kawa-vfx-fog {
+  position: absolute;
+  inset: -50%;
+  pointer-events: none;
+  background: radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.15) 0%, rgba(200, 220, 240, 0.05) 50%, transparent 80%);
+  filter: blur(20px);
+  animation: kawa-fog-drift 20s ease-in-out infinite alternate;
+}
+
+@keyframes kawa-fog-drift {
+  0% { transform: translate(-5%, -5%) scale(1); }
+  50% { transform: translate(5%, 3%) scale(1.1); }
+  100% { transform: translate(-3%, 5%) scale(1); }
+}
+
+/* ==========================================================================
+   Fullscreen CG Layer
+   ========================================================================== */
+
+.kawa-cg-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 15;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  animation: kawa-fade-in 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* ==========================================================================
+   Camera Shake, Flash & Stage Directives
+   ========================================================================== */
+
+.kawa-shake {
+  animation: kawa-shake-anim 0.5s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+}
+
+.kawa-vpunch {
+  animation: kawa-vpunch-anim 0.4s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+}
+
+.kawa-hpunch {
+  animation: kawa-hpunch-anim 0.4s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+}
+
+@keyframes kawa-shake-anim {
+  10%, 90% { transform: translate3d(-3px, -2px, 0); }
+  20%, 80% { transform: translate3d(5px, 4px, 0); }
+  30%, 50%, 70% { transform: translate3d(-6px, -4px, 0); }
+  40%, 60% { transform: translate3d(6px, 3px, 0); }
+}
+
+@keyframes kawa-vpunch-anim {
+  0%, 100% { transform: translateY(0); }
+  20%, 60% { transform: translateY(-16px); }
+  40%, 80% { transform: translateY(14px); }
+}
+
+@keyframes kawa-hpunch-anim {
+  0%, 100% { transform: translateX(0); }
+  20%, 60% { transform: translateX(-18px); }
+  40%, 80% { transform: translateX(18px); }
+}
+
+.kawa-flash-overlay {
+  position: absolute;
+  inset: 0;
+  background: #ffffff;
+  z-index: 50;
+  pointer-events: none;
+  animation: kawa-flash-anim 0.6s ease-out forwards;
+}
+
+@keyframes kawa-flash-anim {
+  0% { opacity: 0.95; }
+  100% { opacity: 0; }
+}
+
+/* ==========================================================================
+   Character Sprite Animations
+   ========================================================================== */
+
+.kawa-anim-bounce {
+  animation: kawa-sprite-bounce 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+.kawa-anim-shake {
+  animation: kawa-sprite-shake 0.4s ease-in-out both;
+}
+
+.kawa-anim-nod {
+  animation: kawa-sprite-nod 0.5s ease-in-out both;
+}
+
+.kawa-anim-slideleft {
+  animation: kawa-sprite-slide-left 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.kawa-anim-slideright {
+  animation: kawa-sprite-slide-right 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.kawa-anim-dissolve {
+  animation: kawa-fade-in 0.6s ease-out both;
+}
+
+@keyframes kawa-sprite-bounce {
+  0%, 100% { transform: translateY(0); }
+  30% { transform: translateY(-30px) scaleY(1.04); }
+  60% { transform: translateY(8px) scaleY(0.96); }
+  80% { transform: translateY(-10px) scaleY(1.01); }
+}
+
+@keyframes kawa-sprite-shake {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-12px) rotate(-1deg); }
+  40% { transform: translateX(12px) rotate(1deg); }
+  60% { transform: translateX(-8px) rotate(-0.5deg); }
+  80% { transform: translateX(8px) rotate(0.5deg); }
+}
+
+@keyframes kawa-sprite-nod {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  40% { transform: translateY(18px) rotate(2deg); }
+  70% { transform: translateY(-4px) rotate(-0.5deg); }
+}
+
+@keyframes kawa-sprite-slide-left {
+  0% { transform: translateX(60px); opacity: 0; }
+  100% { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes kawa-sprite-slide-right {
+  0% { transform: translateX(-60px); opacity: 0; }
+  100% { transform: translateX(0); opacity: 1; }
+}
+
+/* ==========================================================================
+   CG Gallery Modal
+   ========================================================================== */
+
+.kawa-gallery-body {
+  padding: 20px;
+  max-height: 70vh;
+  overflow-y: auto;
+}
+
+.kawa-gallery-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 16px;
+}
+
+.kawa-gallery-card {
+  display: flex;
+  flex-direction: column;
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  overflow: hidden;
+  transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+}
+
+.kawa-gallery-card.unlocked {
+  cursor: pointer;
+}
+
+.kawa-gallery-card.unlocked:hover {
+  transform: translateY(-4px) scale(1.02);
+  border-color: rgba(244, 63, 94, 0.5);
+  box-shadow: 0 12px 28px rgba(244, 63, 94, 0.35);
+}
+
+.kawa-gallery-thumb-container {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  background: #020617;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.kawa-gallery-thumb {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.4s ease;
+}
+
+.kawa-gallery-card.unlocked:hover .kawa-gallery-thumb {
+  transform: scale(1.08);
+}
+
+.kawa-gallery-locked {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  color: #64748b;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.kawa-gallery-lock-icon svg {
+  width: 24px;
+  height: 24px;
+  fill: currentColor;
+}
+
+.kawa-gallery-info {
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.kawa-gallery-title {
+  font-family: var(--kawa-font-heading);
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #ffffff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.kawa-gallery-desc {
+  font-size: 0.75rem;
+  color: #94a3b8;
+  line-height: 1.3;
+}
+
+.kawa-gallery-empty {
+  text-align: center;
+  padding: 40px 20px;
+  color: #94a3b8;
+  font-size: 1rem;
+}
+
+.kawa-gallery-lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background: rgba(2, 6, 23, 0.94);
+  backdrop-filter: blur(12px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  animation: kawa-fade-in 0.25s ease-out;
+  cursor: pointer;
+}
+
+.kawa-gallery-lightbox-img {
+  max-width: 95%;
+  max-height: 90vh;
+  object-fit: contain;
+  border-radius: 8px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8);
+  cursor: default;
+  animation: kawa-pop-in 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.kawa-gallery-lightbox-close {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  background: rgba(15, 23, 42, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #ffffff;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.kawa-gallery-lightbox-close:hover {
+  background: var(--kawa-primary-accent);
+  transform: scale(1.1);
+}
+
 
 
 

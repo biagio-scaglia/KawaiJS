@@ -348,7 +348,53 @@ label start:
 
     renderer.destroy();
   });
+
+  it('renders VFX layer and CG illustration, and opens CG Gallery modal', () => {
+    const vfxScript = `label start:
+    vfx rain
+    cg "event_cg_1.jpg" as "cg_1"
+    "Look at the CG!"
+`;
+    const story = compileScript(vfxScript);
+    const vm = new StoryVM(story);
+    const renderer = new DOMRenderer(vm, {
+      container,
+      mainMenu: {
+        enabled: true,
+        galleryItems: [
+          { id: 'cg_1', title: 'Rainy Day Meeting', image: 'event_cg_1.jpg' }
+        ]
+      }
+    });
+
+    // Verify Gallery button is present in Main Menu when galleryItems are provided
+    const galleryBtn = container.querySelector('.kawa-main-menu-btn[data-action="gallery"]') as HTMLButtonElement;
+    expect(galleryBtn).not.toBeNull();
+    expect(galleryBtn.textContent).toContain('CG Gallery');
+
+    // Click Gallery button to open modal
+    galleryBtn.click();
+    let modal = container.querySelector('.kawa-modal-overlay');
+    expect(modal).not.toBeNull();
+    expect(modal?.querySelector('.kawa-modal-title')?.textContent).toContain('CG & Event Gallery');
+
+    // Close modal
+    (modal?.querySelector('.kawa-btn') as HTMLButtonElement).click();
+    expect(container.querySelector('.kawa-modal-overlay')).toBeNull();
+
+    // Start story and verify VFX & CG elements
+    renderer.startNewGame();
+    const vfxLayer = container.querySelector('.kawa-vfx-layer');
+    expect(vfxLayer).not.toBeNull();
+
+    const cgLayer = container.querySelector('.kawa-cg-layer') as HTMLElement;
+    expect(cgLayer).not.toBeNull();
+    expect(cgLayer.style.display).toBe('block');
+
+    renderer.destroy();
+  });
 });
+
 
 
 

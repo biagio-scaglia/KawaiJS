@@ -3,6 +3,7 @@ import type { ChoiceOption } from '@kawaijs/ast';
 export interface CharacterState {
   readonly expression?: string;
   readonly position?: string;
+  readonly transition?: string;
 }
 
 export interface DialogueState {
@@ -12,10 +13,18 @@ export interface DialogueState {
   readonly text: string;
 }
 
+export interface VfxState {
+  readonly effect: 'rain' | 'snow' | 'sakura' | 'fog' | 'tint' | 'stop';
+  readonly intensity?: number | string;
+  readonly color?: string;
+}
+
 export interface VisualState {
   readonly background: string | null;
   readonly transition: string | null;
   readonly characters: Record<string, CharacterState>;
+  readonly vfx: VfxState | null;
+  readonly activeCG: string | null;
 }
 
 export interface AudioState {
@@ -37,6 +46,7 @@ export interface StoryState {
   readonly audio: AudioState;
   readonly dialogue: DialogueState | null;
   readonly choices: readonly ChoiceOption[] | null;
+  readonly unlockedCGs: Record<string, boolean>;
   readonly isWaitingForInput: boolean;
   readonly isFinished: boolean;
 }
@@ -56,7 +66,9 @@ export function createInitialState(startLabel = 'start'): StoryState {
     visual: {
       background: null,
       transition: null,
-      characters: {}
+      characters: {},
+      vfx: null,
+      activeCG: null
     },
     audio: {
       music: null,
@@ -64,6 +76,7 @@ export function createInitialState(startLabel = 'start'): StoryState {
     },
     dialogue: null,
     choices: null,
+    unlockedCGs: Object.create(null) as Record<string, boolean>,
     isWaitingForInput: false,
     isFinished: false
   };
@@ -78,6 +91,8 @@ export function cloneState(state: StoryState): StoryState {
     visual: {
       background: state.visual.background,
       transition: state.visual.transition,
+      vfx: state.visual.vfx ? { ...state.visual.vfx } : null,
+      activeCG: state.visual.activeCG,
       characters: Object.fromEntries(
         Object.entries(state.visual.characters).map(([k, v]) => [k, { ...v }])
       )
@@ -85,6 +100,7 @@ export function cloneState(state: StoryState): StoryState {
     audio: { ...state.audio },
     dialogue: state.dialogue ? { ...state.dialogue } : null,
     choices: state.choices ? state.choices.map(c => ({ ...c })) : null,
+    unlockedCGs: Object.assign(Object.create(null), state.unlockedCGs),
     isWaitingForInput: state.isWaitingForInput,
     isFinished: state.isFinished
   };
