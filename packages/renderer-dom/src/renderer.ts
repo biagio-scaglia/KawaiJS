@@ -1,3 +1,4 @@
+import type { StoryPackage } from '@kawaijs/ast';
 import type { StoryVM, StoryState, SaveSlot } from '@kawaijs/runtime';
 import { SVG_ICONS } from './icons.js';
 import {
@@ -5,6 +6,7 @@ import {
   type MainMenuOptions,
   type AssetType,
   type AudioManagerLike,
+  type GalleryItem,
   defaultAssetResolver
 } from './types.js';
 import { StageLayerComponent } from './components/stage-layer.js';
@@ -36,6 +38,28 @@ export * from './components/choice-menu.js';
 export * from './components/quick-menu.js';
 export * from './components/stage-layer.js';
 export * from './components/vfx-layer.js';
+export function extractGalleryItems(story?: StoryPackage): GalleryItem[] {
+  if (!story || !story.labels) return [];
+  const itemsMap = new Map<string, GalleryItem>();
+  for (const label of Object.values(story.labels)) {
+    for (const inst of label) {
+      if (inst.type === 'cg' && inst.image) {
+        const id = inst.unlockId ?? inst.image;
+        if (!itemsMap.has(id)) {
+          const rawBase = (inst.unlockId || inst.image).split(/[/\\]/).pop() || '';
+          const cleanName = rawBase.replace(/^cg[\s_]+/i, '').replace(/\.[^/.]+$/, '').replace(/[_-]+/g, ' ');
+          const title = cleanName ? cleanName.charAt(0).toUpperCase() + cleanName.slice(1) : 'Event CG';
+          itemsMap.set(id, {
+            id,
+            title,
+            image: inst.image
+          });
+        }
+      }
+    }
+  }
+  return Array.from(itemsMap.values());
+}
 
 export class DOMRenderer {
   private readonly vm: StoryVM;
@@ -73,7 +97,19 @@ export class DOMRenderer {
     this.typewriterSpeed = options.typewriterSpeed ?? 20;
     this.autoDelayMs = options.autoDelayMs ?? 1800;
     this.assetResolver = options.assetResolver ?? defaultAssetResolver;
-    this.mainMenuOptions = options.mainMenu;
+
+    let finalMainMenu = options.mainMenu;
+    if (finalMainMenu?.enabled !== false && (!finalMainMenu?.galleryItems || finalMainMenu.galleryItems.length === 0)) {
+      const autoItems = extractGalleryItems(this.vm.getStory());
+      if (autoItems.length > 0) {
+        finalMainMenu = {
+          ...finalMainMenu,
+          galleryItems: autoItems
+        };
+      }
+    }
+    this.mainMenuOptions = finalMainMenu;
+
     this.audioManager = options.audioManager;
     this.musicVolume = options.audioManager?.getMusicVolume?.() ?? 0.8;
     this.soundVolume = options.audioManager?.getSoundVolume?.() ?? 1.0;
