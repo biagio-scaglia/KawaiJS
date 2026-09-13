@@ -77,6 +77,26 @@ if score >= 10:
     expect(tokens[0]?.value).toBe('Hello "world"\nLine 2');
   });
 
+  it('tokenizes Unicode identifiers, Japanese kanji/kana, accented letters, and unicode escapes', () => {
+    const code = `character ユミア "ユミア"
+character chloé "Chloé"
+label 桜_start:
+    ユミア "Hello \\u3086\\u307f\\u3042 \\u{1F338}!"
+`;
+    const lexer = new Lexer(code);
+    const tokens = lexer.tokenize();
+
+    const identifiers = tokens.filter(t => t.type === 'IDENTIFIER').map(t => t.value);
+    expect(identifiers).toContain('ユミア');
+    expect(identifiers).toContain('chloé');
+    expect(identifiers).toContain('桜_start');
+
+    const strTokens = tokens.filter(t => t.type === 'STRING');
+    const dialogueStr = strTokens[strTokens.length - 1]?.value;
+    expect(dialogueStr).toContain('ゆみあ');
+    expect(dialogueStr).toContain('🌸');
+  });
+
   it('tokenizes negative numbers and standalone plus/minus operators', () => {
     const code = `set score = -42
 set offset = +10
@@ -90,4 +110,3 @@ set offset = +10
     expect(numTokens[1]?.value).toBe('+10');
   });
 });
-

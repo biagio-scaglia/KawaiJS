@@ -67,6 +67,7 @@ export interface GalleryItem {
   readonly title: string;
   readonly image: string;
   readonly thumbnail?: string;
+  readonly description?: string;
 }
 
 export interface MainMenuItem {

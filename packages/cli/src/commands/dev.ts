@@ -3,6 +3,7 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { compileScript, formatDiagnostic, KawaError } from '@kawaijs/parser';
 import { getBaseThemeCss, getInlineRuntimeScript } from '../runtime-bundle.js';
+import { loadProjectConfig } from '../config.js';
 
 export interface DevServerOptions {
   port?: number;
@@ -11,6 +12,7 @@ export interface DevServerOptions {
 
 export function startDevServer(projectDir = '.', options: DevServerOptions = {}): void {
   const rootDir = path.resolve(process.cwd(), projectDir);
+
   let scriptPath = path.join(rootDir, 'game', 'script.kawa');
   if (!fs.existsSync(scriptPath)) {
     const rootCandidate = path.join(rootDir, 'script.kawa');
@@ -46,136 +48,120 @@ export function startDevServer(projectDir = '.', options: DevServerOptions = {})
 
   // Debounced file watcher for auto-reload
   let reloadTimeout: NodeJS.Timeout | null = null;
-  const gameDir = path.join(rootDir, 'game');
-  if (fs.existsSync(gameDir)) {
-    fs.watch(gameDir, { recursive: true }, (_eventType, filename) => {
+  const watchDirs = [path.join(rootDir, 'game'), rootDir].filter(d => fs.existsSync(d));
+  for (const watchDir of watchDirs) {
+    fs.watch(watchDir, { recursive: true }, (_eventType, filename) => {
       if (
         filename &&
-        (filename.endsWith('.kawa') || filename.endsWith('.css') || filename.startsWith('assets')) &&
+        (filename.endsWith('.kawa') || filename.endsWith('.css') || filename.endsWith('.json') || filename.startsWith('assets')) &&
         !filename.includes('~') &&
         !filename.startsWith('.') &&
         !filename.endsWith('.tmp')
       ) {
         if (reloadTimeout) clearTimeout(reloadTimeout);
         reloadTimeout = setTimeout(() => {
-          console.log(`🔄 [Kawa Dev] File changed: ${filename}. Reloading...`);
+          console.log(`🔄 [${new Date().toLocaleTimeString()}] Change detected in ${filename}, reloading...`);
           for (const client of clients) {
-            try {
-              client.write(`data: reload\n\n`);
-            } catch {}
+            client.write('data: reload\n\n');
           }
-        }, 250);
+        }, 120);
       }
     });
   }
 
   const server = http.createServer((req, res) => {
-    const cleanUrl = (req.url ?? '/').split('?')[0]!;
+    const parsedUrl = new URL(req.url ?? '/', `http://localhost:${port}`);
+    const pathname = parsedUrl.pathname;
 
-    // 1. SSE Live Reload Endpoint
-    if (cleanUrl === '/__kawa_reload') {
+    // 1. SSE Live Reload endpoint
+    if (pathname === '/__kawa_reload') {
       res.writeHead(200, {
         'Content-Type': 'text/event-stream',
         'Cache-Control': 'no-cache',
-        'Connection': 'keep-alive',
-        'Access-Control-Allow-Origin': '*'
+        'Connection': 'keep-alive'
       });
       clients.add(res);
       req.on('close', () => clients.delete(res));
       return;
     }
 
-    // 2. Dynamic Story JSON API
-    if (cleanUrl === '/api/story.json') {
+    // 2. Story compilation API
+    if (pathname === '/api/story.json') {
       try {
         const source = fs.readFileSync(scriptPath, 'utf-8');
-        const story = compileScript(source, path.basename(scriptPath));
-        res.writeHead(200, {
-          'Content-Type': 'application/json',
-          'Cache-Control': 'no-cache, no-store, must-revalidate'
-        });
-        res.end(JSON.stringify(story));
+        const compiledStory = compileScript(source, path.basename(scriptPath));
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify(compiledStory));
       } catch (err: unknown) {
-        res.writeHead(500, {
-          'Content-Type': 'application/json',
-          'Cache-Control': 'no-cache, no-store, must-revalidate'
-        });
-        let errMsg = 'Compilation Error';
+        let formatted = 'Compilation Error';
         if (err instanceof KawaError) {
           const source = fs.readFileSync(scriptPath, 'utf-8');
-          errMsg = formatDiagnostic(err.diagnostic, source);
+          formatted = formatDiagnostic(err.diagnostic, source);
         } else if (err instanceof Error) {
-          errMsg = err.message;
+          formatted = err.message;
         }
-        res.end(JSON.stringify({ error: errMsg }));
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: formatted }));
       }
       return;
     }
 
-    // 3. User & Default Stylesheet
-    let combinedCss = `/* Kawaijs Base Theme */\n` + getBaseThemeCss() + '\n\n';
-    if (fs.existsSync(stylePath)) {
-      combinedCss += `/* User Custom Styles */\n` + fs.readFileSync(stylePath, 'utf-8');
-    }
-
-    if (cleanUrl === '/style.css') {
-      res.writeHead(200, {
-        'Content-Type': 'text/css; charset=utf-8',
-        'Cache-Control': 'no-cache, no-store, must-revalidate'
-      });
-      res.end(combinedCss);
-      return;
-    }
-
-    // 4. Game Assets (/assets/*)
-    if (cleanUrl.startsWith('/assets/')) {
-      const relPath = decodeURIComponent(cleanUrl.replace(/^\/?assets\//, ''));
-      const resolvedAssetsDir = path.resolve(assetsDir);
-      let filePath = path.resolve(assetsDir, relPath);
-
-      // Security: Prevent path traversal
-      if (!filePath.startsWith(resolvedAssetsDir + path.sep) && filePath !== resolvedAssetsDir) {
-        res.writeHead(403, { 'Content-Type': 'text/plain' });
-        res.end('Access denied');
-        return;
+    // 3. Static Assets serving
+    if (
+      pathname.startsWith('/assets/') ||
+      pathname.startsWith('/backgrounds/') ||
+      pathname.startsWith('/characters/') ||
+      pathname.startsWith('/audio/')
+    ) {
+      let relativeAssetPath = pathname;
+      if (relativeAssetPath.startsWith('/assets/')) {
+        relativeAssetPath = relativeAssetPath.slice('/assets/'.length);
+      } else if (relativeAssetPath.startsWith('/')) {
+        relativeAssetPath = relativeAssetPath.slice(1);
       }
 
-      if (!fs.existsSync(filePath) || !fs.statSync(filePath).isFile()) {
-        const parsed = path.parse(filePath);
-        const cleanName = parsed.name.replace(/^bg[\s_]+/i, '');
-        
-        for (const nameCandidate of [parsed.name, cleanName]) {
-          for (const ext of ['', '.svg', '.png', '.webp', '.jpg', '.jpeg', '.mp3', '.ogg', '.wav']) {
-            const candidate = path.resolve(parsed.dir, nameCandidate + ext);
-            if (candidate.startsWith(resolvedAssetsDir + path.sep) && fs.existsSync(candidate) && fs.statSync(candidate).isFile()) {
-              filePath = candidate;
-              break;
-            }
-          }
-          if (fs.existsSync(filePath) && fs.statSync(filePath).isFile()) break;
-        }
-      }
+      const safeAssetPath = path.normalize(relativeAssetPath).replace(/^(\.\.[/\\])+/, '');
+      const filePath = path.join(assetsDir, safeAssetPath);
 
-      if (fs.existsSync(filePath) && fs.statSync(filePath).isFile() && filePath.startsWith(resolvedAssetsDir + path.sep)) {
+      if (fs.existsSync(filePath) && fs.statSync(filePath).isFile()) {
         const ext = path.extname(filePath).toLowerCase();
         const mimeTypes: Record<string, string> = {
           '.png': 'image/png',
           '.jpg': 'image/jpeg',
           '.jpeg': 'image/jpeg',
           '.webp': 'image/webp',
+          '.gif': 'image/gif',
           '.svg': 'image/svg+xml',
           '.mp3': 'audio/mpeg',
           '.ogg': 'audio/ogg',
-          '.wav': 'audio/wav'
+          '.wav': 'audio/wav',
+          '.m4a': 'audio/mp4'
         };
-        res.writeHead(200, { 'Content-Type': mimeTypes[ext] ?? 'application/octet-stream' });
+
+        const contentType = mimeTypes[ext] ?? 'application/octet-stream';
+        res.writeHead(200, { 'Content-Type': contentType });
         fs.createReadStream(filePath).pipe(res);
         return;
-      } else {
-        res.writeHead(404, { 'Content-Type': 'text/plain' });
-        res.end('Asset not found');
-        return;
       }
+    }
+
+    // 4. Combined Stylesheet
+    const activeConfig = loadProjectConfig(rootDir);
+    let configCss = ':root {\n';
+    if (activeConfig.theme?.primaryColor) {
+      configCss += `  --kawa-primary-accent: ${activeConfig.theme.primaryColor};\n`;
+    }
+    if (activeConfig.theme?.fontFamily) {
+      configCss += `  --kawa-font-body: ${activeConfig.theme.fontFamily};\n`;
+    }
+    if (activeConfig.theme?.headingFont) {
+      configCss += `  --kawa-font-heading: ${activeConfig.theme.headingFont};\n`;
+    }
+    configCss += '}\n';
+
+    let combinedCss = getBaseThemeCss() + '\n\n' + configCss + '\n\n';
+    if (fs.existsSync(stylePath)) {
+      combinedCss += fs.readFileSync(stylePath, 'utf-8');
     }
 
     // 5. HTML Shell & Web Runtime
@@ -197,6 +183,8 @@ export function startDevServer(projectDir = '.', options: DevServerOptions = {})
       }
     }
 
+    const gameTitle = activeConfig.title || 'Kawaijs Visual Novel';
+
     res.writeHead(200, {
       'Content-Type': 'text/html; charset=utf-8',
       'Cache-Control': 'no-cache, no-store, must-revalidate'
@@ -206,7 +194,7 @@ export function startDevServer(projectDir = '.', options: DevServerOptions = {})
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Kawaijs Visual Novel</title>
+  <title>${gameTitle}</title>
   <style>
     ${combinedCss}
     html, body, #app {
@@ -260,7 +248,20 @@ export function startDevServer(projectDir = '.', options: DevServerOptions = {})
           }
         }
 
-        const app = mountKawaApp(story, document.getElementById('app'));
+        const projectConfig = ${JSON.stringify(activeConfig)};
+
+        const app = mountKawaApp(story, document.getElementById('app'), {
+          mainMenu: {
+            title: projectConfig.title,
+            galleryItems: projectConfig.gallery
+          },
+          typewriterSpeed: projectConfig.settings?.textSpeed,
+          autoDelayMs: projectConfig.settings?.autoDelay,
+          virtualCanvas: {
+            width: projectConfig.window?.width || 1280,
+            height: projectConfig.window?.height || 720
+          }
+        });
         window.__kawa_app = app;
       } catch (err) {
         errorEl.style.display = 'block';

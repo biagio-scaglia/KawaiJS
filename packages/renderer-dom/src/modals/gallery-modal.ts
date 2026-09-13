@@ -52,25 +52,36 @@ export function showGalleryModal(
 
     for (const item of galleryItems) {
       const isUnlocked = Boolean(unlocked[item.id] || unlocked[item.image]);
-      const itemEl = document.createElement('div');
-      itemEl.className = `kawa-gallery-item ${isUnlocked ? 'unlocked' : 'locked'}`;
+      const cardEl = document.createElement('div');
+      cardEl.className = `kawa-gallery-card ${isUnlocked ? 'unlocked' : 'locked'}`;
 
       if (isUnlocked) {
         const imgUrl = assetResolver(item.thumbnail || item.image, 'background');
-        itemEl.innerHTML = `
-          <div class="kawa-gallery-thumb" style="background-image:url('${imgUrl}')"></div>
-          <div class="kawa-gallery-label">${item.title}</div>
+        cardEl.innerHTML = `
+          <div class="kawa-gallery-thumb-container">
+            <img class="kawa-gallery-thumb" src="${imgUrl}" alt="${item.title}" loading="lazy" />
+          </div>
+          <div class="kawa-gallery-info">
+            <div class="kawa-gallery-title">${item.title}</div>
+            ${item.description ? `<div class="kawa-gallery-desc">${item.description}</div>` : ''}
+          </div>
         `;
-        itemEl.addEventListener('click', () => {
+        cardEl.addEventListener('click', () => {
           showLightbox(rootEl, assetResolver(item.image, 'background'), item.title);
         });
       } else {
-        itemEl.innerHTML = `
-          <div class="kawa-gallery-thumb locked-thumb">🔒</div>
-          <div class="kawa-gallery-label">Locked</div>
+        cardEl.innerHTML = `
+          <div class="kawa-gallery-thumb-container kawa-gallery-locked">
+            <div class="kawa-gallery-lock-icon">🔒</div>
+            <span>Locked</span>
+          </div>
+          <div class="kawa-gallery-info">
+            <div class="kawa-gallery-title">???</div>
+            <div class="kawa-gallery-desc">Keep playing to unlock</div>
+          </div>
         `;
       }
-      grid.appendChild(itemEl);
+      grid.appendChild(cardEl);
     }
     body.appendChild(grid);
   }
@@ -85,11 +96,17 @@ function showLightbox(rootEl: HTMLElement, fullImageUrl: string, titleText: stri
   const lightbox = document.createElement('div');
   lightbox.className = 'kawa-gallery-lightbox';
   lightbox.innerHTML = `
-    <div class="kawa-lightbox-content">
-      <img src="${fullImageUrl}" alt="${titleText}" class="kawa-lightbox-img" />
-      <div class="kawa-lightbox-caption">${titleText}</div>
+    <div class="kawa-gallery-lightbox-content">
+      <img src="${fullImageUrl}" alt="${titleText}" class="kawa-gallery-lightbox-img" />
+      <div class="kawa-gallery-caption">${titleText}</div>
+      <button class="kawa-gallery-lightbox-close" aria-label="Close image lightbox">${SVG_ICONS.close}</button>
     </div>
   `;
-  lightbox.addEventListener('click', () => lightbox.remove());
+  lightbox.addEventListener('click', (e) => {
+    const target = e.target as HTMLElement;
+    if (target.classList.contains('kawa-gallery-lightbox') || target.closest('.kawa-gallery-lightbox-close')) {
+      lightbox.remove();
+    }
+  });
   rootEl.appendChild(lightbox);
 }

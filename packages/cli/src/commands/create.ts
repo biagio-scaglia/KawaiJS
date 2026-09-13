@@ -60,6 +60,31 @@ label conclusion:
 `;
   fs.writeFileSync(path.join(targetDir, 'game', 'style.css'), starterStyle, 'utf-8');
 
+  // 3. game/kawa.config.json
+  const starterConfig = {
+    title: projectName,
+    author: 'Visual Novel Creator',
+    version: '0.1.0',
+    theme: {
+      primaryColor: '#f43f5e',
+      fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+    },
+    window: {
+      width: 1280,
+      height: 720,
+      aspectRatio: '16/9'
+    },
+    settings: {
+      textSpeed: 25,
+      autoDelay: 2000,
+      musicVolume: 0.8,
+      soundVolume: 1.0,
+      voiceVolume: 1.0
+    },
+    gallery: []
+  };
+  fs.writeFileSync(path.join(targetDir, 'game', 'kawa.config.json'), JSON.stringify(starterConfig, null, 2), 'utf-8');
+
   // 3. package.json
   const starterPkg = {
     name: projectName,

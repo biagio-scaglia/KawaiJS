@@ -4,6 +4,7 @@ export * from '@kawaijs/runtime';
 export * from '@kawaijs/renderer-dom';
 export * from '@kawaijs/audio';
 export * from '@kawaijs/vite-plugin';
+export * from './config.js';
 
 import * as fs from 'node:fs';
 import { createProject } from './commands/create.js';

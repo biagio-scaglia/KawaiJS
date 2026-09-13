@@ -5,6 +5,7 @@ import * as os from 'node:os';
 import { validateProject } from '../src/commands/validate.js';
 import { buildProject } from '../src/commands/build.js';
 import { createProject } from '../src/commands/create.js';
+import { loadProjectConfig } from '../src/config.js';
 
 describe('Kawaijs CLI Commands', () => {
   const tempDirs: string[] = [];
@@ -55,10 +56,34 @@ describe('Kawaijs CLI Commands', () => {
 
     expect(fs.existsSync(path.join(testProjectName, 'game', 'script.kawa'))).toBe(true);
     expect(fs.existsSync(path.join(testProjectName, 'game', 'style.css'))).toBe(true);
+    expect(fs.existsSync(path.join(testProjectName, 'game', 'kawa.config.json'))).toBe(true);
     expect(fs.existsSync(path.join(testProjectName, 'game', 'assets', 'backgrounds'))).toBe(true);
     expect(fs.existsSync(path.join(testProjectName, 'package.json'))).toBe(true);
 
     const validated = validateProject(testProjectName);
     expect(validated).toBe(true);
+  });
+
+  it('loads custom project configuration and defaults properly', () => {
+    const testDir = path.join(os.tmpdir(), 'kawa_config_test_' + Date.now());
+    tempDirs.push(testDir);
+    fs.mkdirSync(path.join(testDir, 'game'), { recursive: true });
+
+    const customConfig = {
+      title: 'Custom Adventure',
+      theme: {
+        primaryColor: '#8b5cf6'
+      },
+      settings: {
+        textSpeed: 10
+      }
+    };
+    fs.writeFileSync(path.join(testDir, 'game', 'kawa.config.json'), JSON.stringify(customConfig), 'utf-8');
+
+    const config = loadProjectConfig(testDir);
+    expect(config.title).toBe('Custom Adventure');
+    expect(config.theme?.primaryColor).toBe('#8b5cf6');
+    expect(config.settings?.textSpeed).toBe(10);
+    expect(config.window?.width).toBe(1280);
   });
 });

@@ -361,6 +361,30 @@ export class Lexer {
           case '"': value += '"'; break;
           case "'": value += "'"; break;
           case '\\': value += '\\'; break;
+          case 'u': {
+            if (this.peek() === '{') {
+              this.advance(); // consume '{'
+              let hex = '';
+              while (!this.isEof() && this.peek() !== '}') {
+                hex += this.advance();
+              }
+              if (this.peek() === '}') this.advance(); // consume '}'
+              const codePoint = parseInt(hex, 16);
+              if (!isNaN(codePoint)) {
+                value += String.fromCodePoint(codePoint);
+              }
+            } else {
+              let hex = '';
+              for (let i = 0; i < 4 && !this.isEof(); i++) {
+                hex += this.advance();
+              }
+              const codePoint = parseInt(hex, 16);
+              if (!isNaN(codePoint)) {
+                value += String.fromCharCode(codePoint);
+              }
+            }
+            break;
+          }
           default: value += escapeCh; break;
         }
       } else {
@@ -447,11 +471,11 @@ export class Lexer {
   }
 
   private isAlpha(ch: string): boolean {
-    return (ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z');
+    return (ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z') || /[\p{L}\p{M}]/u.test(ch);
   }
 
   private isAlphaNumeric(ch: string): boolean {
-    return this.isAlpha(ch) || this.isDigit(ch);
+    return this.isAlpha(ch) || this.isDigit(ch) || /[\p{N}]/u.test(ch);
   }
 
   private isHexChar(ch: string): boolean {

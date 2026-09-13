@@ -117,14 +117,15 @@ export class DialogueBoxComponent {
     const temp = document.createElement('div');
     temp.innerHTML = formattedFull;
     const plainText = temp.textContent || '';
+    const graphemes = Array.from(plainText);
 
     let charIdx = 0;
     this.typewriterInterval = window.setInterval(() => {
       charIdx++;
-      if (charIdx >= plainText.length) {
+      if (charIdx >= graphemes.length) {
         this.finishTypewriter();
       } else {
-        this.dialogueTextEl.textContent = plainText.slice(0, charIdx);
+        this.dialogueTextEl.textContent = graphemes.slice(0, charIdx).join('');
       }
     }, this.typewriterSpeed);
   }

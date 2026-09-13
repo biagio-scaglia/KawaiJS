@@ -33,6 +33,10 @@ export class VfxLayerComponent {
 
     this.canvas = document.createElement('canvas');
     this.canvas.className = 'kawa-vfx-canvas';
+    const initialW = typeof window !== 'undefined' ? (window.innerWidth || 1280) : 1280;
+    const initialH = typeof window !== 'undefined' ? (window.innerHeight || 720) : 720;
+    this.canvas.width = initialW;
+    this.canvas.height = initialH;
     this.ctx = this.canvas.getContext('2d');
 
     this.tintEl = document.createElement('div');
@@ -175,8 +179,13 @@ export class VfxLayerComponent {
       }
     }
 
-    const loop = () => {
-      this.updateParticles(effect);
+    let lastTimestamp = performance.now();
+    const loop = (timestamp: number) => {
+      const dt = Math.min(0.1, Math.max(0.001, (timestamp - lastTimestamp) / 1000));
+      lastTimestamp = timestamp;
+      const speedFactor = dt * 60; // normalize to 60 FPS scale
+
+      this.updateParticles(effect, speedFactor);
       this.renderParticles(effect);
       this.animationFrameId = requestAnimationFrame(loop);
     };
@@ -190,38 +199,59 @@ export class VfxLayerComponent {
     }
   }
 
-  private updateParticles(effect: string): void {
+  private updateParticles(effect: string, speedFactor = 1): void {
     const w = this.canvas.width || 1280;
     const h = this.canvas.height || 720;
 
     for (const p of this.particles) {
       if (effect === 'sakura') {
-        p.swingAngle = (p.swingAngle || 0) + (p.swingSpeed || 0.02);
-        p.x += p.vx + Math.sin(p.swingAngle) * 1.2;
-        p.y += p.vy;
-        p.rotation = (p.rotation || 0) + (p.rotationSpeed || 0.02);
+        p.swingAngle = (p.swingAngle || 0) + (p.swingSpeed || 0.02) * speedFactor;
+        p.x += (p.vx + Math.sin(p.swingAngle) * 1.5) * speedFactor;
+        p.y += p.vy * speedFactor;
+        p.rotation = (p.rotation || 0) + (p.rotationSpeed || 0.02) * speedFactor;
 
-        if (p.y > h + 20) {
-          p.y = -20;
-          p.x = Math.random() * w;
+        // Wrap vertically
+        if (p.y > h + 30) {
+          p.y = -30;
+          p.x = Math.random() * (w + 40) - 20;
+        } else if (p.y < -40) {
+          p.y = h + 20;
+          p.x = Math.random() * (w + 40) - 20;
         }
-        if (p.x > w + 20) {
-          p.x = -20;
+
+        // Wrap horizontally (handles both left and right wind drift)
+        if (p.x > w + 40) {
+          p.x = -30;
+        } else if (p.x < -40) {
+          p.x = w + 30;
         }
       } else if (effect === 'rain') {
-        p.x += p.vx;
-        p.y += p.vy;
-        if (p.y > h) {
+        p.x += p.vx * speedFactor;
+        p.y += p.vy * speedFactor;
+        if (p.y > h + 20) {
           p.y = -20;
           p.x = Math.random() * (w + 100);
         }
+        if (p.x < -50) {
+          p.x = w + 50;
+        }
       } else if (effect === 'snow') {
-        p.swingAngle = (p.swingAngle || 0) + (p.swingSpeed || 0.02);
-        p.x += p.vx + Math.sin(p.swingAngle) * 0.8;
-        p.y += p.vy;
-        if (p.y > h + 10) {
-          p.y = -10;
-          p.x = Math.random() * w;
+        p.swingAngle = (p.swingAngle || 0) + (p.swingSpeed || 0.02) * speedFactor;
+        p.x += (p.vx + Math.sin(p.swingAngle) * 0.8) * speedFactor;
+        p.y += p.vy * speedFactor;
+
+        if (p.y > h + 20) {
+          p.y = -20;
+          p.x = Math.random() * (w + 40) - 20;
+        } else if (p.y < -30) {
+          p.y = h + 10;
+          p.x = Math.random() * (w + 40) - 20;
+        }
+
+        if (p.x > w + 30) {
+          p.x = -20;
+        } else if (p.x < -30) {
+          p.x = w + 20;
         }
       }
     }

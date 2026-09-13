@@ -2,6 +2,7 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { compileScript, formatDiagnostic, KawaError } from '@kawaijs/parser';
 import { getBaseThemeCss, getInlineRuntimeScript } from '../runtime-bundle.js';
+import { loadProjectConfig } from '../config.js';
 
 export interface BuildOptions {
   outDir?: string;
@@ -9,6 +10,8 @@ export interface BuildOptions {
 
 export function buildProject(projectDir = '.', options: BuildOptions = {}): boolean {
   const rootDir = path.resolve(process.cwd(), projectDir);
+  const projectConfig = loadProjectConfig(rootDir);
+
   let scriptPath = path.join(rootDir, 'game', 'script.kawa');
   if (!fs.existsSync(scriptPath)) {
     const rootCandidate = path.join(rootDir, 'script.kawa');
@@ -74,7 +77,19 @@ export function buildProject(projectDir = '.', options: BuildOptions = {}): bool
   }
 
   // 4. Generate Combined style.css
-  let combinedCss = `/* Kawaijs Bundled Stylesheet */\n` + getBaseThemeCss() + '\n\n';
+  let configCss = ':root {\n';
+  if (projectConfig.theme?.primaryColor) {
+    configCss += `  --kawa-primary-accent: ${projectConfig.theme.primaryColor};\n`;
+  }
+  if (projectConfig.theme?.fontFamily) {
+    configCss += `  --kawa-font-body: ${projectConfig.theme.fontFamily};\n`;
+  }
+  if (projectConfig.theme?.headingFont) {
+    configCss += `  --kawa-font-heading: ${projectConfig.theme.headingFont};\n`;
+  }
+  configCss += '}\n';
+
+  let combinedCss = `/* Kawaijs Bundled Stylesheet */\n` + getBaseThemeCss() + '\n\n' + configCss + '\n\n';
 
   if (fs.existsSync(stylePath)) {
     combinedCss += fs.readFileSync(stylePath, 'utf-8') + '\n';
@@ -83,12 +98,14 @@ export function buildProject(projectDir = '.', options: BuildOptions = {}): bool
   console.log(`✅ Stylesheet bundled to dist/style.css`);
 
   // 5. Generate Standalone HTML Application
+  const gameTitle = projectConfig.title || storyPackage.meta.title || 'Kawaijs Visual Novel';
+
   const htmlContent = `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>${storyPackage.meta.title ?? 'Kawaijs Visual Novel'}</title>
+  <title>${gameTitle}</title>
   <style>
     ${combinedCss}
     html, body, #app {
@@ -106,11 +123,23 @@ export function buildProject(projectDir = '.', options: BuildOptions = {}): bool
 
   <script type="module">
     const story = ${JSON.stringify(storyPackage, null, 2)};
+    const projectConfig = ${JSON.stringify(projectConfig)};
 
     // Inline runtime VM + DOM Renderer with Start Menu
     ${getInlineRuntimeScript('./')}
 
-    const app = mountKawaApp(story, document.getElementById('app'));
+    const app = mountKawaApp(story, document.getElementById('app'), {
+      mainMenu: {
+        title: projectConfig.title,
+        galleryItems: projectConfig.gallery
+      },
+      typewriterSpeed: projectConfig.settings?.textSpeed,
+      autoDelayMs: projectConfig.settings?.autoDelay,
+      virtualCanvas: {
+        width: projectConfig.window?.width || 1280,
+        height: projectConfig.window?.height || 720
+      }
+    });
     window.__kawa_app = app;
   </script>
 </body>
