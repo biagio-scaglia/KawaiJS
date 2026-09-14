@@ -97,9 +97,34 @@ kawa validate [path]
 kawa version
 ```
 
-Browser URL flags: `?at=<label>` (deep-link), `?embed=1` (iframe mode), `?continue=<token>` (restore shared save).  
-Open Graph tags come from `share` in `kawa.config.json`.  
-`kawa build` emits a PWA (`manifest.webmanifest`, `sw.js`, `icon.svg`) by default.
+Browser URL flags: `?at=<label>` (deep-link), `?embed=1` (iframe mode), `?continue=<token>` (restore shared save).
+
+### SEO, favicon & social
+
+Configure in `game/kawa.config.json`:
+
+```json
+{
+  "seo": {
+    "favicon": "favicon.svg",
+    "description": "Your game blurb",
+    "keywords": ["visual novel", "web"],
+    "canonicalUrl": "https://you.example/game/",
+    "locale": "it_IT",
+    "twitterSite": "@studio"
+  },
+  "share": {
+    "defaultImage": "backgrounds/cover.png",
+    "twitterCard": "summary_large_image"
+  }
+}
+```
+
+- Drop `game/favicon.svg` (or `.png` / `.ico`) — or set `seo.favicon`
+- `kawa build` copies the favicon into `dist/`, sets `<link rel="icon">` / apple-touch, OG/Twitter/JSON-LD, and uses it as the PWA icon
+- With `seo.canonicalUrl`, also writes `dist/robots.txt`
+
+`kawa build` emits a PWA (`manifest.webmanifest`, `sw.js`, icon) by default.
 
 ---
 

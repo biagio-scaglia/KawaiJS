@@ -3,8 +3,15 @@ import * as path from 'node:path';
 import { compileScript, formatDiagnostic, KawaError } from '@kawaijs/parser';
 import { getBaseThemeCss, getInlineRuntimeScript } from '../runtime-bundle.js';
 import { loadProjectConfig } from '../config.js';
-import { renderStaticShareMetaTags } from '../parse-args.js';
-import { buildPwaAssets, renderPwaHeadTags, renderPwaRegisterScript } from '../pwa.js';
+import { buildPwaAssets, buildPwaIconSvg, renderPwaHeadTags, renderPwaRegisterScript } from '../pwa.js';
+import {
+  renderRobotsTxt,
+  renderSeoHeadTags,
+  resolveAppleTouchIcon,
+  resolveFavicon,
+  resolveHtmlLang,
+  writeSeoIconsToDist
+} from '../seo.js';
 
 export interface BuildOptions {
   outDir?: string;
@@ -101,49 +108,74 @@ export function buildProject(projectDir = '.', options: BuildOptions = {}): bool
   fs.writeFileSync(path.join(outDir, 'style.css'), combinedCss, 'utf-8');
   console.log(`✅ Stylesheet bundled to dist/style.css`);
 
-  // 5. Generate Standalone HTML Application
+  // 5. SEO icons + HTML shell
   const gameTitle = (projectConfig.title || storyPackage.meta.title || 'Kawaijs Visual Novel')
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;');
 
-  const shareDescription =
-    projectConfig.share?.description ||
-    projectConfig.share?.siteName ||
-    `Play ${projectConfig.title || storyPackage.meta.title || 'Kawaijs Visual Novel'} in your browser.`;
-  const shareImage = projectConfig.share?.defaultImage
-    ? projectConfig.share.defaultImage.startsWith('http')
-      ? projectConfig.share.defaultImage
-      : `./assets/${projectConfig.share.defaultImage.replace(/^assets\//, '')}`
-    : undefined;
-  const shareMeta = renderStaticShareMetaTags({
-    title: projectConfig.title || storyPackage.meta.title || 'Kawaijs Visual Novel',
-    description: shareDescription,
-    siteName: projectConfig.share?.siteName || projectConfig.title,
-    image: shareImage
+  const favicon = resolveFavicon(rootDir, projectConfig);
+  const appleTouch = resolveAppleTouchIcon(rootDir, projectConfig, favicon);
+  const generatedSvg = buildPwaIconSvg(
+    projectConfig.seo?.themeColor || projectConfig.pwa?.themeColor || projectConfig.theme?.primaryColor
+  );
+  const icons = writeSeoIconsToDist(outDir, favicon, appleTouch, generatedSvg);
+  console.log(
+    favicon.isGenerated
+      ? `✅ Favicon: generated default icon.svg`
+      : `✅ Favicon: copied ${favicon.outFileName} from project`
+  );
+
+  const seoMeta = renderSeoHeadTags({
+    config: projectConfig,
+    favicon: { ...favicon, href: icons.faviconHref },
+    appleTouchIcon: { ...appleTouch, href: icons.appleHref },
+    pageUrl: projectConfig.seo?.canonicalUrl,
+    includeIconLinks: true
   });
 
   const cliStartLabel = options.startLabel ? JSON.stringify(options.startLabel) : 'undefined';
   const pwaEnabled = projectConfig.pwa?.enabled !== false;
   const pwaHead = pwaEnabled ? renderPwaHeadTags(projectConfig) : '';
   const pwaRegister = pwaEnabled ? renderPwaRegisterScript() : '';
+  const htmlLang = resolveHtmlLang(projectConfig);
 
   if (pwaEnabled) {
-    const pwa = buildPwaAssets(projectConfig, `kawa-${projectConfig.version || '0'}`);
+    const iconMime = icons.pwaIconFile.endsWith('.png') ? 'image/png' : 'image/svg+xml';
+    const precacheExtra = [
+      `./${icons.pwaIconFile}`,
+      icons.faviconHref.replace(/^\.\//, './'),
+      icons.appleHref.replace(/^\.\//, './')
+    ].filter((u, i, arr) => arr.indexOf(u) === i);
+    const pwa = buildPwaAssets(projectConfig, `kawa-${projectConfig.version || '0'}`, {
+      iconFile: icons.pwaIconFile,
+      iconMime,
+      precacheExtra
+    });
     fs.writeFileSync(path.join(outDir, 'manifest.webmanifest'), pwa.manifestJson, 'utf-8');
     fs.writeFileSync(path.join(outDir, 'sw.js'), pwa.serviceWorkerJs, 'utf-8');
-    fs.writeFileSync(path.join(outDir, 'icon.svg'), pwa.iconSvg, 'utf-8');
-    console.log(`✅ PWA assets written (manifest, sw.js, icon.svg)`);
+    if (!fs.existsSync(path.join(outDir, icons.pwaIconFile))) {
+      fs.writeFileSync(path.join(outDir, 'icon.svg'), pwa.iconSvg, 'utf-8');
+    }
+    console.log(`✅ PWA assets written (manifest, sw.js, ${icons.pwaIconFile})`);
+  }
+
+  if (projectConfig.seo?.canonicalUrl) {
+    fs.writeFileSync(
+      path.join(outDir, 'robots.txt'),
+      renderRobotsTxt(projectConfig.seo.canonicalUrl),
+      'utf-8'
+    );
   }
 
   const htmlContent = `<!DOCTYPE html>
-<html lang="en">
+<html lang="${htmlLang}">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>${gameTitle}</title>
-${shareMeta}
+${seoMeta}
 ${pwaHead}
   <style>
     ${combinedCss}

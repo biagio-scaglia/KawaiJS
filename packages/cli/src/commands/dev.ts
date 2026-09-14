@@ -4,8 +4,13 @@ import * as path from 'node:path';
 import { compileScript, formatDiagnostic, KawaError } from '@kawaijs/parser';
 import { getBaseThemeCss, getInlineRuntimeScript } from '../runtime-bundle.js';
 import { loadProjectConfig } from '../config.js';
-import { renderStaticShareMetaTags } from '../parse-args.js';
-import { buildPwaAssets, renderPwaHeadTags, renderPwaRegisterScript } from '../pwa.js';
+import { buildPwaAssets, buildPwaIconSvg, renderPwaHeadTags, renderPwaRegisterScript } from '../pwa.js';
+import {
+  renderSeoHeadTags,
+  resolveAppleTouchIcon,
+  resolveFavicon,
+  resolveHtmlLang
+} from '../seo.js';
 
 export interface DevServerOptions {
   port?: number;
@@ -115,27 +120,69 @@ export function startDevServer(projectDir = '.', options: DevServerOptions = {})
       return;
     }
 
-    // 3b. PWA assets (dev preview of installability)
-    if (pathname === '/manifest.webmanifest' || pathname === '/sw.js' || pathname === '/icon.svg') {
+    // 3b. PWA + favicon assets (dev preview)
+    if (
+      pathname === '/manifest.webmanifest' ||
+      pathname === '/sw.js' ||
+      pathname === '/icon.svg' ||
+      pathname === '/favicon.svg' ||
+      pathname === '/favicon.png' ||
+      pathname === '/favicon.ico' ||
+      pathname === '/apple-touch-icon.png' ||
+      pathname === '/apple-touch-icon.svg'
+    ) {
       const activeConfig = loadProjectConfig(rootDir);
-      if (activeConfig.pwa?.enabled === false) {
-        res.writeHead(404);
-        res.end('PWA disabled');
-        return;
-      }
-      const pwa = buildPwaAssets(activeConfig, 'kawa-dev');
-      if (pathname === '/manifest.webmanifest') {
-        res.writeHead(200, { 'Content-Type': 'application/manifest+json' });
-        res.end(pwa.manifestJson);
-        return;
-      }
-      if (pathname === '/sw.js') {
+      const favicon = resolveFavicon(rootDir, activeConfig);
+      const appleTouch = resolveAppleTouchIcon(rootDir, activeConfig, favicon);
+
+      if (pathname === '/manifest.webmanifest' || pathname === '/sw.js') {
+        if (activeConfig.pwa?.enabled === false) {
+          res.writeHead(404);
+          res.end('PWA disabled');
+          return;
+        }
+        const iconFile = favicon.isGenerated
+          ? 'icon.svg'
+          : favicon.outFileName.replace(/^favicon/, 'icon');
+        const pwa = buildPwaAssets(activeConfig, 'kawa-dev', {
+          iconFile: iconFile.endsWith('.ico') ? 'icon.svg' : iconFile,
+          iconMime: favicon.mimeType === 'image/x-icon' ? 'image/svg+xml' : favicon.mimeType
+        });
+        if (pathname === '/manifest.webmanifest') {
+          res.writeHead(200, { 'Content-Type': 'application/manifest+json' });
+          res.end(pwa.manifestJson);
+          return;
+        }
         res.writeHead(200, { 'Content-Type': 'application/javascript; charset=utf-8' });
         res.end(pwa.serviceWorkerJs);
         return;
       }
-      res.writeHead(200, { 'Content-Type': 'image/svg+xml' });
-      res.end(pwa.iconSvg);
+
+      // Serve user favicon / apple-touch / generated icon
+      const serveFile = (abs: string | undefined, fallbackSvg: string, mime: string): void => {
+        if (abs && fs.existsSync(abs)) {
+          res.writeHead(200, { 'Content-Type': mime });
+          fs.createReadStream(abs).pipe(res);
+          return;
+        }
+        res.writeHead(200, { 'Content-Type': 'image/svg+xml' });
+        res.end(fallbackSvg);
+      };
+
+      const generated = buildPwaIconSvg(
+        activeConfig.seo?.themeColor || activeConfig.pwa?.themeColor || activeConfig.theme?.primaryColor
+      );
+
+      if (pathname.startsWith('/apple-touch')) {
+        serveFile(appleTouch.absolutePath, generated, appleTouch.mimeType);
+        return;
+      }
+      if (pathname === '/icon.svg' && favicon.isGenerated) {
+        res.writeHead(200, { 'Content-Type': 'image/svg+xml' });
+        res.end(generated);
+        return;
+      }
+      serveFile(favicon.absolutePath, generated, favicon.mimeType);
       return;
     }
 
@@ -227,38 +274,41 @@ export function startDevServer(projectDir = '.', options: DevServerOptions = {})
       .replace(/>/g, '&gt;')
       .replace(/"/g, '&quot;');
 
-    const shareDescription =
-      activeConfig.share?.description ||
-      activeConfig.share?.siteName ||
-      `Play ${activeConfig.title || 'Kawaijs Visual Novel'} in your browser.`;
-    const shareImage = activeConfig.share?.defaultImage
-      ? activeConfig.share.defaultImage.startsWith('http')
-        ? activeConfig.share.defaultImage
-        : `./assets/${activeConfig.share.defaultImage.replace(/^assets\//, '')}`
-      : undefined;
-    const shareMeta = renderStaticShareMetaTags({
-      title: activeConfig.title || 'Kawaijs Visual Novel',
-      description: shareDescription,
-      siteName: activeConfig.share?.siteName || activeConfig.title,
-      image: shareImage
+    const favicon = resolveFavicon(rootDir, activeConfig);
+    const appleTouch = resolveAppleTouchIcon(rootDir, activeConfig, favicon);
+    // In dev, point at the live routes we serve above
+    const faviconHref = favicon.isGenerated
+      ? './icon.svg'
+      : `./${favicon.outFileName}`;
+    const appleHref = appleTouch.absolutePath
+      ? `./${appleTouch.outFileName}`
+      : faviconHref;
+
+    const seoMeta = renderSeoHeadTags({
+      config: activeConfig,
+      favicon: { ...favicon, href: faviconHref },
+      appleTouchIcon: { ...appleTouch, href: appleHref },
+      pageUrl: activeConfig.seo?.canonicalUrl,
+      includeIconLinks: true
     });
 
     const cliStartLabel = options.startLabel ? JSON.stringify(options.startLabel) : 'undefined';
     const pwaEnabled = activeConfig.pwa?.enabled !== false;
     const pwaHead = pwaEnabled ? renderPwaHeadTags(activeConfig) : '';
     const pwaRegister = pwaEnabled ? renderPwaRegisterScript() : '';
+    const htmlLang = resolveHtmlLang(activeConfig);
 
     res.writeHead(200, {
       'Content-Type': 'text/html; charset=utf-8',
       'Cache-Control': 'no-cache, no-store, must-revalidate'
     });
     res.end(`<!DOCTYPE html>
-<html lang="en">
+<html lang="${htmlLang}">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>${gameTitle}</title>
-${shareMeta}
+${seoMeta}
 ${pwaHead}
   <style>
     ${combinedCss}

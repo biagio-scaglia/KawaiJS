@@ -6,6 +6,12 @@ export interface PwaAssets {
   readonly iconSvg: string;
 }
 
+export interface WebManifestOptions {
+  /** Icon file in dist, e.g. `icon.svg` or `icon.png`. */
+  readonly iconFile?: string;
+  readonly iconMime?: string;
+}
+
 export function buildPwaIconSvg(accent = '#f43f5e'): string {
   const safe = accent.replace(/[<>"']/g, '');
   return `<?xml version="1.0" encoding="UTF-8"?>
@@ -19,13 +25,25 @@ export function buildPwaIconSvg(accent = '#f43f5e'): string {
 `;
 }
 
-export function buildWebManifest(config: KawaProjectConfig): string {
+export function buildWebManifest(
+  config: KawaProjectConfig,
+  options: WebManifestOptions = {}
+): string {
   const name = config.title || 'Kawaijs Visual Novel';
   const shortName = (config.pwa?.shortName || name).slice(0, 12);
-  const themeColor = config.pwa?.themeColor || config.theme?.primaryColor || '#f43f5e';
+  const themeColor =
+    config.seo?.themeColor || config.pwa?.themeColor || config.theme?.primaryColor || '#f43f5e';
   const backgroundColor = config.pwa?.backgroundColor || '#000000';
   const description =
-    config.share?.description || config.pwa?.description || `Play ${name} in your browser.`;
+    config.seo?.description ||
+    config.share?.description ||
+    config.pwa?.description ||
+    `Play ${name} in your browser.`;
+  const iconFile = options.iconFile || 'icon.svg';
+  const iconMime =
+    options.iconMime ||
+    (iconFile.endsWith('.png') ? 'image/png' : 'image/svg+xml');
+  const lang = (config.seo?.locale || 'en_US').split(/[_-]/)[0] || 'en';
 
   const manifest = {
     name,
@@ -37,18 +55,18 @@ export function buildWebManifest(config: KawaProjectConfig): string {
     orientation: 'any',
     background_color: backgroundColor,
     theme_color: themeColor,
-    lang: 'en',
+    lang,
     icons: [
       {
-        src: './icon.svg',
+        src: `./${iconFile}`,
         sizes: 'any',
-        type: 'image/svg+xml',
+        type: iconMime,
         purpose: 'any'
       },
       {
-        src: './icon.svg',
+        src: `./${iconFile}`,
         sizes: 'any',
-        type: 'image/svg+xml',
+        type: iconMime,
         purpose: 'maskable'
       }
     ]
@@ -58,10 +76,22 @@ export function buildWebManifest(config: KawaProjectConfig): string {
 }
 
 /** App-shell service worker: precache core files, cache-first for assets. */
-export function buildServiceWorkerScript(cacheVersion = 'kawa-v1'): string {
+export function buildServiceWorkerScript(
+  cacheVersion = 'kawa-v1',
+  precacheExtra: string[] = []
+): string {
+  const precache = [
+    './',
+    './index.html',
+    './style.css',
+    './manifest.webmanifest',
+    './icon.svg',
+    ...precacheExtra
+  ];
+  const unique = [...new Set(precache)];
   return `/* Kawaijs PWA service worker */
 const CACHE = '${cacheVersion}';
-const PRECACHE = ['./', './index.html', './style.css', './manifest.webmanifest', './icon.svg'];
+const PRECACHE = ${JSON.stringify(unique)};
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
@@ -85,7 +115,7 @@ self.addEventListener('fetch', (event) => {
 
   const isAsset =
     url.pathname.includes('/assets/') ||
-    /\\.(png|jpe?g|webp|gif|svg|mp3|ogg|wav|m4a|css|js|woff2?)$/i.test(url.pathname);
+    /\\.(png|jpe?g|webp|gif|svg|ico|mp3|ogg|wav|m4a|css|js|woff2?)$/i.test(url.pathname);
 
   if (isAsset) {
     event.respondWith(
@@ -113,29 +143,39 @@ self.addEventListener('fetch', (event) => {
 `;
 }
 
-export function buildPwaAssets(config: KawaProjectConfig, cacheVersion?: string): PwaAssets {
-  const accent = config.pwa?.themeColor || config.theme?.primaryColor || '#f43f5e';
+export function buildPwaAssets(
+  config: KawaProjectConfig,
+  cacheVersion?: string,
+  options: WebManifestOptions & { precacheExtra?: string[] } = {}
+): PwaAssets {
+  const accent =
+    config.seo?.themeColor || config.pwa?.themeColor || config.theme?.primaryColor || '#f43f5e';
   return {
-    manifestJson: buildWebManifest(config),
-    serviceWorkerJs: buildServiceWorkerScript(cacheVersion ?? `kawa-${Date.now().toString(36)}`),
+    manifestJson: buildWebManifest(config, options),
+    serviceWorkerJs: buildServiceWorkerScript(
+      cacheVersion ?? `kawa-${Date.now().toString(36)}`,
+      options.precacheExtra
+    ),
     iconSvg: buildPwaIconSvg(accent)
   };
 }
 
-/** HTML tags + registration snippet for PWA installability. */
+/** HTML tags for PWA installability (favicon/SEO icons come from seo.ts). */
 export function renderPwaHeadTags(config: KawaProjectConfig): string {
-  const themeColor = (config.pwa?.themeColor || config.theme?.primaryColor || '#f43f5e')
-    .replace(/[<>"']/g, '');
+  const themeColor = (
+    config.seo?.themeColor ||
+    config.pwa?.themeColor ||
+    config.theme?.primaryColor ||
+    '#f43f5e'
+  ).replace(/[<>"']/g, '');
   const title = (config.title || 'Kawaijs Visual Novel').replace(/[<>"']/g, '');
   return [
-    `  <meta name="theme-color" content="${themeColor}">`,
     `  <meta name="mobile-web-app-capable" content="yes">`,
     `  <meta name="apple-mobile-web-app-capable" content="yes">`,
     `  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">`,
     `  <meta name="apple-mobile-web-app-title" content="${title.slice(0, 12)}">`,
-    `  <link rel="manifest" href="./manifest.webmanifest">`,
-    `  <link rel="icon" href="./icon.svg" type="image/svg+xml">`,
-    `  <link rel="apple-touch-icon" href="./icon.svg">`
+    `  <meta name="theme-color" content="${themeColor}">`,
+    `  <link rel="manifest" href="./manifest.webmanifest">`
   ].join('\n');
 }
 

@@ -110,6 +110,18 @@ label start:
       description: `Play ${projectName} — a Kawaijs visual novel in your browser.`,
       defaultImage: 'backgrounds/classroom.svg',
       twitterCard: 'summary_large_image'
+    },
+    seo: {
+      description: `Play ${projectName} — a Kawaijs visual novel in your browser.`,
+      keywords: ['visual novel', 'kawaijs', projectName],
+      locale: 'en_US',
+      favicon: 'favicon.svg',
+      robots: 'index,follow',
+      jsonLd: true
+    },
+    pwa: {
+      enabled: true,
+      shortName: projectName.slice(0, 12)
     }
   };
   fs.writeFileSync(
@@ -154,6 +166,25 @@ npx kawa build
 \`\`\`
 
 Edit \`game/script.kawa\` and refresh — the live server reloads on script/style changes.
+
+## Branding & SEO
+
+Put your favicon at \`game/favicon.svg\` (or set \`seo.favicon\` in \`kawa.config.json\`).
+
+\`\`\`json
+{
+  "seo": {
+    "favicon": "favicon.svg",
+    "description": "Your blurb for Google & social cards",
+    "keywords": ["visual novel", "your-game"],
+    "canonicalUrl": "https://you.example/game/",
+    "locale": "en_US"
+  },
+  "share": {
+    "defaultImage": "backgrounds/classroom.svg"
+  }
+}
+\`\`\`
 `;
   fs.writeFileSync(path.join(targetDir, 'README.md'), starterReadme, 'utf-8');
 

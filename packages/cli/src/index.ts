@@ -7,6 +7,7 @@ export * from '@kawaijs/vite-plugin';
 export * from './config.js';
 export * from './parse-args.js';
 export * from './pwa.js';
+export * from './seo.js';
 
 import * as fs from 'node:fs';
 import { createProject } from './commands/create.js';

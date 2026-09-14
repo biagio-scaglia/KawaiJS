@@ -54,6 +54,37 @@ export interface KawaPwaConfig {
   readonly backgroundColor?: string;
 }
 
+export interface KawaSeoConfig {
+  /** Meta description (falls back to share.description). */
+  readonly description?: string;
+  /** Comma-separated string or list of keywords. */
+  readonly keywords?: string | readonly string[];
+  /** Canonical page URL (also used for og:url / JSON-LD). */
+  readonly canonicalUrl?: string;
+  /** Open Graph locale, e.g. `en_US` or `it_IT`. */
+  readonly locale?: string;
+  /** robots meta content (default: `index,follow`). */
+  readonly robots?: string;
+  /**
+   * Project-relative favicon path (svg/png/ico).
+   * Checked under project root, `game/`, and `game/assets/`.
+   * Also auto-discovers `favicon.svg` / `favicon.png` / `icon.svg`.
+   */
+  readonly favicon?: string;
+  /** Optional apple-touch-icon (defaults to favicon). */
+  readonly appleTouchIcon?: string;
+  readonly themeColor?: string;
+  /** Twitter @site handle, e.g. `@mystudio`. */
+  readonly twitterSite?: string;
+  /** Twitter @creator handle. */
+  readonly twitterCreator?: string;
+  /**
+   * Emit JSON-LD WebApplication by default.
+   * Set `false` to disable, or pass a custom object.
+   */
+  readonly jsonLd?: boolean | Record<string, unknown>;
+}
+
 export interface KawaProjectConfig {
   readonly title?: string;
   readonly author?: string;
@@ -64,6 +95,7 @@ export interface KawaProjectConfig {
   readonly gallery?: readonly KawaGalleryItemConfig[];
   readonly share?: KawaShareConfig;
   readonly pwa?: KawaPwaConfig;
+  readonly seo?: KawaSeoConfig;
 }
 
 export const DEFAULT_KAWA_CONFIG: KawaProjectConfig = {
@@ -91,6 +123,11 @@ export const DEFAULT_KAWA_CONFIG: KawaProjectConfig = {
   share: {},
   pwa: {
     enabled: true
+  },
+  seo: {
+    robots: 'index,follow',
+    locale: 'en_US',
+    jsonLd: true
   }
 };
 
@@ -138,6 +175,10 @@ export function loadProjectConfig(projectDir: string): KawaProjectConfig {
           pwa: {
             ...DEFAULT_KAWA_CONFIG.pwa,
             ...(parsed.pwa ?? {})
+          },
+          seo: {
+            ...DEFAULT_KAWA_CONFIG.seo,
+            ...(parsed.seo ?? {})
           }
         };
       } catch (err: unknown) {

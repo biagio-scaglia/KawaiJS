@@ -19,8 +19,10 @@
 
 **Kawaijs** brings the expressive simplicity of **Ren'Py** to the modern Web ecosystem. It is a complete visual novel authoring engine designed for storytellers, game designers, and web developers.
 
+- 🌐 **Web-Native**: Runs directly in modern browsers with zero backend dependencies. Deploy to GitHub Pages, Netlify, Vercel, Cloudflare Pages, or itch.io.
 - 📝 **Pythonic Scripting**: Clean, indentation-based syntax designed for readability.
 - 🎨 **Pure Web Native**: Styled 100% with standard CSS, responsive letterboxing (16:9), and zero canvas lock-in.
+- 🔍 **SEO & Branding**: User favicon, Open Graph / Twitter cards, JSON-LD, canonical URL, and PWA install icons from `kawa.config.json`.
 - 🎮 **Out-of-the-Box VN UX**: Built-in Ren'Py-style Main Menu, Save/Load slot manager, Dialogue History (Backlog), Preferences (Text Speed, Auto-forward time, Audio volumes), Rollback, Auto-Mode, and Skip-Mode.
 - ⚡ **Lightning Fast Toolchain**: Live-reload dev server, script validation, and zero-config static exports ready for GitHub Pages, Netlify, Vercel, or itch.io.
 
@@ -220,23 +222,48 @@ label dramatic_scene:
 > **Tip:** Built-in themes: `noir`, `sakura`, `ocean`, `dusk`. Style hooks: `dialogue glass|solid|minimal`, `choices pill|card|underline`, `stage dim|vignette`.  
 > **Showcase:** see [`examples/hello-world`](./examples/hello-world) — also the default `kawa create` template.
 
-Configure social previews in `kawa.config.json`:
+Configure **SEO, favicon, and social previews** in `kawa.config.json`:
 
 ```json
 {
+  "title": "My Novel",
+  "author": "Your Name",
+  "seo": {
+    "favicon": "favicon.svg",
+    "appleTouchIcon": "favicon.svg",
+    "description": "A browser visual novel about spring and secrets.",
+    "keywords": ["visual novel", "romance", "web game"],
+    "canonicalUrl": "https://you.example/my-novel/",
+    "locale": "en_US",
+    "robots": "index,follow",
+    "twitterSite": "@yourstudio",
+    "twitterCreator": "@you",
+    "jsonLd": true
+  },
   "share": {
     "siteName": "My Novel",
     "description": "A browser visual novel.",
     "defaultImage": "backgrounds/classroom.svg",
+    "twitterCard": "summary_large_image",
     "labels": {
       "courtyard_scene": {
         "title": "Under the sakura",
         "description": "Yumia waits by the courtyard gate."
       }
     }
+  },
+  "pwa": {
+    "enabled": true,
+    "shortName": "My Novel"
   }
 }
 ```
+
+**Favicon:** put `game/favicon.svg` (or `.png` / `.ico`) in the project, or set `seo.favicon` to any path under `game/` / `game/assets/`.  
+`kawa build` copies it into `dist/`, wires `<link rel="icon">`, apple-touch, and the PWA manifest icon.  
+If missing, a default icon is generated.
+
+**SEO output includes:** description, keywords, author, robots, canonical, Open Graph, Twitter cards, JSON-LD (`WebApplication`), and `robots.txt` when `canonicalUrl` is set.
 
 CLI deep-link helpers: `kawa dev --at courtyard_scene` · `kawa build --at start`.
 ---
