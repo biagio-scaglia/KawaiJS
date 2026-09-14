@@ -31,6 +31,20 @@ export interface KawaGalleryItemConfig {
   readonly thumbnail?: string;
 }
 
+export interface KawaShareLabelConfig {
+  readonly title?: string;
+  readonly description?: string;
+  readonly image?: string;
+}
+
+export interface KawaShareConfig {
+  readonly siteName?: string;
+  readonly description?: string;
+  readonly defaultImage?: string;
+  readonly twitterCard?: 'summary' | 'summary_large_image';
+  readonly labels?: Readonly<Record<string, KawaShareLabelConfig>>;
+}
+
 export interface KawaProjectConfig {
   readonly title?: string;
   readonly author?: string;
@@ -39,6 +53,7 @@ export interface KawaProjectConfig {
   readonly window?: KawaWindowConfig;
   readonly settings?: KawaDefaultSettings;
   readonly gallery?: readonly KawaGalleryItemConfig[];
+  readonly share?: KawaShareConfig;
 }
 
 export const DEFAULT_KAWA_CONFIG: KawaProjectConfig = {
@@ -62,7 +77,8 @@ export const DEFAULT_KAWA_CONFIG: KawaProjectConfig = {
     soundVolume: 1.0,
     voiceVolume: 1.0
   },
-  gallery: []
+  gallery: [],
+  share: {}
 };
 
 /**
@@ -97,7 +113,15 @@ export function loadProjectConfig(projectDir: string): KawaProjectConfig {
             ...DEFAULT_KAWA_CONFIG.settings,
             ...(parsed.settings ?? {})
           },
-          gallery: parsed.gallery ?? DEFAULT_KAWA_CONFIG.gallery
+          gallery: parsed.gallery ?? DEFAULT_KAWA_CONFIG.gallery,
+          share: {
+            ...DEFAULT_KAWA_CONFIG.share,
+            ...(parsed.share ?? {}),
+            labels: {
+              ...(DEFAULT_KAWA_CONFIG.share?.labels ?? {}),
+              ...(parsed.share?.labels ?? {})
+            }
+          }
         };
       } catch (err: unknown) {
         console.warn(`⚠️ Warning: Failed to parse configuration file at '${configPath}': ${err instanceof Error ? err.message : String(err)}`);

@@ -5,12 +5,14 @@ export * from '@kawaijs/renderer-dom';
 export * from '@kawaijs/audio';
 export * from '@kawaijs/vite-plugin';
 export * from './config.js';
+export * from './parse-args.js';
 
 import * as fs from 'node:fs';
 import { createProject } from './commands/create.js';
 import { validateProject } from './commands/validate.js';
 import { startDevServer } from './commands/dev.js';
 import { buildProject } from './commands/build.js';
+import { parseBuildCommandArgs, parseDevCommandArgs } from './parse-args.js';
 
 export { createProject, validateProject, startDevServer, buildProject };
 
@@ -25,14 +27,20 @@ export function runCLI(args: string[]): void {
     }
 
     case 'dev': {
-      const targetPath = args[1] ?? '.';
-      startDevServer(targetPath);
+      const parsed = parseDevCommandArgs(args);
+      startDevServer(parsed.projectDir, {
+        port: parsed.port,
+        startLabel: parsed.startLabel
+      });
       break;
     }
 
     case 'build': {
-      const targetPath = args[1] ?? '.';
-      const ok = buildProject(targetPath);
+      const parsed = parseBuildCommandArgs(args);
+      const ok = buildProject(parsed.projectDir, {
+        outDir: parsed.outDir,
+        startLabel: parsed.startLabel
+      });
       if (!ok) {
         process.exitCode = 1;
       }
@@ -73,12 +81,18 @@ Usage:
   kawaijs <command> [arguments]
 
 Commands:
-  create <name>     Scaffold a new visual novel project
-  dev [path]        Start the local development server (with live reload)
-  build [path]      Build a static production web bundle (dist/)
-  validate [path]   Validate Kawa Script syntax, labels, and links
-  help              Show this help message
-  version           Show version information
+  create <name>              Scaffold a new visual novel project
+  dev [path] [--port N] [--at label]
+                             Start the local development server (live reload)
+  build [path] [--out dir] [--at label]
+                             Build a static production web bundle (dist/)
+  validate [path]            Validate Kawa Script syntax, labels, and links
+  help                       Show this help message
+  version                    Show version information
+
+URL flags (browser):
+  ?at=<label>                Deep-link into a label (skips main menu)
+  ?embed=1                   Compact embed / iframe mode
 
 Keyboard Shortcuts in Game:
   Space / Enter     Advance dialogue
@@ -91,7 +105,7 @@ Keyboard Shortcuts in Game:
 Example:
   kawa create my-novel
   cd my-novel
-  kawa dev
+  kawa dev --at start
 `);
       break;
     }

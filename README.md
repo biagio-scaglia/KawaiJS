@@ -125,10 +125,11 @@ label leave_early:
 | **Define alias** | `define <name...> = "<path>"` | `define bg classroom = "classroom.svg"` |
 | **Player input** | `input <var> ["prompt"]` | `input player_name "Your name?"` |
 | **Dialogue window** | `window show` \| `window hide` | `window hide` |
-| **Theme token** | `theme "<name>"` | `theme "noir"` |
-| **Style hook** | `style <target> <name>` | `style dialogue glass` |
+| **Theme token** | `theme "<name>"` | `theme "noir"` / `"sakura"` / `"ocean"` / `"dusk"` |
+| **Style hook** | `style <target> <name>` | `style dialogue glass` / `style choices pill` |
 | **Hotspot** | `hotspot <id> <x> <y> <w> <h> jump <label>` | `hotspot door 40 50 18 12 jump courtyard` |
 | **Deep link** | URL `?at=<label>` or `?label=` | `/?at=courtyard_scene` |
+| **Embed mode** | URL `?embed=1` | iframe / blog embed (no main menu) |
 | **Dialogue** | `<char> "<text>"` | `yumia "Hello world!"` |
 | **Narration** | `"<text>"` | `"Silence filled the room."` |
 | **Variables** | `set <var> = <val>` / `+=` / `-=` | `set karma += 5` |
@@ -213,7 +214,29 @@ label dramatic_scene:
 > **Tip:** A new `scene` clears characters and VFX. Re-apply `vfx sakura` (or fog/rain) after each scene change.  
 > **Tip:** `define` aliases are resolved at compile time for `scene`, `play`, and `cg`.  
 > **Tip:** Open a build with `?at=label_name` to deep-link past the main menu (labels starting with `__` are ignored).  
+> **Tip:** Use `?embed=1` for iframe / itch / Notion embeds (compact UI, no main menu).  
+> **Tip:** Built-in themes: `noir`, `sakura`, `ocean`, `dusk`. Style hooks: `dialogue glass|solid|minimal`, `choices pill|card|underline`, `stage dim|vignette`.  
 > **Showcase:** see [`examples/hello-world`](./examples/hello-world) — also the default `kawa create` template.
+
+Configure social previews in `kawa.config.json`:
+
+```json
+{
+  "share": {
+    "siteName": "My Novel",
+    "description": "A browser visual novel.",
+    "defaultImage": "backgrounds/classroom.svg",
+    "labels": {
+      "courtyard_scene": {
+        "title": "Under the sakura",
+        "description": "Yumia waits by the courtyard gate."
+      }
+    }
+  }
+}
+```
+
+CLI deep-link helpers: `kawa dev --at courtyard_scene` · `kawa build --at start`.
 ---
 
 ## 🌸 Start Menu & UI Customization

@@ -3,9 +3,11 @@ import * as path from 'node:path';
 import { compileScript, formatDiagnostic, KawaError } from '@kawaijs/parser';
 import { getBaseThemeCss, getInlineRuntimeScript } from '../runtime-bundle.js';
 import { loadProjectConfig } from '../config.js';
+import { renderStaticShareMetaTags } from '../parse-args.js';
 
 export interface BuildOptions {
   outDir?: string;
+  startLabel?: string;
 }
 
 export function buildProject(projectDir = '.', options: BuildOptions = {}): boolean {
@@ -105,12 +107,31 @@ export function buildProject(projectDir = '.', options: BuildOptions = {}): bool
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;');
 
+  const shareDescription =
+    projectConfig.share?.description ||
+    projectConfig.share?.siteName ||
+    `Play ${projectConfig.title || storyPackage.meta.title || 'Kawaijs Visual Novel'} in your browser.`;
+  const shareImage = projectConfig.share?.defaultImage
+    ? projectConfig.share.defaultImage.startsWith('http')
+      ? projectConfig.share.defaultImage
+      : `./assets/${projectConfig.share.defaultImage.replace(/^assets\//, '')}`
+    : undefined;
+  const shareMeta = renderStaticShareMetaTags({
+    title: projectConfig.title || storyPackage.meta.title || 'Kawaijs Visual Novel',
+    description: shareDescription,
+    siteName: projectConfig.share?.siteName || projectConfig.title,
+    image: shareImage
+  });
+
+  const cliStartLabel = options.startLabel ? JSON.stringify(options.startLabel) : 'undefined';
+
   const htmlContent = `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>${gameTitle}</title>
+${shareMeta}
   <style>
     ${combinedCss}
     html, body, #app {
@@ -129,11 +150,14 @@ export function buildProject(projectDir = '.', options: BuildOptions = {}): bool
   <script type="module">
     const story = ${JSON.stringify(storyPackage, null, 2)};
     const projectConfig = ${JSON.stringify(projectConfig)};
+    const cliStartLabel = ${cliStartLabel};
 
     // Inline runtime VM + DOM Renderer with Start Menu
     ${getInlineRuntimeScript('./')}
 
     const app = mountKawaApp(story, document.getElementById('app'), {
+      startLabel: cliStartLabel,
+      share: projectConfig.share,
       mainMenu: {
         title: projectConfig.title,
         galleryItems: projectConfig.gallery

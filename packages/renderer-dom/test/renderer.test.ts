@@ -3,7 +3,12 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { compileScript } from '@kawaijs/parser';
 import { StoryVM } from '@kawaijs/runtime';
 import { DOMRenderer } from '../src/renderer.js';
-import { resolveDeepLinkLabel } from '../src/index.js';
+import { mountKawaApp, resolveDeepLinkLabel } from '../src/index.js';
+import { resolveEmbedMode } from '../src/embed.js';
+import {
+  buildSceneShareMeta,
+  stripRichTags
+} from '../src/share-meta.js';
 import { DialogueBoxComponent } from '../src/components/dialogue-box.js';
 import { ChoiceMenuComponent } from '../src/components/choice-menu.js';
 
@@ -564,6 +569,50 @@ label __secret:
     expect(resolveDeepLinkLabel(story, { search: '?at=courtyard' })).toBe('courtyard');
     expect(resolveDeepLinkLabel(story, { search: '?label=__secret' })).toBeUndefined();
     expect(resolveDeepLinkLabel(story, { search: '?at=missing' })).toBeUndefined();
+  });
+
+  it('detects embed mode and mounts without main menu chrome', () => {
+    expect(resolveEmbedMode('?embed=1')).toBe(true);
+    expect(resolveEmbedMode('?embed=true')).toBe(true);
+    expect(resolveEmbedMode('?embed=0')).toBe(false);
+
+    const story = compileScript(`label start:
+    "Hello embed"
+`);
+    const { renderer, vm } = mountKawaApp(story, container, {
+      search: '?embed=1',
+      typewriterSpeed: 0,
+      mainMenu: { enabled: true, title: 'Should hide' }
+    });
+
+    expect(vm.getState().dialogue?.text).toBe('Hello embed');
+    const root = container.querySelector('.kawa-root') as HTMLElement;
+    expect(root.classList.contains('kawa-embed')).toBe(true);
+    expect(root.dataset.kawaEmbed).toBe('1');
+    const quick = container.querySelector('.kawa-quick-menu') as HTMLElement;
+    expect(quick.style.display).toBe('none');
+    renderer.destroy();
+  });
+
+  it('builds scene share meta from dialogue and label overrides', () => {
+    expect(stripRichTags('{b}Hi{/b} [name]')).toBe('Hi');
+
+    const story = compileScript(`character yumia "Yumia" #f43f5e
+label start:
+    yumia "Hello from {b}Kawaijs{/b}!"
+label courtyard:
+    "Under the trees"
+`);
+    const vm = new StoryVM(story);
+    vm.start();
+    const meta = buildSceneShareMeta(story, vm.getState(), {
+      siteName: 'Demo VN',
+      labels: {
+        start: { title: 'Opening', description: 'Custom blurb' }
+      }
+    });
+    expect(meta.title).toBe('Opening');
+    expect(meta.description).toBe('Custom blurb');
   });
 });
 

@@ -1703,6 +1703,26 @@ body.kawa-fullscreen {
   --kawa-speaker-bg: linear-gradient(135deg, #fb7185 0%, #e11d48 100%);
 }
 
+.kawa-root[data-kawa-theme='ocean'] {
+  --kawa-primary-accent: #38bdf8;
+  --kawa-primary-glow: rgba(56, 189, 248, 0.4);
+  --kawa-secondary-accent: #7dd3fc;
+  --kawa-dialogue-bg: linear-gradient(180deg, rgba(8, 28, 48, 0.9) 0%, rgba(2, 12, 28, 0.96) 100%);
+  --kawa-dialogue-border: rgba(56, 189, 248, 0.35);
+  --kawa-speaker-bg: linear-gradient(135deg, #0ea5e9 0%, #0369a1 100%);
+  --kawa-choice-hover-bg: linear-gradient(135deg, #0284c7 0%, #0c4a6e 100%);
+}
+
+.kawa-root[data-kawa-theme='dusk'] {
+  --kawa-primary-accent: #fbbf24;
+  --kawa-primary-glow: rgba(251, 191, 36, 0.35);
+  --kawa-secondary-accent: #fdba74;
+  --kawa-dialogue-bg: linear-gradient(180deg, rgba(42, 18, 12, 0.92) 0%, rgba(18, 8, 6, 0.97) 100%);
+  --kawa-dialogue-border: rgba(251, 191, 36, 0.3);
+  --kawa-speaker-bg: linear-gradient(135deg, #f59e0b 0%, #c2410c 100%);
+  --kawa-choice-hover-bg: linear-gradient(135deg, #ea580c 0%, #7c2d12 100%);
+}
+
 /* ── Style hooks (`style dialogue glass` → .kawa-style-dialogue-glass) ── */
 .kawa-root.kawa-style-dialogue-glass .kawa-dialogue-box {
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.12) 0%, rgba(15, 23, 42, 0.55) 100%);
@@ -1711,12 +1731,76 @@ body.kawa-fullscreen {
   border-color: rgba(255, 255, 255, 0.28);
 }
 
+.kawa-root.kawa-style-dialogue-solid .kawa-dialogue-box {
+  background: #0f172a;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  border-color: rgba(248, 250, 252, 0.18);
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.55);
+}
+
+.kawa-root.kawa-style-dialogue-minimal .kawa-dialogue-box {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+.kawa-root.kawa-style-dialogue-minimal .kawa-speaker-name {
+  background: rgba(15, 23, 42, 0.75);
+}
+
 .kawa-root.kawa-style-stage-dim .kawa-stage {
   filter: brightness(0.85) saturate(0.9);
 }
 
+.kawa-root.kawa-style-stage-vignette .kawa-stage::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 6;
+  background: radial-gradient(ellipse at center, transparent 45%, rgba(0, 0, 0, 0.55) 100%);
+}
+
 .kawa-root.kawa-style-choices-pill .kawa-choice-btn {
   border-radius: 999px;
+}
+
+.kawa-root.kawa-style-choices-card .kawa-choice-btn {
+  border-radius: 14px;
+  min-width: min(420px, 86vw);
+  text-align: left;
+  padding: 0.9rem 1.15rem;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.35);
+}
+
+.kawa-root.kawa-style-choices-underline .kawa-choice-btn {
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid rgba(255, 255, 255, 0.35);
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.kawa-root.kawa-style-choices-underline .kawa-choice-btn:hover,
+.kawa-root.kawa-style-choices-underline .kawa-choice-btn:focus-visible {
+  border-bottom-color: var(--kawa-primary-accent);
+  transform: translateY(-1px);
+}
+
+.kawa-root.kawa-style-quickmenu-hidden .kawa-quick-menu {
+  display: none !important;
+}
+
+/* Embed / iframe compact chrome (`?embed=1`) */
+.kawa-root.kawa-embed .kawa-quick-menu {
+  display: none !important;
+}
+
+.kawa-root.kawa-embed .kawa-dialogue-box {
+  max-width: min(920px, 94%);
 }
 
 /* ── Hotspots (`hotspot id x y w h jump label`) ── */

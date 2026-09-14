@@ -1,8 +1,11 @@
 export * from './renderer.js';
+export * from './share-meta.js';
+export * from './embed.js';
 
 import type { StoryPackage } from '@kawaijs/ast';
 import { StoryVM } from '@kawaijs/runtime';
 import { DOMRenderer, preloadStoryAssets, type DOMRendererOptions } from './renderer.js';
+import { resolveEmbedMode } from './embed.js';
 
 export interface MountKawaAppOptions extends Omit<DOMRendererOptions, 'container'> {
   /**
@@ -10,6 +13,8 @@ export interface MountKawaAppOptions extends Omit<DOMRendererOptions, 'container
    * Internal labels (`__…`) are ignored.
    */
   startLabel?: string;
+  /** Optional URL search string for deep-link / embed detection (tests / SSR). */
+  search?: string;
 }
 
 /**
@@ -45,14 +50,16 @@ export function mountKawaApp(
   preloadStoryAssets(story, options?.assetResolver);
 
   const deepLink = resolveDeepLinkLabel(story, options);
-  const { startLabel: _ignored, ...rendererOptions } = options ?? {};
+  const embed = options?.embed ?? resolveEmbedMode(options?.search);
+  const { startLabel: _ignored, search: _search, ...rendererOptions } = options ?? {};
 
   const vm = new StoryVM(story);
   const renderer = new DOMRenderer(vm, {
     container,
     ...rendererOptions,
-    syncUrlLabel: rendererOptions.syncUrlLabel ?? Boolean(deepLink),
-    mainMenu: deepLink
+    embed,
+    syncUrlLabel: rendererOptions.syncUrlLabel ?? Boolean(deepLink || embed),
+    mainMenu: deepLink || embed
       ? { ...rendererOptions.mainMenu, enabled: false }
       : rendererOptions.mainMenu
   });

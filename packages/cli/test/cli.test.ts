@@ -6,6 +6,11 @@ import { validateProject } from '../src/commands/validate.js';
 import { buildProject } from '../src/commands/build.js';
 import { createProject } from '../src/commands/create.js';
 import { loadProjectConfig } from '../src/config.js';
+import {
+  parseBuildCommandArgs,
+  parseDevCommandArgs,
+  renderStaticShareMetaTags
+} from '../src/parse-args.js';
 
 describe('Kawaijs CLI Commands', () => {
   const tempDirs: string[] = [];
@@ -45,6 +50,28 @@ describe('Kawaijs CLI Commands', () => {
     const htmlContent = fs.readFileSync(path.join(outDir, 'index.html'), 'utf-8');
     expect(htmlContent).toContain('<div id="app"></div>');
     expect(htmlContent).toContain('story =');
+    expect(htmlContent).toContain('property="og:title"');
+    expect(htmlContent).toContain('name="twitter:card"');
+  });
+
+  it('parses dev/build CLI flags for --at and --port/--out', () => {
+    expect(parseDevCommandArgs(['dev', './game', '--port', '4123', '--at', 'start'])).toEqual({
+      projectDir: './game',
+      port: 4123,
+      startLabel: 'start'
+    });
+    expect(parseBuildCommandArgs(['build', '--at=ending', '--out', 'public'])).toEqual({
+      projectDir: '.',
+      startLabel: 'ending',
+      outDir: 'public'
+    });
+    const tags = renderStaticShareMetaTags({
+      title: 'Demo',
+      description: 'A VN',
+      image: './assets/bg.svg'
+    });
+    expect(tags).toContain('og:title');
+    expect(tags).toContain('./assets/bg.svg');
   });
 
   it('scaffolds a new project with createProject', () => {

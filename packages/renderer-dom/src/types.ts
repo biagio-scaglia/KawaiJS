@@ -1,4 +1,5 @@
 import type { StoryPackage, ChoiceOption } from '@kawaijs/ast';
+import type { ShareConfig } from './share-meta.js';
 
 export type AssetType = 'background' | 'character' | 'audio';
 
@@ -179,4 +180,13 @@ export interface DOMRendererOptions {
    * Default: false (enabled automatically by mountKawaApp when a deep-link is present).
    */
   syncUrlLabel?: boolean;
+  /**
+   * Open Graph / Twitter share metadata (updated as the player moves between labels).
+   */
+  share?: ShareConfig;
+  /**
+   * Embed / iframe-friendly mode: no main menu chrome, compact UI.
+   * Default: false (also auto-detected via `?embed=1` in mountKawaApp).
+   */
+  embed?: boolean;
 }

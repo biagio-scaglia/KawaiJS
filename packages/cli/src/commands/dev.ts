@@ -4,10 +4,12 @@ import * as path from 'node:path';
 import { compileScript, formatDiagnostic, KawaError } from '@kawaijs/parser';
 import { getBaseThemeCss, getInlineRuntimeScript } from '../runtime-bundle.js';
 import { loadProjectConfig } from '../config.js';
+import { renderStaticShareMetaTags } from '../parse-args.js';
 
 export interface DevServerOptions {
   port?: number;
   open?: boolean;
+  startLabel?: string;
 }
 
 export function startDevServer(projectDir = '.', options: DevServerOptions = {}): void {
@@ -200,6 +202,24 @@ export function startDevServer(projectDir = '.', options: DevServerOptions = {})
       .replace(/>/g, '&gt;')
       .replace(/"/g, '&quot;');
 
+    const shareDescription =
+      activeConfig.share?.description ||
+      activeConfig.share?.siteName ||
+      `Play ${activeConfig.title || 'Kawaijs Visual Novel'} in your browser.`;
+    const shareImage = activeConfig.share?.defaultImage
+      ? activeConfig.share.defaultImage.startsWith('http')
+        ? activeConfig.share.defaultImage
+        : `./assets/${activeConfig.share.defaultImage.replace(/^assets\//, '')}`
+      : undefined;
+    const shareMeta = renderStaticShareMetaTags({
+      title: activeConfig.title || 'Kawaijs Visual Novel',
+      description: shareDescription,
+      siteName: activeConfig.share?.siteName || activeConfig.title,
+      image: shareImage
+    });
+
+    const cliStartLabel = options.startLabel ? JSON.stringify(options.startLabel) : 'undefined';
+
     res.writeHead(200, {
       'Content-Type': 'text/html; charset=utf-8',
       'Cache-Control': 'no-cache, no-store, must-revalidate'
@@ -210,6 +230,7 @@ export function startDevServer(projectDir = '.', options: DevServerOptions = {})
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>${gameTitle}</title>
+${shareMeta}
   <style>
     ${combinedCss}
     html, body, #app {
@@ -264,8 +285,11 @@ export function startDevServer(projectDir = '.', options: DevServerOptions = {})
         }
 
         const projectConfig = ${JSON.stringify(activeConfig)};
+        const cliStartLabel = ${cliStartLabel};
 
         const app = mountKawaApp(story, document.getElementById('app'), {
+          startLabel: cliStartLabel,
+          share: projectConfig.share,
           mainMenu: {
             title: projectConfig.title,
             galleryItems: projectConfig.gallery
@@ -303,6 +327,9 @@ export function startDevServer(projectDir = '.', options: DevServerOptions = {})
   server.listen(port, () => {
     console.log(`\n🌸 Kawaijs Dev Server running at:`);
     console.log(`   > Local:   \x1b[36mhttp://localhost:${port}\x1b[0m`);
+    if (options.startLabel) {
+      console.log(`   > Start:   label "${options.startLabel}" (--at)`);
+    }
     console.log(`   > Project: ${rootDir}`);
     console.log(`   > Watching: game/script.kawa, game/style.css, game/assets/\n`);
   });

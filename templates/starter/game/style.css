@@ -1,4 +1,16 @@
-/* Hello World Custom Kawaijs Theme */
+/*
+ * Project CSS — override design tokens or target Kawaijs classes.
+ *
+ * Script hooks (no CSS edit required):
+ *   theme "noir" | "sakura" | "ocean" | "dusk"
+ *   style dialogue glass | solid | minimal
+ *   style choices pill | card | underline
+ *   style stage dim | vignette
+ *
+ * Official tokens (see @kawaijs/renderer-dom/theme.css):
+ *   --kawa-primary-accent, --kawa-primary-glow, --kawa-dialogue-bg,
+ *   --kawa-dialogue-border, --kawa-font-body, --kawa-font-heading
+ */
 :root {
   --kawa-primary-accent: #f43f5e;
   --kawa-primary-glow: rgba(244, 63, 94, 0.45);
@@ -27,4 +39,3 @@
   transform: translateY(-3px) scale(1.025);
   box-shadow: 0 12px 30px rgba(244, 63, 94, 0.5), 0 0 20px rgba(244, 63, 94, 0.3);
 }
-

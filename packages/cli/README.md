@@ -84,12 +84,21 @@ npx kawaijs validate
 # Create a new visual novel project
 kawa create <project-name>
 
+# Dev server (live reload) — optional deep-link + port
+kawa dev [path] [--port 3000] [--at label]
+
+# Static production bundle
+kawa build [path] [--out dist] [--at label]
+
 # Validate syntax, jump labels, and asset links
 kawa validate [path]
 
 # Show version
 kawa version
 ```
+
+Browser URL flags: `?at=<label>` (deep-link), `?embed=1` (iframe mode).  
+Open Graph tags come from `share` in `kawa.config.json`.
 
 ---
 

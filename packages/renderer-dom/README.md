@@ -53,6 +53,8 @@ const renderer = new DOMRenderer(vm, {
 - **Responsive 16:9 Letterboxing**: Automatically scales to any screen aspect ratio.
 - **Rich Text & Interpolation**: Built-in support for dynamic variables `[var]`, `{b}`, `{i}`, `{color=...}`, `{size=...}` tags with XSS sanitization.
 - **Keyboard Navigation**: Space/Enter advance, Backspace rollback, A auto, Ctrl skip, S/L save/load, H history, P preferences, Esc title.
+- **Theme / Style hooks**: `theme "noir|sakura|ocean|dusk"` and `style dialogue|choices|stage …` map to CSS tokens / classes.
+- **Share & embed**: dynamic Open Graph meta per scene; `?embed=1` for iframe-friendly chrome; `?at=` deep-links.
 
 ## License
 

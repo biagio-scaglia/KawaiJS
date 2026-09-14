@@ -104,7 +104,13 @@ label start:
         image: 'cg_celebration.svg',
         description: 'Unlocked on the master ending.'
       }
-    ]
+    ],
+    share: {
+      siteName: projectName,
+      description: `Play ${projectName} — a Kawaijs visual novel in your browser.`,
+      defaultImage: 'backgrounds/classroom.svg',
+      twitterCard: 'summary_large_image'
+    }
   };
   fs.writeFileSync(
     path.join(targetDir, 'game', 'kawa.config.json'),

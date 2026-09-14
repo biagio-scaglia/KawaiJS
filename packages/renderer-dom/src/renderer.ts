@@ -27,6 +27,12 @@ import { showInputModal } from './modals/input-modal.js';
 import { escapeHtml } from './utils/rich-text.js';
 
 import { ViewportAdapter } from './layout/viewport-adapter.js';
+import {
+  applyDocumentShareMeta,
+  buildSceneShareMeta,
+  resolveShareAssetUrl,
+  type ShareConfig
+} from './share-meta.js';
 
 export * from './icons.js';
 export * from './types.js';
@@ -46,6 +52,8 @@ export * from './components/choice-menu.js';
 export * from './components/quick-menu.js';
 export * from './components/stage-layer.js';
 export * from './components/vfx-layer.js';
+export * from './share-meta.js';
+export * from './embed.js';
 export function extractGalleryItems(story?: StoryPackage): GalleryItem[] {
   if (!story || !story.labels) return [];
   const itemsMap = new Map<string, GalleryItem>();
@@ -115,6 +123,9 @@ export class DOMRenderer {
     this.assetResolver = options.assetResolver ?? defaultAssetResolver;
 
     let finalMainMenu = options.mainMenu;
+    if (options.embed) {
+      finalMainMenu = { ...finalMainMenu, enabled: false };
+    }
     if (finalMainMenu?.enabled !== false && (!finalMainMenu?.galleryItems || finalMainMenu.galleryItems.length === 0)) {
       const autoItems = extractGalleryItems(this.vm.getStory());
       if (autoItems.length > 0) {
@@ -156,6 +167,7 @@ export class DOMRenderer {
     this.unsubscribeVMState = this.vm.onStateChange((state) => {
       this.render(state);
       this.syncUrlLabel(state);
+      this.syncShareMeta(state);
     });
 
     this.unsubscribeCamera = this.vm.onCameraEvent((e) => {
@@ -497,6 +509,10 @@ export class DOMRenderer {
 
     this.rootEl = document.createElement('div');
     this.rootEl.className = 'kawa-root';
+    if (this.options.embed) {
+      this.rootEl.classList.add('kawa-embed');
+      this.rootEl.dataset.kawaEmbed = '1';
+    }
 
     this.stageLayer = new StageLayerComponent(this.assetResolver);
 
@@ -538,7 +554,7 @@ export class DOMRenderer {
       onSettings: () => this.showSettingsModal()
     });
 
-    if (this.options.features?.quickMenu === false) {
+    if (this.options.features?.quickMenu === false || this.options.embed) {
       this.quickMenu.el.style.display = 'none';
     }
 
@@ -726,6 +742,21 @@ export class DOMRenderer {
     } catch {
       // ignore malformed URL environments
     }
+  }
+
+  private syncShareMeta(state: StoryState): void {
+    const share = this.options.share as ShareConfig | undefined;
+    if (!share && !this.options.syncUrlLabel) return;
+
+    const pageUrl = typeof window !== 'undefined' ? window.location.href : undefined;
+    const meta = buildSceneShareMeta(this.vm.getStory(), state, share, pageUrl);
+    applyDocumentShareMeta(
+      {
+        ...meta,
+        image: meta.image ? resolveShareAssetUrl(meta.image) : undefined
+      },
+      share
+    );
   }
 
   private applyThemeAndStyles(state: StoryState): void {
