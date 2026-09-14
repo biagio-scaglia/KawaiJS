@@ -1,6 +1,6 @@
 # Kawaijs Docs - Learn by Playing
 
-> Kawaijs is an open-source, web-native visual novel engine created by Biagio Scaglia. Authors write indentation-based .kawa scripts, preview with kawa dev, and deploy a static dist/ folder to GitHub Pages, Netlify, Vercel, or itch.io. It includes save/load, backlog, rollback, PWA, i18n, and built-in SEO (Open Graph, JSON-LD, sitemap, llms.txt).
+> Kawaijs is an open-source, web-native visual novel engine created by Biagio Scaglia — Ren'Py for the Web. Authors write indentation-based .kawa scripts, preview with kawa dev, try the browser playground, and deploy a static dist/ folder to GitHub Pages, Netlify, Vercel, or itch.io. It includes save/load, backlog, rollback, PWA, i18n, and built-in SEO (Open Graph, JSON-LD, sitemap, llms.txt).
 
 Author: Biagio Scaglia
 Engine: Kawaijs — web-native visual novel engine (TypeScript, Ren'Py-inspired scripting).

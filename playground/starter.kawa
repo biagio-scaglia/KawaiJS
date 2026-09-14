@@ -1,0 +1,24 @@
+character yumia "Yumia" #f43f5e
+
+define bg classroom = "classroom.svg"
+
+label start:
+    scene bg classroom with fade
+    show yumia happy at center
+
+    yumia "Hello from the Kawaijs playground!"
+    yumia "Edit the script on the left — the preview updates live."
+
+    menu:
+        "Say hi back":
+            jump hello
+        "Ask about the engine":
+            jump about
+
+label hello:
+    yumia "Nice to meet you. Download the project when you're ready."
+    return
+
+label about:
+    yumia "Write .kawa, ship a static site. Ren'Py for the Web."
+    return

@@ -8,7 +8,7 @@
 [![Tests](https://img.shields.io/badge/Tests-77%2B%20Passing-brightgreen)](https://github.com/biagio-scaglia/KawaiJS)
 [![Docs](https://img.shields.io/badge/Docs-Playable%20VN-f43f5e)](https://biagio-scaglia.github.io/KawaiJS/)
 
-[Playable Docs](https://biagio-scaglia.github.io/KawaiJS/) · [Quick Start](#-quick-start) · [Syntax Guide](#-kawa-script-syntax-guide) · [Start Menu](#-start-menu--ui-customization) · [Keyboard Shortcuts](#-keyboard-shortcuts) · [Architecture](#-architecture)
+[Playable Docs](https://biagio-scaglia.github.io/KawaiJS/) · [Play Demo](https://biagio-scaglia.github.io/KawaiJS/showcase/) · [Playground](https://biagio-scaglia.github.io/KawaiJS/playground/) · [Quick Start](#-quick-start) · [Syntax Guide](#-kawa-script-syntax-guide) · [Start Menu](#-start-menu--ui-customization) · [Keyboard Shortcuts](#-keyboard-shortcuts) · [Architecture](#-architecture)
 
 ---
 
@@ -16,7 +16,7 @@
 
 **Kawaijs** brings the expressive simplicity of **Ren'Py** to the modern Web ecosystem. It is a complete visual novel authoring engine designed for storytellers, game designers, and web developers.
 
-- 🌐 **Web-Native**: Runs directly in modern browsers with zero backend dependencies. Deploy to GitHub Pages, Netlify, Vercel, Cloudflare Pages, or itch.io.
+- 🌐 **Web-Native**: Ren'Py for the Web — runs in modern browsers with zero backend. Deploy to GitHub Pages, Netlify, Vercel, Cloudflare Pages, or itch.io.
 - 📝 **Pythonic Scripting**: Clean, indentation-based syntax designed for readability.
 - 🎨 **Pure Web Native**: Styled 100% with standard CSS, responsive letterboxing (16:9), and zero canvas lock-in.
 - 🔍 **SEO & Branding**: User favicon, Open Graph / Twitter cards, JSON-LD, canonical URL, and PWA install icons from `kawa.config.json`.
@@ -49,12 +49,35 @@ Try the full showcase (sakura, fades, CG, three endings) from this repo:
 npx kawa dev ./examples/hello-world
 ```
 
+Or the **narrative demo** (*After the Bell*):
+
+```bash
+npm run dev:showcase
+# → http://localhost:3000
+# Production: https://biagio-scaglia.github.io/KawaiJS/showcase/
+```
+
 Or the **interactive documentation** VN (SEO / AEO / GEO ready, author Biagio Scaglia):
 
 ```bash
 npm run dev:docs
 # → http://localhost:3000
 # Production: https://biagio-scaglia.github.io/KawaiJS/
+```
+
+**Zero-install playground** (edit `.kawa` in the browser):
+
+```bash
+npm run build:playground
+# open playground/dist/index.html via a local static server
+# Production: https://biagio-scaglia.github.io/KawaiJS/playground/
+```
+
+Assemble the full GitHub Pages site locally:
+
+```bash
+npm run assemble:pages
+# → docs/ (docs VN + /showcase + /playground + product CTA bar)
 ```
 
 ### 3. Build for Production

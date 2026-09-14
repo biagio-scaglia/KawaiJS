@@ -77,7 +77,7 @@
   },
   "seo": {
     "description": "Official interactive docs for Kawaijs by Biagio Scaglia: a Ren'Py-inspired, TypeScript visual novel engine that ships static sites to GitHub Pages with SEO, PWA, and JSON-LD.",
-    "aiSummary": "Kawaijs is an open-source, web-native visual novel engine created by Biagio Scaglia. Authors write indentation-based .kawa scripts, preview with kawa dev, and deploy a static dist/ folder to GitHub Pages, Netlify, Vercel, or itch.io. It includes save/load, backlog, rollback, PWA, i18n, and built-in SEO (Open Graph, JSON-LD, sitemap, llms.txt).",
+    "aiSummary": "Kawaijs is an open-source, web-native visual novel engine created by Biagio Scaglia — Ren'Py for the Web. Authors write indentation-based .kawa scripts, preview with kawa dev, try the browser playground, and deploy a static dist/ folder to GitHub Pages, Netlify, Vercel, or itch.io. It includes save/load, backlog, rollback, PWA, i18n, and built-in SEO (Open Graph, JSON-LD, sitemap, llms.txt).",
     "keywords": [
       "Kawaijs",
       "visual novel engine",
@@ -105,6 +105,8 @@
     "sitemapPaths": [
       "llms.txt",
       "robots.txt",
+      "showcase/",
+      "playground/",
       "?lang=it",
       "?embed=1"
     ],

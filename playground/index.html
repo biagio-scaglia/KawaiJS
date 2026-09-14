@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Kawaijs Playground — Try in the browser</title>
+  <meta name="description" content="Write Kawa Script in the browser and preview a visual novel instantly. Zero install." />
+  <meta name="theme-color" content="#f43f5e" />
+  <link rel="canonical" href="https://biagio-scaglia.github.io/KawaiJS/playground/" />
+  <link rel="icon" href="../favicon.svg" type="image/svg+xml" />
+  <link rel="stylesheet" href="./playground.css" />
+</head>
+<body>
+  <header class="pg-top">
+    <a class="pg-brand" href="../">Kawaijs</a>
+    <p class="pg-tagline">Ren'Py for the Web — edit, preview, download.</p>
+    <div class="pg-actions">
+      <button type="button" id="btn-run" class="pg-btn pg-btn-primary">Run</button>
+      <button type="button" id="btn-download" class="pg-btn">Download project</button>
+      <a class="pg-btn pg-btn-ghost" href="../showcase/">Play demo</a>
+    </div>
+  </header>
+
+  <main class="pg-layout">
+    <section class="pg-editor-pane" aria-label="Kawa Script editor">
+      <div class="pg-pane-label">game.kawa</div>
+      <div id="editor" class="pg-editor"></div>
+      <pre id="diagnostics" class="pg-diagnostics" hidden></pre>
+    </section>
+    <section class="pg-preview-pane" aria-label="Live preview">
+      <div class="pg-pane-label">Preview</div>
+      <div id="preview" class="pg-preview"></div>
+    </section>
+  </main>
+
+  <script type="module" src="./playground.js"></script>
+</body>
+</html>

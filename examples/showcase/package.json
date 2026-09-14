@@ -1,0 +1,13 @@
+{
+  "name": "kawaijs-showcase",
+  "version": "0.1.11",
+  "private": true,
+  "type": "module",
+  "description": "After the Bell — a short narrative showcase for Kawaijs",
+  "author": "Biagio Scaglia",
+  "scripts": {
+    "dev": "kawa dev",
+    "build": "kawa build",
+    "validate": "kawa validate"
+  }
+}

@@ -1,0 +1,66 @@
+{
+  "title": "After the Bell",
+  "author": "Biagio Scaglia",
+  "version": "0.1.11",
+  "theme": {
+    "primaryColor": "#f43f5e",
+    "fontFamily": "\"Plus Jakarta Sans\", \"Segoe UI\", system-ui, sans-serif",
+    "headingFont": "\"Outfit\", Georgia, serif"
+  },
+  "window": {
+    "width": 1280,
+    "height": 720,
+    "aspectRatio": "16/9"
+  },
+  "settings": {
+    "textSpeed": 28,
+    "autoDelay": 1800,
+    "musicVolume": 0.75,
+    "soundVolume": 1,
+    "voiceVolume": 1
+  },
+  "gallery": [
+    {
+      "id": "sunset_promise",
+      "title": "Sunset Promise",
+      "image": "cg_sunset_promise.svg",
+      "description": "Unlocked during the club's last stand."
+    },
+    {
+      "id": "celebration",
+      "title": "Celebration",
+      "image": "cg_celebration.svg",
+      "description": "Unlocked on the shared ending."
+    }
+  ],
+  "share": {
+    "siteName": "Kawaijs",
+    "description": "After the Bell — a short visual novel demo built with Kawaijs, the web-native Ren'Py-inspired engine.",
+    "defaultImage": "backgrounds/classroom.svg",
+    "twitterCard": "summary_large_image"
+  },
+  "seo": {
+    "description": "Play After the Bell, a short visual novel demo for Kawaijs by Biagio Scaglia. Branching routes, save/load, and static web deployment.",
+    "keywords": [
+      "Kawaijs",
+      "visual novel demo",
+      "web visual novel",
+      "After the Bell",
+      "Biagio Scaglia"
+    ],
+    "canonicalUrl": "https://biagio-scaglia.github.io/KawaiJS/showcase/",
+    "locale": "en_US",
+    "favicon": "favicon.svg",
+    "themeColor": "#f43f5e",
+    "robots": "index,follow",
+    "llmsTxt": true,
+    "jsonLd": true
+  },
+  "pwa": {
+    "enabled": true,
+    "shortName": "After the Bell",
+    "description": "A short Kawaijs visual novel demo.",
+    "themeColor": "#f43f5e",
+    "backgroundColor": "#0f172a"
+  }
+}

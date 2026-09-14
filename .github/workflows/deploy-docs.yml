@@ -1,7 +1,6 @@
 name: Deploy Docs to GitHub Pages
 
-# Publishes the interactive docs VN to /docs on main (branch Pages)
-# and also to the GitHub Actions Pages artifact when enabled.
+# Assembles interactive docs + showcase demo + playground onto GitHub Pages.
 on:
   push:
     branches: [main]
@@ -30,14 +29,8 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npx tsc -b
-      - name: Build interactive docs
-        run: node ./packages/cli/bin/kawa.js build ./examples/docs
-      - name: Sync dist into /docs (branch Pages)
-        run: |
-          rm -rf docs
-          mkdir -p docs
-          cp -a examples/docs/dist/. docs/
-          touch docs/.nojekyll
+      - name: Assemble Pages site (docs + showcase + playground)
+        run: node ./scripts/assemble-pages.js
       - name: Commit /docs if changed
         run: |
           git config user.name "github-actions[bot]"
@@ -52,12 +45,11 @@ jobs:
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: examples/docs/dist
+          path: docs
 
   deploy-actions-pages:
     needs: build-and-publish-docs
     runs-on: ubuntu-latest
-    # Succeeds when Pages source is "GitHub Actions"; otherwise ignored/fails soft.
     continue-on-error: true
     environment:
       name: github-pages

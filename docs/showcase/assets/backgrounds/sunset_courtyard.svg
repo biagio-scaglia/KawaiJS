@@ -1,0 +1,75 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 1080" width="1920" height="1080">
+  <defs>
+    <linearGradient id="sunsetSky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#4c1d95"/>
+      <stop offset="35%" stop-color="#be185d"/>
+      <stop offset="70%" stop-color="#fb923c"/>
+      <stop offset="100%" stop-color="#fef08a"/>
+    </linearGradient>
+    <linearGradient id="sunGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="100%" stop-color="#f59e0b"/>
+    </linearGradient>
+    <linearGradient id="groundGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#7c2d12"/>
+      <stop offset="100%" stop-color="#451a03"/>
+    </linearGradient>
+    <linearGradient id="schoolWall" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#701a75"/>
+      <stop offset="100%" stop-color="#831843"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Sky -->
+  <rect x="0" y="0" width="1920" height="1080" fill="url(#sunsetSky)"/>
+
+  <!-- Glowing Setting Sun -->
+  <circle cx="1400" cy="500" r="140" fill="url(#sunGrad)" opacity="0.9"/>
+  <circle cx="1400" cy="500" r="220" fill="#fbbf24" opacity="0.25"/>
+
+  <!-- Distant Mountains -->
+  <polygon points="0,700 350,520 700,700" fill="#581c87" opacity="0.6"/>
+  <polygon points="500,700 900,480 1350,700" fill="#4a044e" opacity="0.7"/>
+  <polygon points="1100,700 1550,540 1920,680 1920,700" fill="#3b0764" opacity="0.8"/>
+
+  <!-- School Building Silhouette (Left) -->
+  <rect x="0" y="320" width="650" height="480" fill="url(#schoolWall)"/>
+  <!-- Windows -->
+  <g fill="#fef08a" opacity="0.85">
+    <rect x="60" y="380" width="80" height="60" rx="4"/>
+    <rect x="180" y="380" width="80" height="60" rx="4"/>
+    <rect x="300" y="380" width="80" height="60" rx="4"/>
+    <rect x="420" y="380" width="80" height="60" rx="4"/>
+    
+    <rect x="60" y="480" width="80" height="60" rx="4"/>
+    <rect x="180" y="480" width="80" height="60" rx="4"/>
+    <rect x="300" y="480" width="80" height="60" rx="4"/>
+    <rect x="420" y="480" width="80" height="60" rx="4"/>
+
+    <rect x="60" y="580" width="80" height="60" rx="4"/>
+    <rect x="180" y="580" width="80" height="60" rx="4"/>
+    <rect x="300" y="580" width="80" height="60" rx="4"/>
+    <rect x="420" y="580" width="80" height="60" rx="4"/>
+  </g>
+
+  <!-- Courtyard Ground -->
+  <polygon points="0,720 1920,680 1920,1080 0,1080" fill="url(#groundGrad)"/>
+  <path d="M 300,1080 Q 900,850 1400,680 L 1550,680 Q 1100,880 700,1080 Z" fill="#b45309" opacity="0.7"/>
+
+  <!-- Sakura Tree Silhouette (Right) -->
+  <path d="M 1650,1080 C 1650,900 1620,820 1680,720 C 1720,660 1680,620 1710,540 C 1670,580 1630,680 1610,750 C 1580,850 1560,940 1540,1080 Z" fill="#292524"/>
+  <!-- Sakura Foliage -->
+  <circle cx="1680" cy="460" r="160" fill="#f43f5e" opacity="0.85"/>
+  <circle cx="1540" cy="480" r="130" fill="#fb7185" opacity="0.9"/>
+  <circle cx="1800" cy="500" r="140" fill="#fda4af" opacity="0.8"/>
+  <circle cx="1660" cy="380" r="110" fill="#fda4af" opacity="0.95"/>
+
+  <!-- Floating Sakura Petals -->
+  <g fill="#fecdd3" opacity="0.8">
+    <ellipse cx="1200" cy="550" rx="14" ry="7" transform="rotate(25 1200 550)"/>
+    <ellipse cx="1050" cy="620" rx="12" ry="6" transform="rotate(-35 1050 620)"/>
+    <ellipse cx="850" cy="710" rx="15" ry="8" transform="rotate(45 850 710)"/>
+    <ellipse cx="600" cy="780" rx="13" ry="7" transform="rotate(15 600 780)"/>
+    <ellipse cx="1400" cy="670" rx="16" ry="8" transform="rotate(-20 1400 670)"/>
+  </g>
+</svg>

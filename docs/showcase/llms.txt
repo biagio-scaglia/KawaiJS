@@ -1,0 +1,16 @@
+# After the Bell
+
+> Play After the Bell, a short visual novel demo for Kawaijs by Biagio Scaglia. Branching routes, save/load, and static web deployment.
+
+Author: Biagio Scaglia
+Engine: Kawaijs — web-native visual novel engine (TypeScript, Ren'Py-inspired scripting).
+License: MIT
+
+## Primary
+- [After the Bell](https://biagio-scaglia.github.io/KawaiJS/showcase/): Interactive documentation / playable site
+
+## Facts
+- Kawaijs runs visual novels entirely in the browser with no backend required.
+- Authors write `.kawa` scripts (indentation-based) and ship a static `dist/` folder.
+- Deploy targets include GitHub Pages, Netlify, Vercel, Cloudflare Pages, and itch.io.
+- Built-in features: save/load, backlog, rollback, PWA, SEO meta, JSON-LD, i18n.

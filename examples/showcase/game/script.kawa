@@ -1,0 +1,232 @@
+# After the Bell — a short visual novel showcase for Kawaijs
+# Story only. No engine tutorials in dialogue.
+
+character yumia "Yumia" #f43f5e
+character kaori "Kaori" #0284c7
+
+define bg classroom = "classroom.svg"
+define bg rooftop = "rooftop.svg"
+define bg courtyard = "sunset_courtyard.svg"
+define music ambient = "bgm_ambient"
+define music upbeat = "bgm_upbeat"
+
+label start:
+    set trust_yumia = 0
+    set trust_kaori = 0
+    set kept_secret = 0
+
+    play music ambient fade 2
+
+    scene bg classroom with fade
+    vfx sakura
+    show yumia happy at left with bounce
+    show kaori normal at right with dissolve
+
+    yumia "You're late."
+    kaori "Only by four minutes. The hallway clocks lie."
+    yumia "I waited anyway. That means something, right?"
+
+    kaori "It means the club room still has heat. Sit."
+
+    yumia "Today isn't a normal meeting."
+    kaori "Someone left this envelope on the faculty desk. No name. Just... us."
+
+    play sound sfx_click
+    yumia "If we open it here, anyone could walk in."
+
+    menu:
+        "Open it with them right now":
+            set trust_yumia += 1
+            set trust_kaori += 1
+            jump open_together
+
+        "Suggest the rooftop — fewer eyes":
+            set trust_kaori += 2
+            jump go_rooftop
+
+        "Ask Yumia to keep it closed until after class":
+            set trust_yumia += 2
+            set kept_secret = 1
+            jump wait_courtyard
+
+label open_together:
+    show yumia excited at left with bounce
+    show kaori thinking at right
+
+    yumia "Fine. Together."
+    kaori "It's a transfer notice. Fake stamp. Real fear."
+    yumia "They're moving one of us before the festival."
+    kaori "Unless we prove the club is worth keeping."
+
+    play sound sfx_sparkle
+    camera flash
+    jump choose_plan
+
+label go_rooftop:
+    play music upbeat fade 1
+    scene bg rooftop with wipeleft
+    vfx fog
+    show kaori smug at center with dissolve
+
+    kaori "Wind's honest up here. Paper less so."
+    show yumia normal at left with bounce
+    yumia "What's inside?"
+    kaori "A schedule change. Quiet. Permanent."
+    yumia "They want the club gone without a hearing."
+
+    camera vpunch
+    play sound sfx_click
+    jump choose_plan
+
+label wait_courtyard:
+    scene bg courtyard with dissolve
+    vfx sakura
+    show yumia sad at center with bounce
+
+    yumia "I hate waiting. But you asked, so... I waited."
+    show kaori thinking at right with dissolve
+    kaori "Patience bought us privacy. Now open it."
+
+    yumia "A blank page? No — watermark. Tomorrow's vote."
+    kaori "Faculty wants a show of 'student interest'. Numbers, not feelings."
+
+    play sound sfx_sparkle
+    jump choose_plan
+
+label choose_plan:
+    scene bg classroom with fade
+    vfx sakura
+    show yumia happy at left
+    show kaori normal at right
+
+    yumia "So. Do we fight with hearts or with evidence?"
+    kaori "Both, if we have time. We don't."
+
+    menu:
+        "Stand with Yumia — gather the club's stories":
+            set trust_yumia += 2
+            jump route_yumia
+
+        "Stand with Kaori — build the hard case":
+            set trust_kaori += 2
+            jump route_kaori
+
+        "Split up and meet at sunset":
+            set trust_yumia += 1
+            set trust_kaori += 1
+            jump route_together
+
+label route_yumia:
+    play music upbeat fade 1
+    scene bg courtyard with dissolve
+    vfx sakura
+    vfx tint "#fda4af"
+    show yumia excited at center with bounce
+
+    yumia "Every afternoon here, someone laughed like they belonged."
+    yumia "If they erase this room, they erase that sound."
+
+    show kaori happy at right with nod
+    kaori "You got twelve statements. Messy. Human. Perfect."
+
+    play sound sfx_sparkle
+    camera flash
+    pause 600
+    cg "cg_sunset_promise.svg" as "sunset_promise"
+
+    yumia "Promise me you won't look away tomorrow."
+    jump evaluate_ending
+
+label route_kaori:
+    play music upbeat fade 1
+    scene bg rooftop with wipeleft
+    vfx fog
+    show kaori smug at center with dissolve
+
+    kaori "Attendance logs. Budget receipts. Festival plans dated last month."
+    kaori "They can't call us inactive if the paper disagrees."
+
+    show yumia happy at left with bounce
+    yumia "You sound terrifying when you're right."
+    kaori "Good. Tomorrow needs terrifying."
+
+    play sound sfx_sparkle
+    camera flash
+    pause 600
+    cg "cg_sunset_promise.svg" as "sunset_promise"
+
+    jump evaluate_ending
+
+label route_together:
+    play music upbeat fade 1
+    scene bg courtyard with wiperight
+    vfx sakura
+    show yumia happy at left with bounce
+    show kaori happy at right with nod
+
+    yumia "I brought voices."
+    kaori "I brought proof."
+    yumia "Then tomorrow we bring both."
+
+    camera hpunch
+    play sound sfx_sparkle
+    pause 500
+    cg "cg_sunset_promise.svg" as "sunset_promise"
+
+    jump evaluate_ending
+
+label evaluate_ending:
+    if trust_yumia >= 3:
+        if trust_kaori >= 2:
+            jump ending_together
+        else:
+            jump ending_yumia
+    else:
+        if trust_kaori >= 3:
+            jump ending_kaori
+        else:
+            jump ending_together
+
+label ending_yumia:
+    scene bg courtyard with fade
+    vfx sakura
+    show yumia excited at center with bounce
+
+    yumia "They heard us. Not because we shouted — because we meant it."
+    yumia "The club stays. For now. For us."
+
+    narrator "{b}Ending — Soft Resolve{/b}"
+    stop music fade 2
+    return
+
+label ending_kaori:
+    scene bg rooftop with fade
+    vfx fog
+    show kaori smug at center with dissolve
+
+    kaori "They folded the moment the paperwork stood up."
+    kaori "Feelings matter. Evidence decides."
+
+    narrator "{b}Ending — Clean Verdict{/b}"
+    stop music fade 2
+    return
+
+label ending_together:
+    play sound sfx_sparkle
+    camera flash
+    pause 800
+    cg "cg_celebration.svg" as "celebration"
+
+    scene bg classroom with dissolve
+    vfx sakura
+    show yumia excited at left with bounce
+    show kaori happy at right with nod
+
+    yumia "We kept the room."
+    kaori "We kept each other sharper."
+    yumia "Same time tomorrow?"
+    kaori "Don't be late."
+
+    narrator "{b}Ending — After the Bell{/b}"
+    stop music fade 2
+    return
