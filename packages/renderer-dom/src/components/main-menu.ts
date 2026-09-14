@@ -176,6 +176,7 @@ export class MainMenuComponent {
 
     const backdropEl = document.createElement('div');
     backdropEl.className = 'kawa-main-menu-backdrop';
+    backdropEl.setAttribute('aria-hidden', 'true');
 
     const contentEl = document.createElement('div');
     contentEl.className = 'kawa-main-menu-content';

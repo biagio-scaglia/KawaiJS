@@ -387,10 +387,20 @@ export class DOMRenderer {
     if (this.isAutoMode) this.toggleAutoMode(false);
     if (this.isSkipMode) this.toggleSkipMode(false);
     this.mainMenu.show();
+    this.setGameplayUiInert(true);
   }
 
   public hideMainMenu(): void {
     this.mainMenu.hide();
+    this.setGameplayUiInert(false);
+  }
+
+  /** Keep title-screen a11y tree clean: gameplay controls must not stay focusable under the menu. */
+  private setGameplayUiInert(inert: boolean): void {
+    const ui = this.stageLayer.stageEl.querySelector('.kawa-ui-layer');
+    if (!ui) return;
+    if (inert) ui.setAttribute('inert', '');
+    else ui.removeAttribute('inert');
   }
 
   public isMainMenuActive(): boolean {

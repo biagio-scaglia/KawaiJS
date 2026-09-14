@@ -36,7 +36,7 @@ export class QuickMenuComponent {
   public readonly skipBtn: HTMLButtonElement;
 
   constructor(callbacks: QuickMenuCallbacks) {
-    this.el = document.createElement('nav');
+    this.el = document.createElement('div');
     this.el.className = 'kawa-quick-menu';
     this.el.setAttribute('role', 'toolbar');
     this.el.setAttribute('aria-label', 'Quick Actions');

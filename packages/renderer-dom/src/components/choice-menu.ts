@@ -32,7 +32,6 @@ export class ChoiceMenuComponent {
       btn.type = 'button';
       btn.className = 'kawa-choice-btn';
       btn.textContent = choice.text;
-      btn.setAttribute('tabindex', '0');
       btn.setAttribute('aria-label', `Option ${index + 1}: ${choice.text}`);
 
       btn.addEventListener('click', (e) => {

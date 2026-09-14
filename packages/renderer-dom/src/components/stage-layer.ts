@@ -66,7 +66,11 @@ export class StageLayerComponent {
     this.modeBadgeEl = document.createElement('div');
     this.modeBadgeEl.className = 'kawa-mode-badge';
     this.modeBadgeEl.style.display = 'none';
+    this.modeBadgeEl.setAttribute('aria-live', 'polite');
+    this.modeBadgeEl.setAttribute('role', 'status');
 
+    this.cgEl.setAttribute('aria-hidden', 'true');
+    this.cgEl.setAttribute('role', 'presentation');
     this.stageEl.appendChild(this.backgroundEl);
     this.stageEl.appendChild(this.charactersEl);
     this.stageEl.appendChild(this.vfxLayer.el);

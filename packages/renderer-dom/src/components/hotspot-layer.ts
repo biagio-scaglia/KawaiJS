@@ -10,6 +10,7 @@ export class HotspotLayerComponent {
   constructor(private readonly onSelect: (id: string) => void) {
     this.el = document.createElement('div');
     this.el.className = 'kawa-hotspot-layer';
+    this.el.setAttribute('role', 'group');
     this.el.setAttribute('aria-label', 'Interactive regions');
     this.el.style.display = 'none';
   }
