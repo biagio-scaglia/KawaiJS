@@ -32,12 +32,20 @@ export class AudioManager {
   private pendingMusic: { src: string; options: PlayMusicOptions } | null = null;
   private musicFadeIntervals = new Map<HTMLAudioElement, ReturnType<typeof setInterval>>();
   private unlockHandler: (() => void) | null = null;
+  private readonly maxSoundPool = 4;
+  private readonly preferLightPreload: boolean;
 
   constructor(options: AudioOptions = {}) {
     this.masterVolume = options.masterVolume ?? 1.0;
     this.musicVolume = options.musicVolume ?? 0.8;
     this.soundVolume = options.soundVolume ?? 1.0;
     this.voiceVolume = options.voiceVolume ?? 1.0;
+    this.preferLightPreload =
+      typeof navigator !== 'undefined' &&
+      (Boolean((navigator as Navigator & { connection?: { saveData?: boolean } }).connection?.saveData) ||
+        (typeof window !== 'undefined' &&
+          typeof window.matchMedia === 'function' &&
+          window.matchMedia('(pointer: coarse)').matches));
 
     if (typeof window !== 'undefined') {
       this.addUnlockListeners();
@@ -141,7 +149,7 @@ export class AudioManager {
 
     const audio = new Audio(src);
     audio.loop = loop;
-    audio.preload = 'auto';
+    audio.preload = this.preferLightPreload ? 'metadata' : 'auto';
     this.currentMusicAudio = audio;
     this.currentMusicTrack = src;
 
@@ -190,7 +198,21 @@ export class AudioManager {
   public playSound(src: string, volume = 1): void {
     if (typeof Audio === 'undefined') return;
 
+    // Bound concurrent SFX to limit decoded audio RAM on mobile.
+    while (this.soundPool.length >= this.maxSoundPool) {
+      const oldest = this.soundPool.shift();
+      if (oldest) {
+        try {
+          oldest.pause();
+          oldest.src = '';
+        } catch {
+          /* ignore */
+        }
+      }
+    }
+
     const audio = new Audio(src);
+    audio.preload = 'auto';
     audio.volume = volume * this.masterVolume * this.soundVolume;
     audio.play().catch(() => {});
 
@@ -198,6 +220,11 @@ export class AudioManager {
     const cleanup = () => {
       const idx = this.soundPool.indexOf(audio);
       if (idx !== -1) this.soundPool.splice(idx, 1);
+      try {
+        audio.src = '';
+      } catch {
+        /* ignore */
+      }
       audio.removeEventListener('ended', cleanup);
       audio.removeEventListener('error', cleanup);
     };

@@ -41,23 +41,48 @@ let html = fs.readFileSync(indexPath, 'utf8');
 
 const cta = `
 <style>
-.kawa-product-bar{position:fixed;top:0;left:0;right:0;z-index:99999;display:flex;flex-wrap:wrap;align-items:center;gap:10px 16px;padding:10px 16px;background:rgba(7,11,20,.92);border-bottom:1px solid rgba(244,63,94,.35);backdrop-filter:blur(10px);font-family:"Plus Jakarta Sans",system-ui,sans-serif}
-.kawa-product-bar strong{color:#fff;font-size:.95rem}
-.kawa-product-bar span{color:#94a3b8;font-size:.85rem;flex:1;min-width:160px}
-.kawa-product-bar a,.kawa-product-bar code{display:inline-flex;align-items:center;padding:7px 12px;border-radius:10px;font-size:.82rem;font-weight:600;text-decoration:none}
+.kawa-product-bar{position:fixed;top:0;left:0;right:0;z-index:99999;display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;padding:8px 12px;padding-top:max(8px,env(safe-area-inset-top));background:rgba(7,11,20,.96);border-bottom:1px solid rgba(244,63,94,.35);font-family:system-ui,sans-serif}
+.kawa-product-bar strong{color:#fff;font-size:.9rem}
+.kawa-product-bar span{color:#94a3b8;font-size:.8rem;flex:1;min-width:140px}
+.kawa-product-bar a,.kawa-product-bar code,.kawa-product-bar button{display:inline-flex;align-items:center;justify-content:center;padding:8px 12px;border-radius:10px;font-size:.8rem;font-weight:600;text-decoration:none;min-height:40px;border:0;cursor:pointer}
 .kawa-product-bar a.primary{background:linear-gradient(135deg,#f43f5e,#e11d48);color:#fff}
 .kawa-product-bar a.secondary{background:rgba(30,41,59,.9);color:#e2e8f0;border:1px solid rgba(148,163,184,.25)}
 .kawa-product-bar code{background:rgba(15,23,42,.9);color:#38bdf8;border:1px solid rgba(56,189,248,.25)}
-body.kawa-fullscreen .kawa-root,html.kawa-fullscreen .kawa-root{padding-top:52px}
-@media(max-width:720px){.kawa-product-bar span{display:none}}
+.kawa-product-bar .kawa-product-dismiss{background:transparent;color:#94a3b8;padding:6px 10px;min-width:40px}
+body.kawa-fullscreen.has-kawa-product-bar .kawa-root,html.kawa-fullscreen.has-kawa-product-bar .kawa-root{padding-top:calc(48px + env(safe-area-inset-top))}
+@media(max-width:720px){
+  .kawa-product-bar span,.kawa-product-bar code{display:none}
+  .kawa-product-bar{gap:6px}
+  .kawa-product-bar a{flex:1}
+}
 </style>
-<div class="kawa-product-bar" role="banner">
+<div class="kawa-product-bar" id="kawa-product-bar" role="banner">
   <strong>Kawaijs</strong>
   <span>Ren'Py for the Web — narrative script, static deploy, native CSS.</span>
   <a class="primary" href="./showcase/">Play demo</a>
   <a class="secondary" href="./playground/">Try in browser</a>
   <code>npx kawa create my-novel</code>
+  <button type="button" class="kawa-product-dismiss" id="kawa-product-dismiss" aria-label="Hide toolbar">✕</button>
 </div>
+<script>
+(function(){
+  var bar=document.getElementById('kawa-product-bar');
+  var btn=document.getElementById('kawa-product-dismiss');
+  if(!bar) return;
+  function hide(){
+    bar.remove();
+    document.documentElement.classList.remove('has-kawa-product-bar');
+    document.body.classList.remove('has-kawa-product-bar');
+    try{sessionStorage.setItem('kawa-hide-product-bar','1')}catch(e){}
+  }
+  try{
+    if(sessionStorage.getItem('kawa-hide-product-bar')==='1'){hide();return;}
+  }catch(e){}
+  document.documentElement.classList.add('has-kawa-product-bar');
+  document.body.classList.add('has-kawa-product-bar');
+  if(btn) btn.addEventListener('click',hide);
+})();
+</script>
 `;
 
 if (!html.includes('kawa-product-bar')) {
@@ -65,7 +90,6 @@ if (!html.includes('kawa-product-bar')) {
   fs.writeFileSync(indexPath, html, 'utf8');
 }
 
-// Fix playground favicon relative path when nested
 const pgIndex = path.join(docsOut, 'playground', 'index.html');
 if (fs.existsSync(pgIndex)) {
   let pg = fs.readFileSync(pgIndex, 'utf8');

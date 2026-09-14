@@ -24746,11 +24746,14 @@ var AudioManager = class {
   pendingMusic = null;
   musicFadeIntervals = /* @__PURE__ */ new Map();
   unlockHandler = null;
+  maxSoundPool = 4;
+  preferLightPreload;
   constructor(options = {}) {
     this.masterVolume = options.masterVolume ?? 1;
     this.musicVolume = options.musicVolume ?? 0.8;
     this.soundVolume = options.soundVolume ?? 1;
     this.voiceVolume = options.voiceVolume ?? 1;
+    this.preferLightPreload = typeof navigator !== "undefined" && (Boolean(navigator.connection?.saveData) || typeof window !== "undefined" && typeof window.matchMedia === "function" && window.matchMedia("(pointer: coarse)").matches);
     if (typeof window !== "undefined") {
       this.addUnlockListeners();
     }
@@ -24834,7 +24837,7 @@ var AudioManager = class {
     }
     const audio = new Audio(src);
     audio.loop = loop;
-    audio.preload = "auto";
+    audio.preload = this.preferLightPreload ? "metadata" : "auto";
     this.currentMusicAudio = audio;
     this.currentMusicTrack = src;
     const startPlay = () => {
@@ -24877,7 +24880,18 @@ var AudioManager = class {
   playSound(src, volume = 1) {
     if (typeof Audio === "undefined")
       return;
+    while (this.soundPool.length >= this.maxSoundPool) {
+      const oldest = this.soundPool.shift();
+      if (oldest) {
+        try {
+          oldest.pause();
+          oldest.src = "";
+        } catch {
+        }
+      }
+    }
     const audio = new Audio(src);
+    audio.preload = "auto";
     audio.volume = volume * this.masterVolume * this.soundVolume;
     audio.play().catch(() => {
     });
@@ -24886,6 +24900,10 @@ var AudioManager = class {
       const idx = this.soundPool.indexOf(audio);
       if (idx !== -1)
         this.soundPool.splice(idx, 1);
+      try {
+        audio.src = "";
+      } catch {
+      }
       audio.removeEventListener("ended", cleanup);
       audio.removeEventListener("error", cleanup);
     };
@@ -25111,25 +25129,65 @@ function preloadStoryAssets(story, assetResolver2 = defaultAssetResolver) {
       }
     }
   }
+  const urls = [];
   for (const bg of bgSet) {
-    const img = new Image();
-    img.src = assetResolver2(bg, "background");
+    urls.push(assetResolver2(bg, "background"));
   }
   for (const char of charSet) {
     const candidates = characterAssetCandidates(char, assetResolver2);
-    const img = new Image();
-    let i3 = 0;
-    const tryNext = () => {
-      if (i3 >= candidates.length)
-        return;
-      img.src = candidates[i3++];
-    };
-    img.onerror = tryNext;
-    tryNext();
+    if (candidates[0])
+      urls.push(candidates[0]);
+  }
+  const saveData = Boolean(navigator.connection?.saveData);
+  const coarse = typeof window.matchMedia === "function" && window.matchMedia("(pointer: coarse)").matches;
+  const concurrency = saveData ? 2 : coarse ? 3 : 6;
+  let index = 0;
+  let active = 0;
+  const pump = () => {
+    while (active < concurrency && index < urls.length) {
+      const url = urls[index++];
+      active++;
+      const img = new Image();
+      const done = () => {
+        active--;
+        img.onload = null;
+        img.onerror = null;
+        pump();
+      };
+      img.onload = done;
+      img.onerror = done;
+      img.decoding = "async";
+      img.src = url;
+    }
+  };
+  const start = () => {
+    pump();
+  };
+  if (typeof window.requestIdleCallback === "function") {
+    window.requestIdleCallback(() => start(), { timeout: 1200 });
+  } else {
+    setTimeout(start, 0);
   }
 }
 
 // packages/renderer-dom/dist/components/vfx-layer.js
+function isLowPowerClient() {
+  if (typeof window === "undefined")
+    return false;
+  const conn = navigator.connection;
+  if (conn?.saveData)
+    return true;
+  if (typeof window.matchMedia === "function") {
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches)
+      return true;
+    if (window.matchMedia("(pointer: coarse)").matches && window.innerWidth < 900)
+      return true;
+  }
+  const mem = navigator.deviceMemory;
+  if (typeof mem === "number" && mem > 0 && mem <= 4)
+    return true;
+  return false;
+}
 var VfxLayerComponent = class {
   el;
   canvas;
@@ -25142,19 +25200,20 @@ var VfxLayerComponent = class {
   suspended = false;
   resizeTimer = null;
   destroyed = false;
+  lowPower;
+  lastFrameTs = 0;
+  targetFrameMs;
   boundResizeHandler;
   boundVisibilityHandler;
   constructor() {
+    this.lowPower = isLowPowerClient();
+    this.targetFrameMs = this.lowPower ? 1e3 / 30 : 1e3 / 60;
     this.el = document.createElement("div");
     this.el.className = "kawa-vfx-layer";
     this.el.setAttribute("aria-hidden", "true");
     this.canvas = document.createElement("canvas");
     this.canvas.className = "kawa-vfx-canvas";
-    const initialW = typeof window !== "undefined" ? window.innerWidth || 1280 : 1280;
-    const initialH = typeof window !== "undefined" ? window.innerHeight || 720 : 720;
-    this.canvas.width = initialW;
-    this.canvas.height = initialH;
-    this.ctx = this.canvas.getContext("2d");
+    this.ctx = this.canvas.getContext("2d", { alpha: true, desynchronized: true }) ?? this.canvas.getContext("2d");
     this.tintEl = document.createElement("div");
     this.tintEl.className = "kawa-vfx-tint";
     this.tintEl.style.display = "none";
@@ -25188,11 +25247,13 @@ var VfxLayerComponent = class {
       return;
     }
     const prefersReducedMotion = typeof window !== "undefined" && typeof window.matchMedia === "function" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    if (prefersReducedMotion && (vfxState.effect === "rain" || vfxState.effect === "snow" || vfxState.effect === "sakura")) {
-      this.stopParticleLoop();
-      this.currentEffect = vfxState.effect;
-      this.fogEl.style.display = "none";
-      return;
+    if ((prefersReducedMotion || this.lowPower) && (vfxState.effect === "rain" || vfxState.effect === "snow" || vfxState.effect === "sakura")) {
+      if (prefersReducedMotion) {
+        this.stopParticleLoop();
+        this.currentEffect = vfxState.effect;
+        this.fogEl.style.display = "none";
+        return;
+      }
     }
     if (vfxState.effect === "fog") {
       this.currentEffect = "fog";
@@ -25211,7 +25272,6 @@ var VfxLayerComponent = class {
     }
     this.startParticleEffect(vfxState.effect, vfxState.intensity);
   }
-  /** Pause particle rAF (e.g. while skip mode is active). Tint/fog stay. */
   setSuspended(suspended) {
     if (this.suspended === suspended)
       return;
@@ -25228,6 +25288,7 @@ var VfxLayerComponent = class {
   clear() {
     this.currentEffect = null;
     this.stopParticleLoop();
+    this.particles = [];
     this.tintEl.style.display = "none";
     this.fogEl.style.display = "none";
     if (this.ctx) {
@@ -25249,20 +25310,29 @@ var VfxLayerComponent = class {
     }
     this.el.remove();
   }
+  syncCanvasSize() {
+    const rect = this.el.getBoundingClientRect();
+    const cssW = Math.max(1, Math.floor(rect.width || (typeof window !== "undefined" ? window.innerWidth : 1280)));
+    const cssH = Math.max(1, Math.floor(rect.height || (typeof window !== "undefined" ? window.innerHeight : 720)));
+    const dprRaw = typeof window !== "undefined" ? window.devicePixelRatio || 1 : 1;
+    const dpr = this.lowPower ? Math.min(1, dprRaw) : Math.min(1.5, dprRaw);
+    const maxEdge = this.lowPower ? 960 : 1440;
+    const scale = Math.min(1, maxEdge / Math.max(cssW, cssH));
+    const w = Math.max(1, Math.floor(cssW * dpr * scale));
+    const h = Math.max(1, Math.floor(cssH * dpr * scale));
+    if (this.canvas.width !== w || this.canvas.height !== h) {
+      this.canvas.width = w;
+      this.canvas.height = h;
+    }
+  }
   initListeners() {
     if (typeof window !== "undefined") {
       this.boundResizeHandler = () => {
         if (this.destroyed)
           return;
-        const rect = this.el.getBoundingClientRect();
-        const w = rect.width || 1280;
-        const h = rect.height || 720;
-        if (this.canvas.width !== w || this.canvas.height !== h) {
-          this.canvas.width = w;
-          this.canvas.height = h;
-        }
+        this.syncCanvasSize();
       };
-      window.addEventListener("resize", this.boundResizeHandler);
+      window.addEventListener("resize", this.boundResizeHandler, { passive: true });
       this.resizeTimer = setTimeout(this.boundResizeHandler, 50);
     }
     if (typeof document !== "undefined") {
@@ -25278,11 +25348,18 @@ var VfxLayerComponent = class {
       document.addEventListener("visibilitychange", this.boundVisibilityHandler);
     }
   }
+  particleBudget(intensity) {
+    const base2 = typeof intensity === "number" ? Math.min(150, Math.max(10, intensity * 50)) : 50;
+    if (this.lowPower)
+      return Math.min(22, Math.max(10, Math.floor(base2 * 0.4)));
+    return Math.min(80, base2);
+  }
   startParticleEffect(effect, intensity) {
     if (this.destroyed || this.suspended)
       return;
     this.stopParticleLoop();
-    const count = typeof intensity === "number" ? Math.min(150, Math.max(10, intensity * 50)) : 50;
+    this.syncCanvasSize();
+    const count = this.particleBudget(intensity);
     const w = this.canvas.width || 1280;
     const h = this.canvas.height || 720;
     this.particles = [];
@@ -25322,10 +25399,16 @@ var VfxLayerComponent = class {
         });
       }
     }
-    let lastTimestamp = performance.now();
+    this.lastFrameTs = 0;
     const loop = (timestamp) => {
-      const dt = Math.min(0.1, Math.max(1e-3, (timestamp - lastTimestamp) / 1e3));
-      lastTimestamp = timestamp;
+      if (this.destroyed || this.suspended)
+        return;
+      if (this.lastFrameTs && timestamp - this.lastFrameTs < this.targetFrameMs) {
+        this.animationFrameId = requestAnimationFrame(loop);
+        return;
+      }
+      const dt = this.lastFrameTs ? Math.min(0.1, Math.max(1e-3, (timestamp - this.lastFrameTs) / 1e3)) : 1 / 60;
+      this.lastFrameTs = timestamp;
       const speedFactor = dt * 60;
       this.updateParticles(effect, speedFactor);
       this.renderParticles(effect);
@@ -25338,6 +25421,7 @@ var VfxLayerComponent = class {
       cancelAnimationFrame(this.animationFrameId);
       this.animationFrameId = null;
     }
+    this.lastFrameTs = 0;
   }
   updateParticles(effect, speedFactor = 1) {
     const w = this.canvas.width || 1280;
@@ -26048,7 +26132,7 @@ function cloneState(state2) {
 var HistoryManager = class {
   entries = [];
   maxEntries;
-  constructor(maxEntries = 200) {
+  constructor(maxEntries = 120) {
     this.maxEntries = maxEntries;
   }
   addEntry(speaker, speakerDisplayName, text) {
@@ -28838,14 +28922,23 @@ var ViewportAdapter = class {
     return this.currentMetrics;
   }
   initObserver() {
+    let raf = 0;
+    const schedule = () => {
+      if (raf)
+        return;
+      raf = requestAnimationFrame(() => {
+        raf = 0;
+        this.applyMetrics();
+      });
+    };
     if (typeof ResizeObserver !== "undefined") {
       this.resizeObserver = new ResizeObserver(() => {
-        this.applyMetrics();
+        schedule();
       });
       this.resizeObserver.observe(this.container);
     } else if (typeof window !== "undefined") {
-      this.windowResizeListener = () => this.applyMetrics();
-      window.addEventListener("resize", this.windowResizeListener);
+      this.windowResizeListener = () => schedule();
+      window.addEventListener("resize", this.windowResizeListener, { passive: true });
     }
   }
   destroy() {
@@ -28965,9 +29058,10 @@ function applyDocumentShareMeta(meta2, config2) {
 }
 
 // packages/renderer-dom/dist/touch.js
-var SWIPE_MIN_DIST_PX = 48;
-var SWIPE_MAX_OFF_AXIS_PX = 80;
-var SWIPE_MAX_DURATION_MS = 600;
+var SWIPE_MIN_DIST_PX = 56;
+var SWIPE_MAX_OFF_AXIS_PX = 72;
+var SWIPE_MAX_DURATION_MS = 550;
+var IGNORE_SELECTOR = "button, a, input, textarea, select, .kawa-choice-container, .kawa-quick-menu, .kawa-modal-overlay, .kawa-hotspot-layer, .kawa-product-bar";
 function bindSwipeControls(el, handlers2) {
   let startX = 0;
   let startY = 0;
@@ -28976,6 +29070,11 @@ function bindSwipeControls(el, handlers2) {
   const onStart = (e) => {
     if (e.touches.length !== 1)
       return;
+    const target = e.target;
+    if (target?.closest?.(IGNORE_SELECTOR)) {
+      tracking = false;
+      return;
+    }
     const t2 = e.touches[0];
     startX = t2.clientX;
     startY = t2.clientY;

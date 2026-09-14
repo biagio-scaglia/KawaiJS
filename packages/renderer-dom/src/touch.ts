@@ -11,9 +11,12 @@ export interface BoundTouchControls {
   destroy(): void;
 }
 
-const SWIPE_MIN_DIST_PX = 48;
-const SWIPE_MAX_OFF_AXIS_PX = 80;
-const SWIPE_MAX_DURATION_MS = 600;
+const SWIPE_MIN_DIST_PX = 56;
+const SWIPE_MAX_OFF_AXIS_PX = 72;
+const SWIPE_MAX_DURATION_MS = 550;
+
+const IGNORE_SELECTOR =
+  'button, a, input, textarea, select, .kawa-choice-container, .kawa-quick-menu, .kawa-modal-overlay, .kawa-hotspot-layer, .kawa-product-bar';
 
 /**
  * Bind horizontal swipe gestures on an element.
@@ -27,6 +30,11 @@ export function bindSwipeControls(el: HTMLElement, handlers: SwipeHandlers): Bou
 
   const onStart = (e: TouchEvent): void => {
     if (e.touches.length !== 1) return;
+    const target = e.target as HTMLElement | null;
+    if (target?.closest?.(IGNORE_SELECTOR)) {
+      tracking = false;
+      return;
+    }
     const t = e.touches[0]!;
     startX = t.clientX;
     startY = t.clientY;

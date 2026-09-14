@@ -13,6 +13,19 @@ interface Particle {
   swingSpeed?: number;
 }
 
+function isLowPowerClient(): boolean {
+  if (typeof window === 'undefined') return false;
+  const conn = (navigator as Navigator & { connection?: { saveData?: boolean } }).connection;
+  if (conn?.saveData) return true;
+  if (typeof window.matchMedia === 'function') {
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return true;
+    if (window.matchMedia('(pointer: coarse)').matches && window.innerWidth < 900) return true;
+  }
+  const mem = (navigator as Navigator & { deviceMemory?: number }).deviceMemory;
+  if (typeof mem === 'number' && mem > 0 && mem <= 4) return true;
+  return false;
+}
+
 export class VfxLayerComponent {
   public readonly el: HTMLDivElement;
   private canvas: HTMLCanvasElement;
@@ -25,22 +38,26 @@ export class VfxLayerComponent {
   private suspended = false;
   private resizeTimer: ReturnType<typeof setTimeout> | null = null;
   private destroyed = false;
+  private readonly lowPower: boolean;
+  private lastFrameTs = 0;
+  private targetFrameMs: number;
 
   private boundResizeHandler?: () => void;
   private boundVisibilityHandler?: () => void;
 
   constructor() {
+    this.lowPower = isLowPowerClient();
+    this.targetFrameMs = this.lowPower ? 1000 / 30 : 1000 / 60;
+
     this.el = document.createElement('div');
     this.el.className = 'kawa-vfx-layer';
     this.el.setAttribute('aria-hidden', 'true');
 
     this.canvas = document.createElement('canvas');
     this.canvas.className = 'kawa-vfx-canvas';
-    const initialW = typeof window !== 'undefined' ? (window.innerWidth || 1280) : 1280;
-    const initialH = typeof window !== 'undefined' ? (window.innerHeight || 720) : 720;
-    this.canvas.width = initialW;
-    this.canvas.height = initialH;
-    this.ctx = this.canvas.getContext('2d');
+    this.ctx =
+      this.canvas.getContext('2d', { alpha: true, desynchronized: true }) ??
+      this.canvas.getContext('2d');
 
     this.tintEl = document.createElement('div');
     this.tintEl.className = 'kawa-vfx-tint';
@@ -64,7 +81,6 @@ export class VfxLayerComponent {
       return;
     }
 
-    // Color tint is an overlay and can layer over sakura/rain/snow/fog.
     if (vfxState.color || vfxState.effect === 'tint') {
       this.tintEl.style.display = 'block';
       this.tintEl.style.backgroundColor = vfxState.color || 'rgba(244, 63, 94, 0.2)';
@@ -73,7 +89,6 @@ export class VfxLayerComponent {
     }
 
     if (vfxState.effect === 'tint') {
-      // Tint-only (no active weather) — keep overlay, clear particles.
       if (!this.currentEffect || this.currentEffect === 'tint') {
         this.currentEffect = 'tint';
         this.stopParticleLoop();
@@ -88,15 +103,19 @@ export class VfxLayerComponent {
       window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
     if (
-      prefersReducedMotion &&
+      (prefersReducedMotion || this.lowPower) &&
       (vfxState.effect === 'rain' ||
         vfxState.effect === 'snow' ||
         vfxState.effect === 'sakura')
     ) {
-      this.stopParticleLoop();
-      this.currentEffect = vfxState.effect;
-      this.fogEl.style.display = 'none';
-      return;
+      // Keep a static light overlay instead of continuous particle rAF on weak devices.
+      if (prefersReducedMotion) {
+        this.stopParticleLoop();
+        this.currentEffect = vfxState.effect;
+        this.fogEl.style.display = 'none';
+        return;
+      }
+      // lowPower still gets particles, but fewer + 30fps (handled below)
     }
 
     if (vfxState.effect === 'fog') {
@@ -109,7 +128,6 @@ export class VfxLayerComponent {
     this.fogEl.style.display = 'none';
 
     if (this.currentEffect === vfxState.effect) {
-      // Same weather — tint overlay may have changed above; keep particles.
       return;
     }
 
@@ -123,7 +141,6 @@ export class VfxLayerComponent {
     this.startParticleEffect(vfxState.effect, vfxState.intensity);
   }
 
-  /** Pause particle rAF (e.g. while skip mode is active). Tint/fog stay. */
   public setSuspended(suspended: boolean): void {
     if (this.suspended === suspended) return;
     this.suspended = suspended;
@@ -145,6 +162,7 @@ export class VfxLayerComponent {
   public clear(): void {
     this.currentEffect = null;
     this.stopParticleLoop();
+    this.particles = [];
     this.tintEl.style.display = 'none';
     this.fogEl.style.display = 'none';
     if (this.ctx) {
@@ -168,19 +186,30 @@ export class VfxLayerComponent {
     this.el.remove();
   }
 
+  private syncCanvasSize(): void {
+    const rect = this.el.getBoundingClientRect();
+    const cssW = Math.max(1, Math.floor(rect.width || (typeof window !== 'undefined' ? window.innerWidth : 1280)));
+    const cssH = Math.max(1, Math.floor(rect.height || (typeof window !== 'undefined' ? window.innerHeight : 720)));
+    const dprRaw = typeof window !== 'undefined' ? window.devicePixelRatio || 1 : 1;
+    const dpr = this.lowPower ? Math.min(1, dprRaw) : Math.min(1.5, dprRaw);
+    // Cap absolute buffer size to limit GPU memory on large phones
+    const maxEdge = this.lowPower ? 960 : 1440;
+    const scale = Math.min(1, maxEdge / Math.max(cssW, cssH));
+    const w = Math.max(1, Math.floor(cssW * dpr * scale));
+    const h = Math.max(1, Math.floor(cssH * dpr * scale));
+    if (this.canvas.width !== w || this.canvas.height !== h) {
+      this.canvas.width = w;
+      this.canvas.height = h;
+    }
+  }
+
   private initListeners(): void {
     if (typeof window !== 'undefined') {
       this.boundResizeHandler = () => {
         if (this.destroyed) return;
-        const rect = this.el.getBoundingClientRect();
-        const w = rect.width || 1280;
-        const h = rect.height || 720;
-        if (this.canvas.width !== w || this.canvas.height !== h) {
-          this.canvas.width = w;
-          this.canvas.height = h;
-        }
+        this.syncCanvasSize();
       };
-      window.addEventListener('resize', this.boundResizeHandler);
+      window.addEventListener('resize', this.boundResizeHandler, { passive: true });
       this.resizeTimer = setTimeout(this.boundResizeHandler, 50);
     }
 
@@ -197,10 +226,18 @@ export class VfxLayerComponent {
     }
   }
 
+  private particleBudget(intensity?: number | string): number {
+    const base =
+      typeof intensity === 'number' ? Math.min(150, Math.max(10, intensity * 50)) : 50;
+    if (this.lowPower) return Math.min(22, Math.max(10, Math.floor(base * 0.4)));
+    return Math.min(80, base);
+  }
+
   private startParticleEffect(effect: string, intensity?: number | string): void {
     if (this.destroyed || this.suspended) return;
     this.stopParticleLoop();
-    const count = typeof intensity === 'number' ? Math.min(150, Math.max(10, intensity * 50)) : 50;
+    this.syncCanvasSize();
+    const count = this.particleBudget(intensity);
 
     const w = this.canvas.width || 1280;
     const h = this.canvas.height || 720;
@@ -243,11 +280,18 @@ export class VfxLayerComponent {
       }
     }
 
-    let lastTimestamp = performance.now();
+    this.lastFrameTs = 0;
     const loop = (timestamp: number) => {
-      const dt = Math.min(0.1, Math.max(0.001, (timestamp - lastTimestamp) / 1000));
-      lastTimestamp = timestamp;
-      const speedFactor = dt * 60; // normalize to 60 FPS scale
+      if (this.destroyed || this.suspended) return;
+      if (this.lastFrameTs && timestamp - this.lastFrameTs < this.targetFrameMs) {
+        this.animationFrameId = requestAnimationFrame(loop);
+        return;
+      }
+      const dt = this.lastFrameTs
+        ? Math.min(0.1, Math.max(0.001, (timestamp - this.lastFrameTs) / 1000))
+        : 1 / 60;
+      this.lastFrameTs = timestamp;
+      const speedFactor = dt * 60;
 
       this.updateParticles(effect, speedFactor);
       this.renderParticles(effect);
@@ -261,6 +305,7 @@ export class VfxLayerComponent {
       cancelAnimationFrame(this.animationFrameId);
       this.animationFrameId = null;
     }
+    this.lastFrameTs = 0;
   }
 
   private updateParticles(effect: string, speedFactor = 1): void {
@@ -318,7 +363,7 @@ export class VfxLayerComponent {
         ctx.save();
         ctx.translate(p.x, p.y);
         ctx.rotate(p.rotation || 0);
-        ctx.fillStyle = '#fda4af'; // Soft sakura pink
+        ctx.fillStyle = '#fda4af';
         ctx.beginPath();
         ctx.ellipse(0, 0, p.size * 0.55, p.size * 0.35, 0, 0, Math.PI * 2);
         ctx.fill();

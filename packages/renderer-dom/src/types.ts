@@ -33,7 +33,7 @@ export function defaultAssetResolver(path: string, type: AssetType): string {
 }
 
 /**
- * Preload all background and character assets mentioned in a story to eliminate visual flashes.
+ * Preload story assets with bounded concurrency to avoid RAM/network spikes on mobile.
  */
 export function preloadStoryAssets(story: StoryPackage, assetResolver: (path: string, type: AssetType) => string = defaultAssetResolver): void {
   if (typeof window === 'undefined') return;
@@ -53,21 +53,50 @@ export function preloadStoryAssets(story: StoryPackage, assetResolver: (path: st
     }
   }
 
+  const urls: string[] = [];
   for (const bg of bgSet) {
-    const img = new Image();
-    img.src = assetResolver(bg, 'background');
+    urls.push(assetResolver(bg, 'background'));
   }
-
   for (const char of charSet) {
     const candidates = characterAssetCandidates(char, assetResolver);
-    const img = new Image();
-    let i = 0;
-    const tryNext = (): void => {
-      if (i >= candidates.length) return;
-      img.src = candidates[i++]!;
-    };
-    img.onerror = tryNext;
-    tryNext();
+    if (candidates[0]) urls.push(candidates[0]);
+  }
+
+  const saveData = Boolean((navigator as Navigator & { connection?: { saveData?: boolean } }).connection?.saveData);
+  const coarse =
+    typeof window.matchMedia === 'function' && window.matchMedia('(pointer: coarse)').matches;
+  const concurrency = saveData ? 2 : coarse ? 3 : 6;
+
+  let index = 0;
+  let active = 0;
+
+  const pump = (): void => {
+    while (active < concurrency && index < urls.length) {
+      const url = urls[index++]!;
+      active++;
+      const img = new Image();
+      const done = (): void => {
+        active--;
+        // Drop reference promptly so decode buffers can GC.
+        img.onload = null;
+        img.onerror = null;
+        pump();
+      };
+      img.onload = done;
+      img.onerror = done;
+      img.decoding = 'async';
+      img.src = url;
+    }
+  };
+
+  const start = (): void => {
+    pump();
+  };
+
+  if (typeof window.requestIdleCallback === 'function') {
+    window.requestIdleCallback(() => start(), { timeout: 1200 });
+  } else {
+    setTimeout(start, 0);
   }
 }
 

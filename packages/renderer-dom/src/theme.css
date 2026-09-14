@@ -1863,6 +1863,47 @@ body.kawa-fullscreen {
 }
 
 @media (max-width: 768px), (pointer: coarse) {
+  .kawa-root {
+    /* Use dynamic viewport so mobile browser chrome doesn't clip the stage */
+    min-height: 100dvh;
+    height: 100dvh;
+  }
+
+  .kawa-stage {
+    width: 100%;
+    max-width: 100%;
+    max-height: 100%;
+    border-radius: 0;
+    box-shadow: none;
+    border-left: none;
+    border-right: none;
+  }
+
+  .kawa-ui-layer {
+    padding: 10px 12px max(10px, env(safe-area-inset-bottom));
+  }
+
+  .kawa-dialogue-box {
+    min-height: 112px;
+    padding: 14px 16px 18px;
+    padding-bottom: max(14px, env(safe-area-inset-bottom));
+    /* backdrop-filter is expensive on mobile GPUs */
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    background: rgba(10, 15, 29, 0.94);
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.55);
+  }
+
+  .kawa-dialogue-text {
+    font-size: clamp(0.95rem, 3.6vw, 1.1rem);
+    line-height: 1.45;
+  }
+
+  .kawa-choice-container {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+
   .kawa-choice-btn {
     min-height: 48px;
     padding: 0.85rem 1.1rem;
@@ -1877,6 +1918,9 @@ body.kawa-fullscreen {
     justify-content: center;
     align-self: stretch;
     border-radius: 16px;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    background: rgba(15, 23, 42, 0.92);
   }
 
   .kawa-quick-menu .kawa-btn {
@@ -1890,17 +1934,30 @@ body.kawa-fullscreen {
     display: none;
   }
 
-  .kawa-dialogue-box {
-    padding-bottom: max(12px, env(safe-area-inset-bottom));
+  .kawa-sprite img {
+    filter: none;
+    animation: none;
   }
 
   .kawa-hotspot {
-    min-width: 44px;
-    min-height: 44px;
+    min-width: 48px;
+    min-height: 48px;
+  }
+
+  .kawa-main-menu {
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    padding: max(16px, env(safe-area-inset-top)) 16px max(16px, env(safe-area-inset-bottom));
   }
 
   .kawa-main-menu-btn {
     min-height: 48px;
+  }
+
+  .kawa-modal-overlay,
+  .kawa-modal {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
   }
 
   .kawa-slot-actions {
@@ -1909,6 +1966,17 @@ body.kawa-fullscreen {
 
   .kawa-slot-btn {
     min-height: 44px;
+  }
+
+  .kawa-ending-card {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .kawa-sprite img {
+    animation: none !important;
   }
 }
 

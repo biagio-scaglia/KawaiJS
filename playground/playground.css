@@ -180,12 +180,35 @@ body {
 @media (max-width: 960px) {
   .pg-layout {
     grid-template-columns: 1fr;
-    grid-template-rows: 1fr 1fr;
+    grid-template-rows: minmax(200px, 38vh) minmax(280px, 1fr);
   }
 
   .pg-editor-pane {
     border-right: none;
     border-bottom: 1px solid var(--pg-border);
-    max-height: 48vh;
+    max-height: none;
+  }
+
+  .pg-top {
+    padding: 10px 12px;
+    gap: 8px;
+  }
+
+  .pg-tagline {
+    display: none;
+  }
+
+  .pg-actions {
+    width: 100%;
+  }
+
+  .pg-btn {
+    flex: 1;
+    justify-content: center;
+    min-height: 44px;
+  }
+
+  .pg-preview {
+    min-height: 280px;
   }
 }

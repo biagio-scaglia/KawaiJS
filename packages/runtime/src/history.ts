@@ -10,7 +10,7 @@ export class HistoryManager {
   private entries: DialogueHistoryEntry[] = [];
   private maxEntries: number;
 
-  constructor(maxEntries = 200) {
+  constructor(maxEntries = 120) {
     this.maxEntries = maxEntries;
   }
 

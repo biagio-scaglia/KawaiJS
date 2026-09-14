@@ -131,14 +131,23 @@ export class ViewportAdapter {
   }
 
   private initObserver(): void {
+    let raf = 0;
+    const schedule = (): void => {
+      if (raf) return;
+      raf = requestAnimationFrame(() => {
+        raf = 0;
+        this.applyMetrics();
+      });
+    };
+
     if (typeof ResizeObserver !== 'undefined') {
       this.resizeObserver = new ResizeObserver(() => {
-        this.applyMetrics();
+        schedule();
       });
       this.resizeObserver.observe(this.container);
     } else if (typeof window !== 'undefined') {
-      this.windowResizeListener = () => this.applyMetrics();
-      window.addEventListener('resize', this.windowResizeListener);
+      this.windowResizeListener = () => schedule();
+      window.addEventListener('resize', this.windowResizeListener, { passive: true });
     }
   }
 
