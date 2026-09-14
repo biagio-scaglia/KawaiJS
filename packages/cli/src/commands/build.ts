@@ -12,6 +12,7 @@ import {
   resolveHtmlLang,
   writeSeoIconsToDist
 } from '../seo.js';
+import { enrichStoryPackage } from '../i18n.js';
 
 export interface BuildOptions {
   outDir?: string;
@@ -62,6 +63,7 @@ export function buildProject(projectDir = '.', options: BuildOptions = {}): bool
   try {
     const source = fs.readFileSync(scriptPath, 'utf-8');
     storyPackage = compileScript(source, path.basename(scriptPath));
+    storyPackage = enrichStoryPackage(storyPackage, rootDir);
     console.log(`✅ Script compiled successfully (${Object.keys(storyPackage.labels).length} labels).`);
   } catch (err: unknown) {
     if (err instanceof KawaError) {

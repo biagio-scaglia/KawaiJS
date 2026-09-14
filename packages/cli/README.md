@@ -126,6 +126,14 @@ Configure in `game/kawa.config.json`:
 
 `kawa build` emits a PWA (`manifest.webmanifest`, `sw.js`, icon) by default.
 
+### Embed kit
+
+```bash
+kawa embed --width 960 --height 540 --at start --src https://you.example/game/
+```
+
+Prints a responsive iframe snippet with `?embed=1` (and optional `?at=`).
+
 ---
 
 ## 📦 Modular Packages

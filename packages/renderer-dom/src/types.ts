@@ -75,7 +75,7 @@ export interface MainMenuItem {
   id?: string;
   label: string;
   icon?: string;
-  action: 'start' | 'continue' | 'load' | 'gallery' | 'settings' | 'about' | 'history' | 'quit' | (() => void);
+  action: 'start' | 'continue' | 'load' | 'gallery' | 'achievements' | 'settings' | 'about' | 'history' | 'quit' | (() => void);
   condition?: () => boolean;
   className?: string;
 }

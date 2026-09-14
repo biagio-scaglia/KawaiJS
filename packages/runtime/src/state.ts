@@ -4,6 +4,21 @@ export interface CharacterState {
   readonly expression?: string;
   readonly position?: string;
   readonly transition?: string;
+  readonly layer?: string;
+  readonly z?: number;
+  readonly cssAnimation?: {
+    readonly name: string;
+    readonly durationMs?: number;
+    /** Bumps so the same animation can re-trigger. */
+    readonly token?: number;
+  };
+}
+
+export interface AchievementState {
+  readonly id: string;
+  readonly title?: string;
+  readonly description?: string;
+  readonly unlockedAt: number;
 }
 
 export interface DialogueState {
@@ -25,6 +40,8 @@ export interface VisualState {
   readonly characters: Record<string, CharacterState>;
   readonly vfx: VfxState | null;
   readonly activeCG: string | null;
+  /** Default layer name applied to subsequent shows without an explicit layer. */
+  readonly defaultLayer: string | null;
 }
 
 export interface AudioState {
@@ -53,6 +70,10 @@ export interface StoryState {
   /** Named style tokens keyed by UI target (dialogue, stage, root, choices). */
   readonly styleClasses: Readonly<Record<string, string>>;
   readonly unlockedCGs: Record<string, boolean>;
+  /** Unlocked achievements / exportable flags. */
+  readonly achievements: Readonly<Record<string, AchievementState>>;
+  /** Active language code for `{t:key}` string tables. */
+  readonly lang: string | null;
   /**
    * When set, the presentation layer should auto-advance after this many ms.
    * Click/keyboard advance may skip the remaining delay.
@@ -85,7 +106,8 @@ export function createInitialState(startLabel = 'start'): StoryState {
       transition: null,
       characters: {},
       vfx: null,
-      activeCG: null
+      activeCG: null,
+      defaultLayer: null
     },
     audio: {
       music: null,
@@ -97,6 +119,8 @@ export function createInitialState(startLabel = 'start'): StoryState {
     theme: null,
     styleClasses: Object.create(null) as Record<string, string>,
     unlockedCGs: Object.create(null) as Record<string, boolean>,
+    achievements: Object.create(null) as Record<string, AchievementState>,
+    lang: null,
     pendingPauseMs: null,
     pendingInput: null,
     windowVisible: true,
@@ -149,7 +173,8 @@ export function normalizeStoryState(raw: unknown): StoryState | null {
       transition: typeof visualRaw['transition'] === 'string' ? visualRaw['transition'] : null,
       characters: { ...charactersRaw },
       vfx: (visualRaw['vfx'] as VfxState | null) ?? null,
-      activeCG: typeof visualRaw['activeCG'] === 'string' ? visualRaw['activeCG'] : null
+      activeCG: typeof visualRaw['activeCG'] === 'string' ? visualRaw['activeCG'] : null,
+      defaultLayer: typeof visualRaw['defaultLayer'] === 'string' ? visualRaw['defaultLayer'] : null
     },
     audio: {
       music: typeof audioRaw['music'] === 'string' ? audioRaw['music'] : null,
@@ -177,6 +202,11 @@ export function normalizeStoryState(raw: unknown): StoryState | null {
       s['unlockedCGs'] && typeof s['unlockedCGs'] === 'object'
         ? Object.assign(Object.create(null), s['unlockedCGs'])
         : Object.create(null),
+    achievements:
+      s['achievements'] && typeof s['achievements'] === 'object'
+        ? Object.assign(Object.create(null), s['achievements'])
+        : Object.create(null),
+    lang: typeof s['lang'] === 'string' ? s['lang'] : null,
     pendingPauseMs: typeof s['pendingPauseMs'] === 'number' ? s['pendingPauseMs'] : null,
     pendingInput: null, // never restore mid-prompt from saves
     windowVisible: s['windowVisible'] === false ? false : true,
@@ -196,8 +226,15 @@ export function cloneState(state: StoryState): StoryState {
       transition: state.visual.transition,
       vfx: state.visual.vfx ? { ...state.visual.vfx } : null,
       activeCG: state.visual.activeCG,
+      defaultLayer: state.visual.defaultLayer,
       characters: Object.fromEntries(
-        Object.entries(state.visual.characters).map(([k, v]) => [k, { ...v }])
+        Object.entries(state.visual.characters).map(([k, v]) => [
+          k,
+          {
+            ...v,
+            cssAnimation: v.cssAnimation ? { ...v.cssAnimation } : undefined
+          }
+        ])
       )
     },
     audio: { ...state.audio },
@@ -207,6 +244,8 @@ export function cloneState(state: StoryState): StoryState {
     theme: state.theme,
     styleClasses: Object.assign(Object.create(null), state.styleClasses),
     unlockedCGs: Object.assign(Object.create(null), state.unlockedCGs),
+    achievements: Object.assign(Object.create(null), state.achievements),
+    lang: state.lang,
     pendingPauseMs: state.pendingPauseMs ?? null,
     pendingInput: state.pendingInput ? { ...state.pendingInput } : null,
     windowVisible: state.windowVisible !== false,

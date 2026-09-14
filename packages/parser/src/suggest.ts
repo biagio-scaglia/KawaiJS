@@ -6,7 +6,7 @@ export const STATEMENT_EXAMPLES: Readonly<Record<string, string>> = {
   define: 'define bg classroom = "classroom.svg"',
   label: 'label start:',
   scene: 'scene bg classroom with fade',
-  show: 'show yumia happy at left',
+  show: 'show yumia happy at left z 2',
   hide: 'hide yumia',
   menu: 'menu:',
   jump: 'jump next_scene',
@@ -24,7 +24,11 @@ export const STATEMENT_EXAMPLES: Readonly<Record<string, string>> = {
   window: 'window hide',
   theme: 'theme "noir"',
   style: 'style dialogue glass',
-  hotspot: 'hotspot door 40 50 18 12 jump courtyard'
+  hotspot: 'hotspot door 40 50 18 12 jump courtyard',
+  layer: 'layer overlay',
+  animate: 'animate yumia with "slide-in 400ms"',
+  unlock: 'unlock first_end "First Ending"',
+  lang: 'lang "it"'
 };
 
 export function levenshteinDistance(a: string, b: string): number {

@@ -6,6 +6,7 @@ import { showSettingsModal } from '../modals/settings-modal.js';
 import { showAboutModal } from '../modals/about-modal.js';
 import { showConfirmModal } from '../modals/confirm-modal.js';
 import { showGalleryModal } from '../modals/gallery-modal.js';
+import { showAchievementsModal } from '../modals/achievements-modal.js';
 import { escapeHtml } from '../utils/rich-text.js';
 
 export interface MainMenuComponentCallbacks {
@@ -128,6 +129,13 @@ export class MainMenuComponent {
       });
     }
 
+    items.push({
+      id: 'achievements',
+      label: 'Achievements',
+      icon: SVG_ICONS.bookmark,
+      action: 'achievements'
+    });
+
     items.push(
       {
         id: 'settings',
@@ -246,6 +254,8 @@ export class MainMenuComponent {
           showGalleryModal(this.rootEl, this.vm, galleryItems, (path) =>
             this.callbacks.assetResolver(path, 'background')
           );
+        } else if (item.action === 'achievements') {
+          showAchievementsModal(this.rootEl, this.vm, this.vm.getStory().achievements ?? []);
         } else if (item.action === 'settings') {
           showSettingsModal(this.rootEl, this.callbacks.getSettingsConfig());
         } else if (item.action === 'about') {

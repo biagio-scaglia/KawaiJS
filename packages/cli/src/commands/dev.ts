@@ -11,6 +11,7 @@ import {
   resolveFavicon,
   resolveHtmlLang
 } from '../seo.js';
+import { enrichStoryPackage } from '../i18n.js';
 
 export interface DevServerOptions {
   port?: number;
@@ -105,7 +106,7 @@ export function startDevServer(projectDir = '.', options: DevServerOptions = {})
         const source = fs.readFileSync(scriptPath, 'utf-8');
         const compiledStory = compileScript(source, path.basename(scriptPath));
         res.writeHead(200, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify(compiledStory));
+        res.end(JSON.stringify(enrichStoryPackage(compiledStory, rootDir)));
       } catch (err: unknown) {
         let formatted = 'Compilation Error';
         if (err instanceof KawaError) {
@@ -256,7 +257,7 @@ export function startDevServer(projectDir = '.', options: DevServerOptions = {})
     try {
       const source = fs.readFileSync(scriptPath, 'utf-8');
       const compiledStory = compileScript(source, path.basename(scriptPath));
-      storyJson = JSON.stringify(compiledStory);
+      storyJson = JSON.stringify(enrichStoryPackage(compiledStory, rootDir));
     } catch (err: unknown) {
       if (err instanceof KawaError) {
         const source = fs.readFileSync(scriptPath, 'utf-8');

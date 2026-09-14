@@ -45,6 +45,7 @@ export * from './modals/settings-modal.js';
 export * from './modals/history-modal.js';
 export * from './modals/about-modal.js';
 export * from './modals/gallery-modal.js';
+export * from './modals/achievements-modal.js';
 export * from './modals/confirm-modal.js';
 export * from './modals/input-modal.js';
 export * from './components/main-menu.js';

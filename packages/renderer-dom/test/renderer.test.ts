@@ -293,7 +293,7 @@ label start:
 
     const buttons = container.querySelectorAll('.kawa-main-menu-btn');
     const buttonActions = Array.from(buttons).map(b => b.getAttribute('data-action'));
-    expect(buttonActions).toEqual(['start', 'continue', 'load', 'settings', 'about', 'quit']);
+    expect(buttonActions).toEqual(['start', 'continue', 'load', 'achievements', 'settings', 'about', 'quit']);
 
     // Test Quit button
     const quitBtn = container.querySelector('.kawa-main-menu-btn[data-action="quit"]') as HTMLButtonElement;

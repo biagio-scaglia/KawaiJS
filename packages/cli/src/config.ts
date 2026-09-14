@@ -85,6 +85,12 @@ export interface KawaSeoConfig {
   readonly jsonLd?: boolean | Record<string, unknown>;
 }
 
+export interface KawaAchievementConfig {
+  readonly id: string;
+  readonly title?: string;
+  readonly description?: string;
+}
+
 export interface KawaProjectConfig {
   readonly title?: string;
   readonly author?: string;
@@ -96,6 +102,7 @@ export interface KawaProjectConfig {
   readonly share?: KawaShareConfig;
   readonly pwa?: KawaPwaConfig;
   readonly seo?: KawaSeoConfig;
+  readonly achievements?: readonly KawaAchievementConfig[];
 }
 
 export const DEFAULT_KAWA_CONFIG: KawaProjectConfig = {
@@ -128,7 +135,8 @@ export const DEFAULT_KAWA_CONFIG: KawaProjectConfig = {
     robots: 'index,follow',
     locale: 'en_US',
     jsonLd: true
-  }
+  },
+  achievements: []
 };
 
 /**
@@ -179,7 +187,8 @@ export function loadProjectConfig(projectDir: string): KawaProjectConfig {
           seo: {
             ...DEFAULT_KAWA_CONFIG.seo,
             ...(parsed.seo ?? {})
-          }
+          },
+          achievements: parsed.achievements ?? DEFAULT_KAWA_CONFIG.achievements
         };
       } catch (err: unknown) {
         console.warn(`⚠️ Warning: Failed to parse configuration file at '${configPath}': ${err instanceof Error ? err.message : String(err)}`);

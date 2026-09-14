@@ -129,6 +129,10 @@ label leave_early:
 | **Dialogue window** | `window show` \| `window hide` | `window hide` |
 | **Theme token** | `theme "<name>"` | `theme "noir"` / `"sakura"` / `"ocean"` / `"dusk"` |
 | **Style hook** | `style <target> <name>` | `style dialogue glass` / `style choices pill` |
+| **Layer / z-order** | `layer <name>` · `show … z <n>` · `show … layer <name>` | `layer overlay` / `show yumia at left z 2` |
+| **CSS animate** | `animate <char> with "<name> [ms]"` | `animate yumia with "slide-in 400ms"` |
+| **Achievement** | `unlock <id> ["title"] ["desc"]` | `unlock first_end "First Ending"` |
+| **Language** | `lang "<code>"` · text `{t:key}` | `lang "it"` / `yumia "{t:hello}"` |
 | **Hotspot** | `hotspot <id> <x> <y> <w> <h> jump <label>` | `hotspot door 40 50 18 12 jump courtyard` |
 | **Deep link** | URL `?at=<label>` or `?label=` | `/?at=courtyard_scene` |
 | **Embed mode** | URL `?embed=1` | iframe / blog embed (no main menu) |
@@ -219,8 +223,9 @@ label dramatic_scene:
 > **Tip:** Use `?embed=1` for iframe / itch / Notion embeds (compact UI, no main menu).  
 > **Tip:** Share progress with **Copy continue link** in Save/Load (URL `?continue=…` restores the save).  
 > **Tip:** Production builds ship as a **PWA** (`manifest.webmanifest` + `sw.js`) unless `pwa.enabled` is `false`.  
-> **Tip:** Built-in themes: `noir`, `sakura`, `ocean`, `dusk`. Style hooks: `dialogue glass|solid|minimal`, `choices pill|card|underline`, `stage dim|vignette`.  
-> **Showcase:** see [`examples/hello-world`](./examples/hello-world) — also the default `kawa create` template.
+> **Tip:** Built-in CSS anims: `slide-in`, `slide-out`, `fade-in`, `fade-out`, `pop`, `pulse` (override in `style.css` with `.kawa-css-anim-*`).  
+> **Tip:** Put string tables in `game/lang/it.json` and use `{t:key}` in dialogue; open with `?lang=it`.  
+> **Tip:** `kawa embed --src https://you.example/game/ --width 960 --height 540` prints an iframe snippet.
 
 Configure **SEO, favicon, and social previews** in `kawa.config.json`:
 
@@ -255,7 +260,10 @@ Configure **SEO, favicon, and social previews** in `kawa.config.json`:
   "pwa": {
     "enabled": true,
     "shortName": "My Novel"
-  }
+  },
+  "achievements": [
+    { "id": "first_end", "title": "First Ending", "description": "Reach any ending." }
+  ]
 }
 ```
 
@@ -263,9 +271,11 @@ Configure **SEO, favicon, and social previews** in `kawa.config.json`:
 `kawa build` copies it into `dist/`, wires `<link rel="icon">`, apple-touch, and the PWA manifest icon.  
 If missing, a default icon is generated.
 
+**i18n:** add `game/lang/en.json` / `game/lang/it.json` as `{ "hello": "…" }` and write `yumia "{t:hello}"` in script. Force with `lang "it"` or `?lang=it`.
+
 **SEO output includes:** description, keywords, author, robots, canonical, Open Graph, Twitter cards, JSON-LD (`WebApplication`), and `robots.txt` when `canonicalUrl` is set.
 
-CLI deep-link helpers: `kawa dev --at courtyard_scene` · `kawa build --at start`.
+CLI deep-link helpers: `kawa dev --at courtyard_scene` · `kawa build --at start` · `kawa embed --src ./index.html`.
 ---
 
 ## 🌸 Start Menu & UI Customization

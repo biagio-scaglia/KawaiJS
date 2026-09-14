@@ -115,6 +115,8 @@ export class Compiler {
             expression: stmt.expression,
             position: stmt.position,
             transition: stmt.transition,
+            layer: stmt.layer,
+            z: stmt.z,
             loc: stmt.loc
           });
           break;
@@ -407,6 +409,42 @@ export class Compiler {
           });
           break;
         }
+
+        case 'LayerStmt':
+          instructions.push({
+            type: 'layer',
+            name: stmt.name,
+            loc: stmt.loc
+          });
+          break;
+
+        case 'AnimateStmt':
+          instructions.push({
+            type: 'animate',
+            character: stmt.character,
+            animation: stmt.animation,
+            durationMs: stmt.durationMs,
+            loc: stmt.loc
+          });
+          break;
+
+        case 'UnlockStmt':
+          instructions.push({
+            type: 'unlock',
+            id: stmt.id,
+            title: stmt.title,
+            description: stmt.description,
+            loc: stmt.loc
+          });
+          break;
+
+        case 'LangStmt':
+          instructions.push({
+            type: 'lang',
+            code: stmt.code,
+            loc: stmt.loc
+          });
+          break;
 
         case 'CharacterDecl':
         case 'DefineDecl':

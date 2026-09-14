@@ -18,12 +18,14 @@ export interface MountKawaAppOptions extends Omit<DOMRendererOptions, 'container
    * Internal labels (`__…`) are ignored.
    */
   startLabel?: string;
-  /** Optional URL search string for deep-link / embed / continue detection (tests / SSR). */
+  /** Optional URL search string for deep-link / embed / continue / lang detection. */
   search?: string;
   /** Optional URL hash for continue-link detection. */
   hash?: string;
   /** Skip applying a continue-link from the URL. */
   ignoreContinueLink?: boolean;
+  /** Force language for `{t:key}` tables. Falls back to `?lang=`. */
+  lang?: string;
 }
 
 /**
@@ -48,6 +50,18 @@ export function resolveDeepLinkLabel(
   return candidate;
 }
 
+export function resolveLangCode(options?: { lang?: string; search?: string }): string | undefined {
+  const fromOpt = options?.lang?.trim().toLowerCase();
+  if (fromOpt) return fromOpt;
+  let search = options?.search;
+  if (search === undefined && typeof window !== 'undefined') {
+    search = window.location.search;
+  }
+  if (!search) return undefined;
+  const code = new URLSearchParams(search).get('lang')?.trim().toLowerCase();
+  return code || undefined;
+}
+
 /**
  * High-level helper to initialize and mount a visual novel into the DOM.
  */
@@ -65,8 +79,15 @@ export function mountKawaApp(
 
   const deepLink = continueSlot ? undefined : resolveDeepLinkLabel(story, options);
   const embed = options?.embed ?? resolveEmbedMode(options?.search);
-  const { startLabel: _ignored, search: _search, hash: _hash, ignoreContinueLink: _icl, ...rendererOptions } =
-    options ?? {};
+  const lang = resolveLangCode(options);
+  const {
+    startLabel: _ignored,
+    search: _search,
+    hash: _hash,
+    ignoreContinueLink: _icl,
+    lang: _lang,
+    ...rendererOptions
+  } = options ?? {};
 
   const skipMenu = Boolean(deepLink || embed || continueSlot);
 
@@ -84,7 +105,6 @@ export function mountKawaApp(
   if (continueSlot) {
     const res = vm.loadFromSlot(continueSlot);
     if (!res.success) {
-      // Fall back to normal start if the continue payload is for another story.
       if (!renderer.isMainMenuActive()) {
         vm.start(deepLink);
       }
@@ -93,6 +113,11 @@ export function mountKawaApp(
     vm.start(deepLink);
   } else if (!renderer.isMainMenuActive()) {
     vm.start();
+  }
+
+  vm.hydrateAchievements();
+  if (lang) {
+    vm.setLang(lang);
   }
 
   return { vm, renderer };

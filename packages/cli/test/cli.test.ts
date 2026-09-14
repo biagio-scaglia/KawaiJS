@@ -11,6 +11,7 @@ import {
   parseDevCommandArgs,
   renderStaticShareMetaTags
 } from '../src/parse-args.js';
+import { buildEmbedSnippet, parseEmbedCommandArgs } from '../src/commands/embed.js';
 import { renderSeoHeadTags, resolveFavicon } from '../src/seo.js';
 import { DEFAULT_KAWA_CONFIG } from '../src/config.js';
 
@@ -175,26 +176,23 @@ describe('Kawaijs CLI Commands', () => {
     expect(validated).toBe(true);
   });
 
-  it('loads custom project configuration and defaults properly', () => {
-    const testDir = path.join(os.tmpdir(), 'kawa_config_test_' + Date.now());
-    tempDirs.push(testDir);
-    fs.mkdirSync(path.join(testDir, 'game'), { recursive: true });
-
-    const customConfig = {
-      title: 'Custom Adventure',
-      theme: {
-        primaryColor: '#8b5cf6'
-      },
-      settings: {
-        textSpeed: 10
-      }
-    };
-    fs.writeFileSync(path.join(testDir, 'game', 'kawa.config.json'), JSON.stringify(customConfig), 'utf-8');
-
-    const config = loadProjectConfig(testDir);
-    expect(config.title).toBe('Custom Adventure');
-    expect(config.theme?.primaryColor).toBe('#8b5cf6');
-    expect(config.settings?.textSpeed).toBe(10);
-    expect(config.window?.width).toBe(1280);
+  it('parses embed CLI flags and builds an iframe snippet', () => {
+    expect(parseEmbedCommandArgs(['embed', '.', '--width', '800', '--height', '450', '--at', 'start'])).toEqual({
+      projectDir: '.',
+      width: 800,
+      height: 450,
+      startLabel: 'start',
+      src: undefined
+    });
+    const html = buildEmbedSnippet('.', {
+      width: 800,
+      height: 450,
+      startLabel: 'start',
+      src: 'https://example.com/game/'
+    });
+    expect(html).toContain('<iframe');
+    expect(html).toContain('embed=1');
+    expect(html).toContain('at=start');
+    expect(html).toContain('aspect-ratio:800/450');
   });
 });

@@ -28,7 +28,11 @@ import type {
   WindowStmtNode,
   ThemeStmtNode,
   StyleStmtNode,
-  HotspotStmtNode
+  HotspotStmtNode,
+  LayerStmtNode,
+  AnimateStmtNode,
+  UnlockStmtNode,
+  LangStmtNode
 } from '@kawaijs/ast';
 import { createLocation } from '@kawaijs/ast';
 import { Token, TokenType } from './token.js';
@@ -126,6 +130,14 @@ export class Parser {
         return this.parseStyleStmt();
       case 'HOTSPOT':
         return this.parseHotspotStmt();
+      case 'LAYER':
+        return this.parseLayerStmt();
+      case 'ANIMATE':
+        return this.parseAnimateStmt();
+      case 'UNLOCK':
+        return this.parseUnlockStmt();
+      case 'LANG':
+        return this.parseLangStmt();
       case 'STRING':
         // Narration without speaker identifier
         return this.parseDialogueStmt();
@@ -231,7 +243,10 @@ export class Parser {
     const charTok = this.consume('IDENTIFIER', 'Expected character name after "show"');
 
     let expression: string | undefined;
-    if (this.check('IDENTIFIER') && this.peek().value !== 'at' && this.peek().value !== 'with') {
+    if (
+      this.check('IDENTIFIER') &&
+      !['at', 'with', 'z', 'layer'].includes(this.peek().value.toLowerCase())
+    ) {
       expression = this.advance().value;
     }
 
@@ -240,11 +255,35 @@ export class Parser {
       position = this.consume('IDENTIFIER', 'Expected position identifier after "at" (e.g. left, center, right)').value;
     }
 
+    let layer: string | undefined;
+    let z: number | undefined;
+
+    // Optional `layer <name>` and/or `z <number>` in either order
+    while (!this.check('NEWLINE') && !this.check('DEDENT') && !this.check('EOF') && !this.check('WITH')) {
+      if (this.match('LAYER') || (this.check('IDENTIFIER') && this.peek().value.toLowerCase() === 'layer')) {
+        if (this.check('IDENTIFIER') && this.peek().value.toLowerCase() === 'layer') {
+          this.advance();
+        }
+        layer = this.check('STRING')
+          ? this.advance().value
+          : this.consume('IDENTIFIER', 'Expected layer name after "layer"').value;
+        continue;
+      }
+      if (this.check('IDENTIFIER') && this.peek().value.toLowerCase() === 'z') {
+        this.advance();
+        const zTok = this.consume('NUMBER', 'Expected z-index number after "z"');
+        z = Number(zTok.value);
+        continue;
+      }
+      break;
+    }
+
     let transition: string | undefined;
     if (this.match('WITH')) {
       transition = this.parseTransitionName();
     }
 
+    // Allow z/layer also after with (rare) — already handled above before with
     this.consumeOptionalNewline();
     return {
       type: 'ShowStmt',
@@ -252,6 +291,8 @@ export class Parser {
       expression,
       position,
       transition,
+      layer,
+      z: Number.isFinite(z) ? z : undefined,
       loc: createLocation(this.file, startTok.loc.start, this.previousLocation().end)
     };
   }
@@ -839,6 +880,90 @@ export class Parser {
       w,
       h,
       targetLabel: target,
+      loc: createLocation(this.file, startTok.loc.start, this.previousLocation().end)
+    };
+  }
+
+  private parseLayerStmt(): LayerStmtNode {
+    const startTok = this.consume('LAYER', 'Expected "layer" keyword');
+    const name = this.check('STRING')
+      ? this.advance().value
+      : this.consume('IDENTIFIER', 'Expected layer name (e.g. master, overlay)').value;
+    this.consumeOptionalNewline();
+    return {
+      type: 'LayerStmt',
+      name,
+      loc: createLocation(this.file, startTok.loc.start, this.previousLocation().end)
+    };
+  }
+
+  private parseAnimateStmt(): AnimateStmtNode {
+    const startTok = this.consume('ANIMATE', 'Expected "animate" keyword');
+    const charTok = this.consume('IDENTIFIER', 'Expected character name after "animate"');
+    this.consume('WITH', 'Expected "with" after character in animate statement');
+
+    let animation: string;
+    let durationMs: number | undefined;
+
+    if (this.check('STRING')) {
+      const raw = this.advance().value.trim();
+      // "slide-in 400ms" | "slide-in 400" | "slide-in"
+      const match = raw.match(/^([a-zA-Z0-9_-]+)\s*(\d+)\s*(ms)?$/i) || raw.match(/^([a-zA-Z0-9_-]+)$/);
+      if (match) {
+        animation = match[1]!;
+        if (match[2]) durationMs = Number(match[2]);
+      } else {
+        animation = raw.replace(/\s+/g, '-');
+      }
+    } else {
+      animation = this.consume('IDENTIFIER', 'Expected animation name after "with"').value;
+      if (this.check('NUMBER')) {
+        durationMs = Number(this.advance().value);
+      }
+    }
+
+    this.consumeOptionalNewline();
+    return {
+      type: 'AnimateStmt',
+      character: charTok.value,
+      animation: animation.toLowerCase(),
+      durationMs: Number.isFinite(durationMs) ? durationMs : undefined,
+      loc: createLocation(this.file, startTok.loc.start, this.previousLocation().end)
+    };
+  }
+
+  private parseUnlockStmt(): UnlockStmtNode {
+    const startTok = this.consume('UNLOCK', 'Expected "unlock" keyword');
+    const id = this.check('STRING')
+      ? this.advance().value
+      : this.consume('IDENTIFIER', 'Expected achievement id after "unlock"').value;
+    let title: string | undefined;
+    let description: string | undefined;
+    if (this.check('STRING')) {
+      title = this.advance().value;
+      if (this.check('STRING')) {
+        description = this.advance().value;
+      }
+    }
+    this.consumeOptionalNewline();
+    return {
+      type: 'UnlockStmt',
+      id,
+      title,
+      description,
+      loc: createLocation(this.file, startTok.loc.start, this.previousLocation().end)
+    };
+  }
+
+  private parseLangStmt(): LangStmtNode {
+    const startTok = this.consume('LANG', 'Expected "lang" keyword');
+    const code = this.check('STRING')
+      ? this.advance().value
+      : this.consume('IDENTIFIER', 'Expected language code after "lang" (e.g. it, en)').value;
+    this.consumeOptionalNewline();
+    return {
+      type: 'LangStmt',
+      code: code.toLowerCase(),
       loc: createLocation(this.file, startTok.loc.start, this.previousLocation().end)
     };
   }

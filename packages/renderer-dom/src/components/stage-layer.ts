@@ -16,7 +16,18 @@ export class StageLayerComponent {
   private activeBgLayer: 'A' | 'B' = 'A';
   private currentBgUrl = '';
 
-  private activeCharacters = new Map<string, { div: HTMLDivElement; img: HTMLImageElement; expression?: string; position?: string; transition?: string }>();
+  private activeCharacters = new Map<
+    string,
+    {
+      div: HTMLDivElement;
+      img: HTMLImageElement;
+      expression?: string;
+      position?: string;
+      transition?: string;
+      z?: number;
+      animToken?: number;
+    }
+  >();
   private pendingRemovals = new Map<string, { div: HTMLDivElement; timer: ReturnType<typeof setTimeout> }>();
   private flashTimer: ReturnType<typeof setTimeout> | null = null;
   private readonly assetResolver: (path: string, type: AssetType) => string;
@@ -113,7 +124,17 @@ export class StageLayerComponent {
   }
 
   public updateCharacters(
-    characters: Record<string, { expression?: string; position?: string; transition?: string }>
+    characters: Record<
+      string,
+      {
+        expression?: string;
+        position?: string;
+        transition?: string;
+        layer?: string;
+        z?: number;
+        cssAnimation?: { name: string; durationMs?: number; token?: number };
+      }
+    >
   ): void {
     const presentChars = new Set(Object.keys(characters));
 
@@ -142,6 +163,7 @@ export class StageLayerComponent {
 
       const pos = charState.position ?? 'center';
       const expr = charState.expression;
+      const z = typeof charState.z === 'number' ? charState.z : 10;
       const assetKey = expr ? `${id}/${expr}` : id;
       const primaryUrl = this.assetResolver(assetKey, 'character');
 
@@ -150,6 +172,8 @@ export class StageLayerComponent {
         div.className = `kawa-sprite kawa-pos-${pos}`;
         div.dataset.character = id;
         if (expr) div.dataset.expression = expr;
+        if (charState.layer) div.dataset.layer = charState.layer;
+        div.style.zIndex = String(z);
 
         const img = document.createElement('img');
         img.src = primaryUrl;
@@ -167,14 +191,23 @@ export class StageLayerComponent {
         div.appendChild(img);
         this.charactersEl.appendChild(div);
 
-        this.activeCharacters.set(id, { div, img, expression: expr, position: pos });
+        this.activeCharacters.set(id, { div, img, expression: expr, position: pos, z });
       } else {
         const existing = this.activeCharacters.get(id)!;
 
         // Position change
         if (existing.position !== pos) {
           existing.div.className = `kawa-sprite kawa-pos-${pos}`;
+          // re-apply css anim class if any
           existing.position = pos;
+        }
+
+        if (existing.z !== z) {
+          existing.div.style.zIndex = String(z);
+          existing.z = z;
+        }
+        if (charState.layer) {
+          existing.div.dataset.layer = charState.layer;
         }
 
         // Expression change
@@ -197,6 +230,24 @@ export class StageLayerComponent {
           void existing.div.offsetWidth; // Reflow
           existing.div.classList.add(`kawa-anim-${charState.transition}`);
         }
+      }
+
+      const entry = this.activeCharacters.get(id)!;
+      // CSS-first animate directive
+      if (charState.cssAnimation && charState.cssAnimation.token !== entry.animToken) {
+        const anim = charState.cssAnimation.name;
+        const className = `kawa-css-anim-${anim}`;
+        entry.div.classList.forEach((cls) => {
+          if (cls.startsWith('kawa-css-anim-')) entry.div.classList.remove(cls);
+        });
+        void entry.div.offsetWidth;
+        entry.div.classList.add(className);
+        if (charState.cssAnimation.durationMs) {
+          entry.div.style.animationDuration = `${charState.cssAnimation.durationMs}ms`;
+        } else {
+          entry.div.style.removeProperty('animation-duration');
+        }
+        entry.animToken = charState.cssAnimation.token;
       }
     }
   }

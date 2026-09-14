@@ -24,7 +24,7 @@ export interface HotspotOption {
 
 export type Instruction =
   | { readonly type: 'scene'; readonly background: string; readonly transition?: string; readonly loc?: SourceLocation }
-  | { readonly type: 'show'; readonly character: string; readonly expression?: string; readonly position?: string; readonly transition?: string; readonly loc?: SourceLocation }
+  | { readonly type: 'show'; readonly character: string; readonly expression?: string; readonly position?: string; readonly transition?: string; readonly layer?: string; readonly z?: number; readonly loc?: SourceLocation }
   | { readonly type: 'hide'; readonly character: string; readonly transition?: string; readonly loc?: SourceLocation }
   | { readonly type: 'dialogue'; readonly speaker?: string; readonly text: string; readonly loc?: SourceLocation }
   | { readonly type: 'choice'; readonly prompt?: string; readonly choices: readonly ChoiceOption[]; readonly fallbackLabel?: string; readonly loc?: SourceLocation }
@@ -43,7 +43,17 @@ export type Instruction =
   | { readonly type: 'window'; readonly action: 'show' | 'hide'; readonly loc?: SourceLocation }
   | { readonly type: 'theme'; readonly name: string; readonly loc?: SourceLocation }
   | { readonly type: 'style'; readonly target: string; readonly name: string; readonly loc?: SourceLocation }
-  | { readonly type: 'hotspot'; readonly id: string; readonly x: number; readonly y: number; readonly w: number; readonly h: number; readonly targetLabel: string; readonly loc?: SourceLocation };
+  | { readonly type: 'hotspot'; readonly id: string; readonly x: number; readonly y: number; readonly w: number; readonly h: number; readonly targetLabel: string; readonly loc?: SourceLocation }
+  | { readonly type: 'layer'; readonly name: string; readonly loc?: SourceLocation }
+  | { readonly type: 'animate'; readonly character: string; readonly animation: string; readonly durationMs?: number; readonly loc?: SourceLocation }
+  | { readonly type: 'unlock'; readonly id: string; readonly title?: string; readonly description?: string; readonly loc?: SourceLocation }
+  | { readonly type: 'lang'; readonly code: string; readonly loc?: SourceLocation };
+
+export interface AchievementDefinition {
+  readonly id: string;
+  readonly title?: string;
+  readonly description?: string;
+}
 
 export interface StoryMeta {
   readonly title?: string;
@@ -58,4 +68,8 @@ export interface StoryPackage {
   /** Optional asset/string aliases from `define` declarations. */
   readonly defines?: Record<string, string>;
   readonly labels: Record<string, readonly Instruction[]>;
+  /** String tables keyed by language code, then message key. */
+  readonly i18n?: Readonly<Record<string, Readonly<Record<string, string>>>>;
+  /** Optional achievement catalog (titles/descriptions for the panel). */
+  readonly achievements?: readonly AchievementDefinition[];
 }

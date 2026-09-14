@@ -37,6 +37,10 @@ export type TokenType =
   | 'THEME'
   | 'STYLE'
   | 'HOTSPOT'
+  | 'LAYER'
+  | 'ANIMATE'
+  | 'UNLOCK'
+  | 'LANG'
   // Literals & Identifiers
   | 'IDENTIFIER'
   | 'STRING'
@@ -106,6 +110,10 @@ export const KEYWORDS_MAP = new Map<string, TokenType>([
   ['theme', 'THEME'],
   ['style', 'STYLE'],
   ['hotspot', 'HOTSPOT'],
+  ['layer', 'LAYER'],
+  ['animate', 'ANIMATE'],
+  ['unlock', 'UNLOCK'],
+  ['lang', 'LANG'],
   ['true', 'BOOLEAN'],
   ['false', 'BOOLEAN']
 ]);

@@ -28,7 +28,11 @@ export type ASTNodeType =
   | 'WindowStmt'
   | 'ThemeStmt'
   | 'StyleStmt'
-  | 'HotspotStmt';
+  | 'HotspotStmt'
+  | 'LayerStmt'
+  | 'AnimateStmt'
+  | 'UnlockStmt'
+  | 'LangStmt';
 
 export interface BaseNode {
   readonly type: ASTNodeType;
@@ -64,7 +68,11 @@ export type StatementNode =
   | WindowStmtNode
   | ThemeStmtNode
   | StyleStmtNode
-  | HotspotStmtNode;
+  | HotspotStmtNode
+  | LayerStmtNode
+  | AnimateStmtNode
+  | UnlockStmtNode
+  | LangStmtNode;
 
 export interface CharacterDeclNode extends BaseNode {
   readonly type: 'CharacterDecl';
@@ -98,6 +106,10 @@ export interface ShowStmtNode extends BaseNode {
   readonly expression?: string;
   readonly position?: string; // e.g. 'left', 'center', 'right'
   readonly transition?: string;
+  /** Named stage layer (master / overlay / …). */
+  readonly layer?: string;
+  /** Explicit z-index (higher draws above). */
+  readonly z?: number;
 }
 
 export interface HideStmtNode extends BaseNode {
@@ -239,5 +251,36 @@ export interface HotspotStmtNode extends BaseNode {
   readonly w: number;
   readonly h: number;
   readonly targetLabel: string;
+}
+
+/** Set the default sprite layer for subsequent `show` statements. */
+export interface LayerStmtNode extends BaseNode {
+  readonly type: 'LayerStmt';
+  readonly name: string;
+}
+
+/**
+ * CSS-first sprite animation.
+ * `animate yumia with "slide-in 400ms"` → class `kawa-css-anim-slide-in`.
+ */
+export interface AnimateStmtNode extends BaseNode {
+  readonly type: 'AnimateStmt';
+  readonly character: string;
+  readonly animation: string;
+  readonly durationMs?: number;
+}
+
+/** Unlock an achievement / exportable flag. */
+export interface UnlockStmtNode extends BaseNode {
+  readonly type: 'UnlockStmt';
+  readonly id: string;
+  readonly title?: string;
+  readonly description?: string;
+}
+
+/** Switch active UI / string-table language. */
+export interface LangStmtNode extends BaseNode {
+  readonly type: 'LangStmt';
+  readonly code: string;
 }
 

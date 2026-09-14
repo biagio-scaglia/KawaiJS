@@ -207,13 +207,49 @@ export function applySetOperation(
 /**
  * Interpolates variables in dialogue or prompt strings (e.g. "Hello [player_name]!").
  */
-export function interpolateVariables(text: string, variables: Record<string, unknown>): string {
-  if (!text || !text.includes('[')) return text;
-  return text.replace(/\[([a-zA-Z_][a-zA-Z0-9_]*)\]/g, (match, varName) => {
+export function interpolateVariables(
+  text: string,
+  variables: Record<string, unknown>,
+  options?: {
+    readonly lang?: string | null;
+    readonly i18n?: Readonly<Record<string, Readonly<Record<string, string>>>>;
+  }
+): string {
+  if (!text) return text;
+  let out = text;
+
+  // i18n: {t:key} or {t:key|fallback}
+  if (out.includes('{t:')) {
+    const lang = options?.lang || 'en';
+    const table = options?.i18n?.[lang] ?? options?.i18n?.['en'];
+    out = out.replace(/\{t:([a-zA-Z0-9_.-]+)(?:\|([^}]*))?\}/g, (match, key: string, fallback?: string) => {
+      const val = table?.[key];
+      if (val !== undefined) return val;
+      if (fallback !== undefined) return fallback;
+      return match;
+    });
+  }
+
+  if (!out.includes('[')) return out;
+  return out.replace(/\[([a-zA-Z_][a-zA-Z0-9_]*)\]/g, (match, varName) => {
     if (hasVar(variables, varName)) {
       const val = variables[varName];
       return val !== undefined && val !== null ? String(val) : '';
     }
     return match;
   });
+}
+
+/** Built-in layer → z-index map (overridable with explicit `z N`). */
+export const DEFAULT_LAYER_Z: Readonly<Record<string, number>> = {
+  background: 0,
+  master: 10,
+  overlay: 30,
+  ui: 50
+};
+
+export function resolveSpriteZ(layer: string | undefined | null, z: number | undefined): number {
+  if (typeof z === 'number' && Number.isFinite(z)) return z;
+  if (layer && DEFAULT_LAYER_Z[layer] !== undefined) return DEFAULT_LAYER_Z[layer]!;
+  return DEFAULT_LAYER_Z.master ?? 10;
 }

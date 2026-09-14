@@ -1,8 +1,8 @@
 import type { Instruction, StoryPackage } from '@kawaijs/ast';
-import { cloneState, createInitialState, type Snapshot, type StoryState } from './state.js';
+import { cloneState, createInitialState, type AchievementState, type Snapshot, type StoryState } from './state.js';
 import { HistoryManager } from './history.js';
 import { computeStoryHash, SaveManager, type SaveSlot, type LoadResult } from './save.js';
-import { applySetOperation, evaluateCondition, interpolateVariables, isSafeKey } from './evaluator.js';
+import { applySetOperation, evaluateCondition, interpolateVariables, isSafeKey, resolveSpriteZ } from './evaluator.js';
 
 export interface AudioEvent {
   readonly action: 'play' | 'stop';
@@ -537,7 +537,8 @@ export class StoryVM {
             transition: inst.transition ?? null,
             characters: {}, // Clear characters on new scene
             vfx: null,
-            activeCG: null
+            activeCG: null,
+            defaultLayer: this.state.visual.defaultLayer
           },
           hotspots: null
         };
@@ -547,6 +548,8 @@ export class StoryVM {
       case 'show': {
         this.recordTrace(`SHOW ${inst.character}${inst.expression ? ` ${inst.expression}` : ''}${inst.position ? ` at ${inst.position}` : ''}`);
         const charDef = this.state.visual.characters[inst.character] ?? {};
+        const layer = inst.layer ?? charDef.layer ?? this.state.visual.defaultLayer ?? undefined;
+        const z = resolveSpriteZ(layer, inst.z ?? charDef.z);
         this.state = {
           ...this.state,
           visual: {
@@ -556,7 +559,10 @@ export class StoryVM {
               [inst.character]: {
                 expression: inst.expression ?? charDef.expression,
                 position: inst.position ?? charDef.position ?? 'center',
-                transition: inst.transition ?? charDef.transition
+                transition: inst.transition ?? charDef.transition,
+                layer,
+                z,
+                cssAnimation: charDef.cssAnimation
               }
             }
           }
@@ -582,7 +588,10 @@ export class StoryVM {
         const charDef = inst.speaker ? this.story.characters[inst.speaker] : undefined;
         const displayName = charDef?.name ?? inst.speaker;
         const color = charDef?.color;
-        const interpolatedText = interpolateVariables(inst.text, this.state.variables);
+        const interpolatedText = interpolateVariables(inst.text, this.state.variables, {
+          lang: this.state.lang,
+          i18n: this.story.i18n
+        });
         this.recordTrace(`DIALOGUE ${displayName ? `[${displayName}] ` : ''}${interpolatedText}`);
 
         this.state = {
@@ -610,7 +619,10 @@ export class StoryVM {
           })
           .map(choice => ({
             ...choice,
-            text: interpolateVariables(choice.text, this.state.variables)
+            text: interpolateVariables(choice.text, this.state.variables, {
+              lang: this.state.lang,
+              i18n: this.story.i18n
+            })
           }));
 
         this.recordTrace(`CHOICES [${availableChoices.map(c => c.text).join(', ')}]`);
@@ -870,7 +882,10 @@ export class StoryVM {
       }
 
       case 'input': {
-        const prompt = interpolateVariables(inst.prompt, this.state.variables);
+        const prompt = interpolateVariables(inst.prompt, this.state.variables, {
+          lang: this.state.lang,
+          i18n: this.story.i18n
+        });
         this.recordTrace(`INPUT_WAIT ${inst.variable} "${prompt}"`);
         this.state = {
           ...this.state,
@@ -957,6 +972,77 @@ export class StoryVM {
         break;
       }
 
+      case 'layer': {
+        const name = sanitizeCssToken(inst.name) || 'master';
+        this.recordTrace(`LAYER ${name}`);
+        this.state = {
+          ...this.state,
+          visual: {
+            ...this.state.visual,
+            defaultLayer: name
+          }
+        };
+        break;
+      }
+
+      case 'animate': {
+        const existing = this.state.visual.characters[inst.character];
+        if (!existing) {
+          this.recordTrace(`ANIMATE skipped (missing ${inst.character})`);
+          break;
+        }
+        const animName = sanitizeCssToken(inst.animation) || 'fade-in';
+        this.recordTrace(`ANIMATE ${inst.character} ${animName}`);
+        this.state = {
+          ...this.state,
+          visual: {
+            ...this.state.visual,
+            characters: {
+              ...this.state.visual.characters,
+              [inst.character]: {
+                ...existing,
+                cssAnimation: {
+                  name: animName,
+                  durationMs: inst.durationMs,
+                  token: Date.now()
+                }
+              }
+            }
+          }
+        };
+        break;
+      }
+
+      case 'unlock': {
+        const catalog = this.story.achievements?.find((a) => a.id === inst.id);
+        const entry = {
+          id: inst.id,
+          title: inst.title ?? catalog?.title ?? inst.id,
+          description: inst.description ?? catalog?.description,
+          unlockedAt: Date.now()
+        };
+        this.recordTrace(`UNLOCK ${inst.id}`);
+        this.state = {
+          ...this.state,
+          achievements: {
+            ...this.state.achievements,
+            [inst.id]: entry
+          }
+        };
+        this.persistAchievement(entry);
+        break;
+      }
+
+      case 'lang': {
+        const code = inst.code.trim().toLowerCase() || 'en';
+        this.recordTrace(`LANG ${code}`);
+        this.state = {
+          ...this.state,
+          lang: code
+        };
+        break;
+      }
+
       case 'return': {
         if (this.state.callStack.length > 0) {
           const topFrame = this.state.callStack[this.state.callStack.length - 1]!;
@@ -1008,6 +1094,63 @@ export class StoryVM {
     for (const listener of this.audioEventListeners) {
       listener(event);
     }
+  }
+
+  private persistAchievement(entry: AchievementState): void {
+    if (typeof localStorage === 'undefined') return;
+    try {
+      const key = `kawaijs_achievements_${this.storyHash}`;
+      const raw = localStorage.getItem(key);
+      const map = raw ? (JSON.parse(raw) as Record<string, AchievementState>) : {};
+      map[entry.id] = entry;
+      localStorage.setItem(key, JSON.stringify(map));
+    } catch {
+      // ignore quota / private mode
+    }
+  }
+
+  /** Merge locally persisted achievements into the current state (call after start/load). */
+  public hydrateAchievements(): void {
+    if (typeof localStorage === 'undefined') return;
+    try {
+      const key = `kawaijs_achievements_${this.storyHash}`;
+      const raw = localStorage.getItem(key);
+      if (!raw) return;
+      const map = JSON.parse(raw) as Record<string, AchievementState>;
+      this.state = {
+        ...this.state,
+        achievements: {
+          ...map,
+          ...this.state.achievements
+        }
+      };
+      this.notifyStateChanged();
+    } catch {
+      // ignore
+    }
+  }
+
+  /** Export achievements as a plain JSON-serializable object (itch / analytics). */
+  public exportAchievementsJson(): {
+    storyHash: string;
+    exportedAt: number;
+    achievements: AchievementState[];
+  } {
+    return {
+      storyHash: this.storyHash,
+      exportedAt: Date.now(),
+      achievements: Object.values(this.state.achievements)
+    };
+  }
+
+  /** Set active language for `{t:key}` lookups (also used by `?lang=`). */
+  public setLang(code: string): void {
+    const normalized = code.trim().toLowerCase() || 'en';
+    this.state = {
+      ...this.state,
+      lang: normalized
+    };
+    this.notifyStateChanged();
   }
 }
 

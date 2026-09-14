@@ -8,15 +8,17 @@ export * from './config.js';
 export * from './parse-args.js';
 export * from './pwa.js';
 export * from './seo.js';
+export * from './i18n.js';
 
 import * as fs from 'node:fs';
 import { createProject } from './commands/create.js';
 import { validateProject } from './commands/validate.js';
 import { startDevServer } from './commands/dev.js';
 import { buildProject } from './commands/build.js';
+import { buildEmbedSnippet, parseEmbedCommandArgs } from './commands/embed.js';
 import { parseBuildCommandArgs, parseDevCommandArgs } from './parse-args.js';
 
-export { createProject, validateProject, startDevServer, buildProject };
+export { createProject, validateProject, startDevServer, buildProject, buildEmbedSnippet };
 
 export function runCLI(args: string[]): void {
   const command = args[0];
@@ -46,6 +48,18 @@ export function runCLI(args: string[]): void {
       if (!ok) {
         process.exitCode = 1;
       }
+      break;
+    }
+
+    case 'embed': {
+      const parsed = parseEmbedCommandArgs(args);
+      const snippet = buildEmbedSnippet(parsed.projectDir, {
+        width: parsed.width,
+        height: parsed.height,
+        startLabel: parsed.startLabel,
+        src: parsed.src
+      });
+      console.log(snippet);
       break;
     }
 
@@ -88,6 +102,8 @@ Commands:
                              Start the local development server (live reload)
   build [path] [--out dir] [--at label]
                              Build a static production web bundle (dist/)
+  embed [path] [--width N] [--height N] [--at label] [--src url]
+                             Print an iframe embed snippet (?embed=1)
   validate [path]            Validate Kawa Script syntax, labels, and links
   help                       Show this help message
   version                    Show version information
@@ -95,19 +111,14 @@ Commands:
 URL flags (browser):
   ?at=<label>                Deep-link into a label (skips main menu)
   ?embed=1                   Compact embed / iframe mode
-
-Keyboard Shortcuts in Game:
-  Space / Enter     Advance dialogue
-  Backspace         Rollback (step back)
-  S                 Open Save Game menu
-  L                 Open Load Game menu
-  H                 Open Dialogue History
-  Escape            Close active modal
+  ?continue=<token>          Restore a shared continue-link save
+  ?lang=<code>               Force string-table language (e.g. it)
 
 Example:
   kawa create my-novel
   cd my-novel
   kawa dev --at start
+  kawa embed --width 960 --height 540 --src https://you.example/game/
 `);
       break;
     }
