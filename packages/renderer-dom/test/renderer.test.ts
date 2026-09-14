@@ -11,6 +11,7 @@ import {
 } from '../src/share-meta.js';
 import { DialogueBoxComponent } from '../src/components/dialogue-box.js';
 import { ChoiceMenuComponent } from '../src/components/choice-menu.js';
+import { characterAssetCandidates, defaultAssetResolver } from '../src/renderer.js';
 
 describe('DOMRenderer Component & Accessibility', () => {
   let container: HTMLDivElement;
@@ -72,6 +73,19 @@ label start:
     expect(kaoriSprite.classList.contains('kawa-pos-right')).toBe(true);
 
     renderer.destroy();
+  });
+
+  it('prefers raster character assets before default svg', () => {
+    expect(characterAssetCandidates('hero/normal', defaultAssetResolver)).toEqual([
+      'assets/characters/hero/normal.png',
+      'assets/characters/hero/normal.jpg',
+      'assets/characters/hero/normal.jpeg',
+      'assets/characters/hero/normal.webp',
+      'assets/characters/hero/normal.svg'
+    ]);
+    expect(characterAssetCandidates('hero.jpg', defaultAssetResolver)[0]).toBe(
+      'assets/characters/hero.jpg'
+    );
   });
 
   it('renders dialogue, speaker tag with color, and accessibility attributes', () => {

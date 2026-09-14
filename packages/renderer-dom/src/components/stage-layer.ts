@@ -2,6 +2,7 @@ import type { AssetType } from '../types.js';
 import type { VfxState } from '@kawaijs/runtime';
 import { VfxLayerComponent } from './vfx-layer.js';
 import { escapeHtml } from '../utils/rich-text.js';
+import { bindImageSrcFallbacks, characterAssetCandidates } from '../asset-fallbacks.js';
 
 export class StageLayerComponent {
   public readonly stageEl: HTMLDivElement;
@@ -165,7 +166,7 @@ export class StageLayerComponent {
       const expr = charState.expression;
       const z = typeof charState.z === 'number' ? charState.z : 10;
       const assetKey = expr ? `${id}/${expr}` : id;
-      const primaryUrl = this.assetResolver(assetKey, 'character');
+      const candidates = characterAssetCandidates(assetKey, this.assetResolver);
 
       if (!this.activeCharacters.has(id)) {
         const div = document.createElement('div');
@@ -176,9 +177,9 @@ export class StageLayerComponent {
         div.style.zIndex = String(z);
 
         const img = document.createElement('img');
-        img.src = primaryUrl;
         img.alt = `${id} ${expr ?? ''}`;
-        img.onerror = () => {
+        img.decoding = 'async';
+        bindImageSrcFallbacks(img, candidates, () => {
           img.style.display = 'none';
           if (!div.querySelector('.kawa-sprite-placeholder')) {
             const ph = document.createElement('div');
@@ -186,7 +187,7 @@ export class StageLayerComponent {
             ph.innerHTML = `<span class="kawa-sprite-placeholder-icon">👤</span><span class="kawa-sprite-placeholder-name">${escapeHtml(id)}</span>`;
             div.appendChild(ph);
           }
-        };
+        });
 
         div.appendChild(img);
         this.charactersEl.appendChild(div);
@@ -213,7 +214,7 @@ export class StageLayerComponent {
         // Expression change
         if (existing.expression !== expr) {
           existing.img.style.display = 'block';
-          existing.img.src = primaryUrl;
+          bindImageSrcFallbacks(existing.img, candidates);
           existing.expression = expr;
           const ph = existing.div.querySelector('.kawa-sprite-placeholder');
           if (ph) ph.remove();

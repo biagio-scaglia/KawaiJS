@@ -1,5 +1,6 @@
 import type { StoryPackage, ChoiceOption } from '@kawaijs/ast';
 import type { ShareConfig } from './share-meta.js';
+import { characterAssetCandidates } from './asset-fallbacks.js';
 
 export type AssetType = 'background' | 'character' | 'audio';
 
@@ -58,8 +59,15 @@ export function preloadStoryAssets(story: StoryPackage, assetResolver: (path: st
   }
 
   for (const char of charSet) {
+    const candidates = characterAssetCandidates(char, assetResolver);
     const img = new Image();
-    img.src = assetResolver(char, 'character');
+    let i = 0;
+    const tryNext = (): void => {
+      if (i >= candidates.length) return;
+      img.src = candidates[i++]!;
+    };
+    img.onerror = tryNext;
+    tryNext();
   }
 }
 

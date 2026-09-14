@@ -37,6 +37,7 @@ import { bindSwipeControls, type BoundTouchControls } from './touch.js';
 
 export * from './icons.js';
 export * from './types.js';
+export * from './asset-fallbacks.js';
 export * from './utils/rich-text.js';
 export * from './utils/focus-trap.js';
 export * from './layout/viewport-adapter.js';
