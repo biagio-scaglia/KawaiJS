@@ -5,6 +5,7 @@ import { compileScript, formatDiagnostic, KawaError } from '@kawaijs/parser';
 import { getBaseThemeCss, getInlineRuntimeScript } from '../runtime-bundle.js';
 import { loadProjectConfig } from '../config.js';
 import { renderStaticShareMetaTags } from '../parse-args.js';
+import { buildPwaAssets, renderPwaHeadTags, renderPwaRegisterScript } from '../pwa.js';
 
 export interface DevServerOptions {
   port?: number;
@@ -114,6 +115,30 @@ export function startDevServer(projectDir = '.', options: DevServerOptions = {})
       return;
     }
 
+    // 3b. PWA assets (dev preview of installability)
+    if (pathname === '/manifest.webmanifest' || pathname === '/sw.js' || pathname === '/icon.svg') {
+      const activeConfig = loadProjectConfig(rootDir);
+      if (activeConfig.pwa?.enabled === false) {
+        res.writeHead(404);
+        res.end('PWA disabled');
+        return;
+      }
+      const pwa = buildPwaAssets(activeConfig, 'kawa-dev');
+      if (pathname === '/manifest.webmanifest') {
+        res.writeHead(200, { 'Content-Type': 'application/manifest+json' });
+        res.end(pwa.manifestJson);
+        return;
+      }
+      if (pathname === '/sw.js') {
+        res.writeHead(200, { 'Content-Type': 'application/javascript; charset=utf-8' });
+        res.end(pwa.serviceWorkerJs);
+        return;
+      }
+      res.writeHead(200, { 'Content-Type': 'image/svg+xml' });
+      res.end(pwa.iconSvg);
+      return;
+    }
+
     // 3. Static Assets serving
     if (
       pathname.startsWith('/assets/') ||
@@ -219,6 +244,9 @@ export function startDevServer(projectDir = '.', options: DevServerOptions = {})
     });
 
     const cliStartLabel = options.startLabel ? JSON.stringify(options.startLabel) : 'undefined';
+    const pwaEnabled = activeConfig.pwa?.enabled !== false;
+    const pwaHead = pwaEnabled ? renderPwaHeadTags(activeConfig) : '';
+    const pwaRegister = pwaEnabled ? renderPwaRegisterScript() : '';
 
     res.writeHead(200, {
       'Content-Type': 'text/html; charset=utf-8',
@@ -228,18 +256,22 @@ export function startDevServer(projectDir = '.', options: DevServerOptions = {})
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>${gameTitle}</title>
 ${shareMeta}
+${pwaHead}
   <style>
     ${combinedCss}
     html, body, #app {
       width: 100vw;
       height: 100vh;
+      height: 100dvh;
       margin: 0;
       padding: 0;
       overflow: hidden;
       background: #000;
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
     }
     #error-overlay {
       display: ${initialError ? 'block' : 'none'}; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.95);
@@ -302,6 +334,7 @@ ${shareMeta}
           }
         });
         window.__kawa_app = app;
+        ${pwaRegister}
       } catch (err) {
         errorEl.style.display = 'block';
         errorEl.textContent = err.stack || err.message;

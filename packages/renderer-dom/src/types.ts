@@ -161,6 +161,8 @@ export interface RendererFeatureOptions {
    * to prevent accidental double-advance (default: 220).
    */
   advanceDebounceMs?: number;
+  /** Horizontal swipe gestures on mobile (default: true). */
+  touchGestures?: boolean;
 }
 
 export interface DOMRendererOptions {

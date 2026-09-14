@@ -215,6 +215,8 @@ label dramatic_scene:
 > **Tip:** `define` aliases are resolved at compile time for `scene`, `play`, and `cg`.  
 > **Tip:** Open a build with `?at=label_name` to deep-link past the main menu (labels starting with `__` are ignored).  
 > **Tip:** Use `?embed=1` for iframe / itch / Notion embeds (compact UI, no main menu).  
+> **Tip:** Share progress with **Copy continue link** in Save/Load (URL `?continue=…` restores the save).  
+> **Tip:** Production builds ship as a **PWA** (`manifest.webmanifest` + `sw.js`) unless `pwa.enabled` is `false`.  
 > **Tip:** Built-in themes: `noir`, `sakura`, `ocean`, `dusk`. Style hooks: `dialogue glass|solid|minimal`, `choices pill|card|underline`, `stage dim|vignette`.  
 > **Showcase:** see [`examples/hello-world`](./examples/hello-world) — also the default `kawa create` template.
 

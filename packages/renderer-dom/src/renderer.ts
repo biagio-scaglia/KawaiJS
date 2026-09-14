@@ -33,6 +33,7 @@ import {
   resolveShareAssetUrl,
   type ShareConfig
 } from './share-meta.js';
+import { bindSwipeControls, type BoundTouchControls } from './touch.js';
 
 export * from './icons.js';
 export * from './types.js';
@@ -54,6 +55,7 @@ export * from './components/stage-layer.js';
 export * from './components/vfx-layer.js';
 export * from './share-meta.js';
 export * from './embed.js';
+export * from './touch.js';
 export function extractGalleryItems(story?: StoryPackage): GalleryItem[] {
   if (!story || !story.labels) return [];
   const itemsMap = new Map<string, GalleryItem>();
@@ -113,6 +115,7 @@ export class DOMRenderer {
   private unsubscribeAudio?: () => void;
   private unsubscribeError?: () => void;
   private boundKeyHandler?: (e: KeyboardEvent) => void;
+  private touchControls?: BoundTouchControls;
 
   constructor(vm: StoryVM, options: DOMRendererOptions) {
     this.vm = vm;
@@ -269,6 +272,10 @@ export class DOMRenderer {
     if (this.boundKeyHandler && typeof window !== 'undefined') {
       window.removeEventListener('keydown', this.boundKeyHandler);
       this.boundKeyHandler = undefined;
+    }
+    if (this.touchControls) {
+      this.touchControls.destroy();
+      this.touchControls = undefined;
     }
     this.container.innerHTML = '';
   }
@@ -509,6 +516,7 @@ export class DOMRenderer {
 
     this.rootEl = document.createElement('div');
     this.rootEl.className = 'kawa-root';
+    this.rootEl.style.touchAction = 'manipulation';
     if (this.options.embed) {
       this.rootEl.classList.add('kawa-embed');
       this.rootEl.dataset.kawaEmbed = '1';
@@ -697,6 +705,24 @@ export class DOMRenderer {
 
     if (typeof window !== 'undefined') {
       window.addEventListener('keydown', this.boundKeyHandler);
+    }
+
+    // Mobile: swipe left = advance, swipe right = rollback
+    if (this.options.features?.touchGestures !== false) {
+      this.touchControls = bindSwipeControls(this.stageLayer.stageEl, {
+        onSwipeLeft: () => {
+          if (this.isMainMenuActive()) return;
+          if (this.isAutoMode) this.toggleAutoMode(false);
+          if (this.isSkipMode) this.toggleSkipMode(false);
+          this.handleUserAdvance();
+        },
+        onSwipeRight: () => {
+          if (this.isMainMenuActive()) return;
+          if (this.isAutoMode) this.toggleAutoMode(false);
+          if (this.isSkipMode) this.toggleSkipMode(false);
+          if (this.vm.canRollback()) this.vm.rollback();
+        }
+      });
     }
   }
 

@@ -1,4 +1,5 @@
 import type { StoryVM, SaveSlot } from '@kawaijs/runtime';
+import { encodeContinueToken, buildContinueHref } from '@kawaijs/runtime';
 import { SVG_ICONS } from '../icons.js';
 import { showConfirmModal } from './confirm-modal.js';
 import { trapFocus } from '../utils/focus-trap.js';
@@ -56,6 +57,40 @@ export async function showSaveLoadModal(
 
   const body = document.createElement('div');
   body.className = 'kawa-modal-body';
+
+  const shareCurrent = document.createElement('button');
+  shareCurrent.type = 'button';
+  shareCurrent.className = 'kawa-slot-btn kawa-slot-btn-link kawa-continue-link-btn';
+  shareCurrent.innerHTML = `${SVG_ICONS.bookmark} <span>Copy continue link (current progress)</span>`;
+  shareCurrent.setAttribute('aria-label', 'Copy continue link for current progress');
+  shareCurrent.addEventListener('click', async (e) => {
+    e.preventDefault();
+    const slot = await vm.save('__continue_share__');
+    const token = encodeContinueToken(slot);
+    await vm.getSaveManager().deleteSlot('__continue_share__');
+    if (!token) {
+      shareCurrent.querySelector('span')!.textContent = 'Progress too large to link';
+      return;
+    }
+    const href = buildContinueHref(token);
+    try {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(href);
+      } else {
+        window.prompt('Copy this continue link:', href);
+      }
+      const label = shareCurrent.querySelector('span');
+      if (label) {
+        label.textContent = 'Continue link copied!';
+        window.setTimeout(() => {
+          label.textContent = 'Copy continue link (current progress)';
+        }, 1600);
+      }
+    } catch {
+      window.prompt('Copy this continue link:', href);
+    }
+  });
+  body.appendChild(shareCurrent);
 
   const grid = document.createElement('div');
   grid.className = 'kawa-slots-grid';
@@ -176,6 +211,48 @@ export async function showSaveLoadModal(
     }
 
     if (slot) {
+      const linkBtn = document.createElement('button');
+      linkBtn.type = 'button';
+      linkBtn.className = 'kawa-slot-btn kawa-slot-btn-link';
+      linkBtn.innerHTML = `${SVG_ICONS.bookmark} <span>Copy Link</span>`;
+      linkBtn.title = 'Copy continue link';
+      linkBtn.setAttribute('aria-label', `Copy continue link for slot ${slotNum}`);
+      linkBtn.addEventListener('click', async (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const token = encodeContinueToken(slot);
+        if (!token) {
+          linkBtn.querySelector('span')!.textContent = 'Too large';
+          return;
+        }
+        const href = buildContinueHref(token);
+        try {
+          if (navigator.clipboard?.writeText) {
+            await navigator.clipboard.writeText(href);
+          } else {
+            const ta = document.createElement('textarea');
+            ta.value = href;
+            ta.style.position = 'fixed';
+            ta.style.left = '-9999px';
+            document.body.appendChild(ta);
+            ta.select();
+            document.execCommand('copy');
+            ta.remove();
+          }
+          const label = linkBtn.querySelector('span');
+          if (label) {
+            const prev = label.textContent;
+            label.textContent = 'Copied!';
+            window.setTimeout(() => {
+              label.textContent = prev;
+            }, 1400);
+          }
+        } catch {
+          window.prompt('Copy this continue link:', href);
+        }
+      });
+      actions.appendChild(linkBtn);
+
       const delBtn = document.createElement('button');
       delBtn.type = 'button';
       delBtn.className = 'kawa-slot-btn kawa-slot-btn-del';

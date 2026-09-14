@@ -45,6 +45,15 @@ export interface KawaShareConfig {
   readonly labels?: Readonly<Record<string, KawaShareLabelConfig>>;
 }
 
+export interface KawaPwaConfig {
+  /** Enable PWA assets on build (default: true). */
+  readonly enabled?: boolean;
+  readonly shortName?: string;
+  readonly description?: string;
+  readonly themeColor?: string;
+  readonly backgroundColor?: string;
+}
+
 export interface KawaProjectConfig {
   readonly title?: string;
   readonly author?: string;
@@ -54,6 +63,7 @@ export interface KawaProjectConfig {
   readonly settings?: KawaDefaultSettings;
   readonly gallery?: readonly KawaGalleryItemConfig[];
   readonly share?: KawaShareConfig;
+  readonly pwa?: KawaPwaConfig;
 }
 
 export const DEFAULT_KAWA_CONFIG: KawaProjectConfig = {
@@ -78,7 +88,10 @@ export const DEFAULT_KAWA_CONFIG: KawaProjectConfig = {
     voiceVolume: 1.0
   },
   gallery: [],
-  share: {}
+  share: {},
+  pwa: {
+    enabled: true
+  }
 };
 
 /**
@@ -121,6 +134,10 @@ export function loadProjectConfig(projectDir: string): KawaProjectConfig {
               ...(DEFAULT_KAWA_CONFIG.share?.labels ?? {}),
               ...(parsed.share?.labels ?? {})
             }
+          },
+          pwa: {
+            ...DEFAULT_KAWA_CONFIG.pwa,
+            ...(parsed.pwa ?? {})
           }
         };
       } catch (err: unknown) {

@@ -4,6 +4,7 @@ import { compileScript, formatDiagnostic, KawaError } from '@kawaijs/parser';
 import { getBaseThemeCss, getInlineRuntimeScript } from '../runtime-bundle.js';
 import { loadProjectConfig } from '../config.js';
 import { renderStaticShareMetaTags } from '../parse-args.js';
+import { buildPwaAssets, renderPwaHeadTags, renderPwaRegisterScript } from '../pwa.js';
 
 export interface BuildOptions {
   outDir?: string;
@@ -124,23 +125,38 @@ export function buildProject(projectDir = '.', options: BuildOptions = {}): bool
   });
 
   const cliStartLabel = options.startLabel ? JSON.stringify(options.startLabel) : 'undefined';
+  const pwaEnabled = projectConfig.pwa?.enabled !== false;
+  const pwaHead = pwaEnabled ? renderPwaHeadTags(projectConfig) : '';
+  const pwaRegister = pwaEnabled ? renderPwaRegisterScript() : '';
+
+  if (pwaEnabled) {
+    const pwa = buildPwaAssets(projectConfig, `kawa-${projectConfig.version || '0'}`);
+    fs.writeFileSync(path.join(outDir, 'manifest.webmanifest'), pwa.manifestJson, 'utf-8');
+    fs.writeFileSync(path.join(outDir, 'sw.js'), pwa.serviceWorkerJs, 'utf-8');
+    fs.writeFileSync(path.join(outDir, 'icon.svg'), pwa.iconSvg, 'utf-8');
+    console.log(`✅ PWA assets written (manifest, sw.js, icon.svg)`);
+  }
 
   const htmlContent = `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>${gameTitle}</title>
 ${shareMeta}
+${pwaHead}
   <style>
     ${combinedCss}
     html, body, #app {
       width: 100vw;
       height: 100vh;
+      height: 100dvh;
       margin: 0;
       padding: 0;
       overflow: hidden;
       background: #000;
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
     }
   </style>
 </head>
@@ -170,6 +186,7 @@ ${shareMeta}
       }
     });
     window.__kawa_app = app;
+    ${pwaRegister}
   </script>
 </body>
 </html>`;

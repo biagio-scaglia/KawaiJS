@@ -52,6 +52,11 @@ describe('Kawaijs CLI Commands', () => {
     expect(htmlContent).toContain('story =');
     expect(htmlContent).toContain('property="og:title"');
     expect(htmlContent).toContain('name="twitter:card"');
+    expect(fs.existsSync(path.join(outDir, 'manifest.webmanifest'))).toBe(true);
+    expect(fs.existsSync(path.join(outDir, 'sw.js'))).toBe(true);
+    expect(fs.existsSync(path.join(outDir, 'icon.svg'))).toBe(true);
+    expect(htmlContent).toContain('manifest.webmanifest');
+    expect(htmlContent).toContain('serviceWorker');
   });
 
   it('parses dev/build CLI flags for --at and --port/--out', () => {

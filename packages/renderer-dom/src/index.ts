@@ -1,9 +1,14 @@
 export * from './renderer.js';
 export * from './share-meta.js';
 export * from './embed.js';
+export * from './touch.js';
 
 import type { StoryPackage } from '@kawaijs/ast';
-import { StoryVM } from '@kawaijs/runtime';
+import {
+  StoryVM,
+  decodeContinueToken,
+  resolveContinueToken
+} from '@kawaijs/runtime';
 import { DOMRenderer, preloadStoryAssets, type DOMRendererOptions } from './renderer.js';
 import { resolveEmbedMode } from './embed.js';
 
@@ -13,8 +18,12 @@ export interface MountKawaAppOptions extends Omit<DOMRendererOptions, 'container
    * Internal labels (`__…`) are ignored.
    */
   startLabel?: string;
-  /** Optional URL search string for deep-link / embed detection (tests / SSR). */
+  /** Optional URL search string for deep-link / embed / continue detection (tests / SSR). */
   search?: string;
+  /** Optional URL hash for continue-link detection. */
+  hash?: string;
+  /** Skip applying a continue-link from the URL. */
+  ignoreContinueLink?: boolean;
 }
 
 /**
@@ -49,9 +58,17 @@ export function mountKawaApp(
 ): { vm: StoryVM; renderer: DOMRenderer } {
   preloadStoryAssets(story, options?.assetResolver);
 
-  const deepLink = resolveDeepLinkLabel(story, options);
+  const continueToken = options?.ignoreContinueLink
+    ? undefined
+    : resolveContinueToken(options?.search, options?.hash);
+  const continueSlot = continueToken ? decodeContinueToken(continueToken) : null;
+
+  const deepLink = continueSlot ? undefined : resolveDeepLinkLabel(story, options);
   const embed = options?.embed ?? resolveEmbedMode(options?.search);
-  const { startLabel: _ignored, search: _search, ...rendererOptions } = options ?? {};
+  const { startLabel: _ignored, search: _search, hash: _hash, ignoreContinueLink: _icl, ...rendererOptions } =
+    options ?? {};
+
+  const skipMenu = Boolean(deepLink || embed || continueSlot);
 
   const vm = new StoryVM(story);
   const renderer = new DOMRenderer(vm, {
@@ -59,12 +76,20 @@ export function mountKawaApp(
     ...rendererOptions,
     embed,
     syncUrlLabel: rendererOptions.syncUrlLabel ?? Boolean(deepLink || embed),
-    mainMenu: deepLink || embed
+    mainMenu: skipMenu
       ? { ...rendererOptions.mainMenu, enabled: false }
       : rendererOptions.mainMenu
   });
 
-  if (deepLink) {
+  if (continueSlot) {
+    const res = vm.loadFromSlot(continueSlot);
+    if (!res.success) {
+      // Fall back to normal start if the continue payload is for another story.
+      if (!renderer.isMainMenuActive()) {
+        vm.start(deepLink);
+      }
+    }
+  } else if (deepLink) {
     vm.start(deepLink);
   } else if (!renderer.isMainMenuActive()) {
     vm.start();

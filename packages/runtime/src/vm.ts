@@ -402,23 +402,38 @@ export class StoryVM {
     if (!res.success || !res.slot) {
       return res;
     }
+    this.applyLoadedSlot(res.slot, `LOAD slot_${slotId}`);
+    return res;
+  }
 
+  /**
+   * Restore from an in-memory SaveSlot (continue-links, imported saves).
+   * Validates storyHash when present on the slot.
+   */
+  public loadFromSlot(slot: SaveSlot, validateStoryHash = true): LoadResult {
+    if (validateStoryHash && slot.storyHash && slot.storyHash !== this.storyHash) {
+      return { success: false, reason: 'incompatible_story', slot };
+    }
+    this.applyLoadedSlot(slot, `LOAD continue_${slot.id}`);
+    return { success: true, slot };
+  }
+
+  private applyLoadedSlot(slot: SaveSlot, traceLabel: string): void {
     const prevMusic = this.state.audio.music;
-    this.state = cloneState(res.slot.snapshot.state);
-    const restoredHistory = res.slot.historyEntries ?? [];
+    this.state = cloneState(slot.snapshot.state);
+    const restoredHistory = slot.historyEntries ?? [];
     this.historyManager.replaceAll(restoredHistory);
     const snap: Snapshot = {
-      ...res.slot.snapshot,
+      ...slot.snapshot,
       historyLength:
-        typeof res.slot.snapshot.historyLength === 'number'
-          ? res.slot.snapshot.historyLength
+        typeof slot.snapshot.historyLength === 'number'
+          ? slot.snapshot.historyLength
           : restoredHistory.length
     };
     this.snapshotStack = [snap];
-    this.recordTrace(`LOAD slot_${slotId}`);
+    this.recordTrace(traceLabel);
     this.resyncAudio(prevMusic);
     this.notifyStateChanged();
-    return res;
   }
 
   /**

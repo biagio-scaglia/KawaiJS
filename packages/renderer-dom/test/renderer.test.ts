@@ -594,6 +594,30 @@ label __secret:
     renderer.destroy();
   });
 
+  it('restores progress from a continue-link query param', async () => {
+    const story = compileScript(`character yumia "Yumia" #f43f5e
+label start:
+    yumia "First"
+    yumia "Second"
+`);
+    const prep = new StoryVM(story);
+    prep.start();
+    prep.next();
+    const slot = await prep.save('1');
+    const { encodeContinueToken } = await import('@kawaijs/runtime');
+    const token = encodeContinueToken(slot)!;
+
+    const { renderer, vm } = mountKawaApp(story, container, {
+      search: `?continue=${token}`,
+      typewriterSpeed: 0,
+      mainMenu: { enabled: true }
+    });
+
+    expect(vm.getState().dialogue?.text).toBe('Second');
+    expect(container.querySelector('.kawa-main-menu.active')).toBeNull();
+    renderer.destroy();
+  });
+
   it('builds scene share meta from dialogue and label overrides', () => {
     expect(stripRichTags('{b}Hi{/b} [name]')).toBe('Hi');
 

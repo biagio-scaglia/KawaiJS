@@ -97,8 +97,9 @@ kawa validate [path]
 kawa version
 ```
 
-Browser URL flags: `?at=<label>` (deep-link), `?embed=1` (iframe mode).  
-Open Graph tags come from `share` in `kawa.config.json`.
+Browser URL flags: `?at=<label>` (deep-link), `?embed=1` (iframe mode), `?continue=<token>` (restore shared save).  
+Open Graph tags come from `share` in `kawa.config.json`.  
+`kawa build` emits a PWA (`manifest.webmanifest`, `sw.js`, `icon.svg`) by default.
 
 ---
 
