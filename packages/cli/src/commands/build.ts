@@ -77,15 +77,16 @@ export function buildProject(projectDir = '.', options: BuildOptions = {}): bool
   }
 
   // 4. Generate Combined style.css
+  const sanitizeCssValue = (v: string) => v.replace(/[;{}<>\\]/g, '').slice(0, 120);
   let configCss = ':root {\n';
   if (projectConfig.theme?.primaryColor) {
-    configCss += `  --kawa-primary-accent: ${projectConfig.theme.primaryColor};\n`;
+    configCss += `  --kawa-primary-accent: ${sanitizeCssValue(projectConfig.theme.primaryColor)};\n`;
   }
   if (projectConfig.theme?.fontFamily) {
-    configCss += `  --kawa-font-body: ${projectConfig.theme.fontFamily};\n`;
+    configCss += `  --kawa-font-body: ${sanitizeCssValue(projectConfig.theme.fontFamily)};\n`;
   }
   if (projectConfig.theme?.headingFont) {
-    configCss += `  --kawa-font-heading: ${projectConfig.theme.headingFont};\n`;
+    configCss += `  --kawa-font-heading: ${sanitizeCssValue(projectConfig.theme.headingFont)};\n`;
   }
   configCss += '}\n';
 
@@ -98,7 +99,11 @@ export function buildProject(projectDir = '.', options: BuildOptions = {}): bool
   console.log(`✅ Stylesheet bundled to dist/style.css`);
 
   // 5. Generate Standalone HTML Application
-  const gameTitle = projectConfig.title || storyPackage.meta.title || 'Kawaijs Visual Novel';
+  const gameTitle = (projectConfig.title || storyPackage.meta.title || 'Kawaijs Visual Novel')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
 
   const htmlContent = `<!DOCTYPE html>
 <html lang="en">

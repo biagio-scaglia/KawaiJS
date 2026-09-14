@@ -390,4 +390,77 @@ label start:
     expect(errors[0]?.message).toContain('non_existent_label');
     expect(vm.getState().isFinished).toBe(true);
   });
+
+  it('halts infinite self-jump loops via instruction budget', () => {
+    const story = {
+      meta: { startLabel: 'start' },
+      characters: {},
+      labels: {
+        start: [{ type: 'jump' as const, targetLabel: 'start' }]
+      }
+    };
+    const vm = new StoryVM(story, { maxInstructionsPerBurst: 25 });
+    const errors: Error[] = [];
+    vm.onError((err) => errors.push(err));
+
+    vm.start();
+    expect(vm.getState().isFinished).toBe(true);
+    expect(errors.some((e) => e.message.includes('infinite loop') || e.message.includes('maximum'))).toBe(true);
+  });
+
+  it('clears dialogue history and virtual time on start()', () => {
+    const code = `label start:
+    "Hello"
+    "World"
+`;
+    const story = compileScript(code);
+    const vm = new StoryVM(story);
+
+    vm.start();
+    vm.next();
+    expect(vm.getHistoryManager().getEntries().length).toBe(2);
+
+    vm.tick(500);
+    expect(vm.getVirtualTime()).toBe(500);
+
+    vm.start();
+    expect(vm.getHistoryManager().getEntries().length).toBe(1); // only first line of restarted story
+    expect(vm.getVirtualTime()).toBe(0);
+    expect(vm.getState().dialogue?.text).toBe('Hello');
+  });
+
+  it('sets pendingPauseMs for timed pauses', () => {
+    const code = `label start:
+    pause 250
+    "After pause"
+`;
+    const story = compileScript(code);
+    const vm = new StoryVM(story);
+
+    vm.start();
+    expect(vm.getState().pendingPauseMs).toBe(250);
+    expect(vm.getState().isWaitingForInput).toBe(true);
+
+    vm.next();
+    expect(vm.getState().pendingPauseMs).toBeNull();
+    expect(vm.getState().dialogue?.text).toBe('After pause');
+  });
+
+  it('continues when all choice conditions filter out options', () => {
+    const code = `label start:
+    set flag = false
+    menu:
+        "Hidden" if flag:
+            "Should not appear"
+    "Continued"
+`;
+    const story = compileScript(code);
+    const vm = new StoryVM(story);
+    const errors: Error[] = [];
+    vm.onError((err) => errors.push(err));
+
+    vm.start();
+    expect(vm.getState().dialogue?.text).toBe('Continued');
+    expect(errors.some((e) => e.message.includes('zero available options'))).toBe(true);
+  });
 });

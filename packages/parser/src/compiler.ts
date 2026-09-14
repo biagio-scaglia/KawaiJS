@@ -142,6 +142,7 @@ export class Compiler {
             type: 'choice',
             prompt: stmt.prompt,
             choices: choiceOptions,
+            fallbackLabel: mergeLabel,
             loc: stmt.loc
           });
 

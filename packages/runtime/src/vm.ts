@@ -27,6 +27,8 @@ export interface VMOptions {
   readonly saveManager?: SaveManager;
   readonly maxSnapshots?: number;
   readonly maxCallDepth?: number;
+  /** Hard cap on instructions executed in a single burst (prevents infinite jump loops). */
+  readonly maxInstructionsPerBurst?: number;
 }
 
 export class StoryVM {
@@ -38,6 +40,7 @@ export class StoryVM {
   private readonly saveManager: SaveManager;
   private readonly maxSnapshots: number;
   private readonly maxCallDepth: number;
+  private readonly maxInstructionsPerBurst: number;
 
   private stateChangeListeners = new Set<StateChangeListener>();
   private audioEventListeners = new Set<AudioEventListener>();
@@ -59,6 +62,7 @@ export class StoryVM {
     let sm: SaveManager | undefined;
     let maxSnaps = 250;
     let maxDepth = 100;
+    let maxBurst = 10_000;
 
     if (saveManagerOrOptions instanceof SaveManager) {
       sm = saveManagerOrOptions;
@@ -70,11 +74,15 @@ export class StoryVM {
       if (typeof saveManagerOrOptions.maxCallDepth === 'number') {
         maxDepth = saveManagerOrOptions.maxCallDepth;
       }
+      if (typeof saveManagerOrOptions.maxInstructionsPerBurst === 'number') {
+        maxBurst = saveManagerOrOptions.maxInstructionsPerBurst;
+      }
     }
 
     this.saveManager = sm ?? new SaveManager();
     this.maxSnapshots = Math.max(1, maxSnaps);
     this.maxCallDepth = Math.max(1, maxDepth);
+    this.maxInstructionsPerBurst = Math.max(1, maxBurst);
   }
 
   public getState(): StoryState {
@@ -157,6 +165,10 @@ export class StoryVM {
   }
 
   public start(): void {
+    if (this.isExecuting) {
+      throw new Error('Cannot call start() while the story VM is already executing instructions.');
+    }
+
     const startLabel = this.story.meta?.startLabel ?? 'start';
     if (!this.story.labels[startLabel]) {
       throw new Error(`Cannot start story: Start label '${startLabel}' not found in story package.`);
@@ -165,6 +177,8 @@ export class StoryVM {
     this.recordTrace(`START ${startLabel}`);
     this.state = createInitialState(startLabel);
     this.snapshotStack = [];
+    this.virtualTimeMs = 0;
+    this.historyManager.clear();
     this.executeUntilWaiting();
   }
 
@@ -181,7 +195,8 @@ export class StoryVM {
 
     this.state = {
       ...this.state,
-      isWaitingForInput: false
+      isWaitingForInput: false,
+      pendingPauseMs: null
     };
 
     this.executeUntilWaiting();
@@ -197,10 +212,26 @@ export class StoryVM {
 
     const choice = this.state.choices[choiceIndex]!;
     this.recordTrace(`CHOOSE ${choiceIndex} (${choice.text}) -> ${choice.targetLabel}`);
+
+    if (!this.story.labels[choice.targetLabel]) {
+      const err = new Error(`Runtime Error: Choice target label '${choice.targetLabel}' is not defined in story.`);
+      this.emitError(err);
+      this.state = {
+        ...this.state,
+        choices: null,
+        pendingPauseMs: null,
+        isFinished: true,
+        isWaitingForInput: false
+      };
+      this.notifyStateChanged();
+      return;
+    }
+
     this.state = {
       ...this.state,
       choices: null,
       isWaitingForInput: false,
+      pendingPauseMs: null,
       currentLabel: choice.targetLabel,
       instructionPointer: 0
     };
@@ -212,6 +243,9 @@ export class StoryVM {
    * Jumps directly to a label.
    */
   public jump(labelName: string): void {
+    if (this.isExecuting) {
+      throw new Error('Cannot call jump() while the story VM is already executing instructions.');
+    }
     if (!this.story.labels[labelName]) {
       throw new Error(`Target label '${labelName}' not found in story package.`);
     }
@@ -222,6 +256,7 @@ export class StoryVM {
       currentLabel: labelName,
       instructionPointer: 0,
       choices: null,
+      pendingPauseMs: null,
       isWaitingForInput: false
     };
 
@@ -284,7 +319,21 @@ export class StoryVM {
     this.isExecuting = true;
 
     try {
+      let instructionsExecuted = 0;
       while (!this.state.isWaitingForInput && !this.state.isFinished) {
+        if (instructionsExecuted >= this.maxInstructionsPerBurst) {
+          const err = new Error(
+            `Runtime Error: Exceeded maximum of ${this.maxInstructionsPerBurst} instructions without waiting for input (possible infinite loop at label '${this.state.currentLabel}').`
+          );
+          this.emitError(err);
+          this.state = {
+            ...this.state,
+            isFinished: true,
+            isWaitingForInput: false
+          };
+          break;
+        }
+
         const labelInstructions = this.story.labels[this.state.currentLabel];
         if (!labelInstructions || this.state.instructionPointer >= labelInstructions.length) {
           // Handle end of label: check call stack
@@ -317,6 +366,7 @@ export class StoryVM {
         };
 
         this.executeInstruction(inst);
+        instructionsExecuted++;
       }
 
       if (this.state.isWaitingForInput) {
@@ -395,6 +445,7 @@ export class StoryVM {
             speakerColor: color,
             text: interpolatedText
           },
+          pendingPauseMs: null,
           isWaitingForInput: true
         };
 
@@ -414,9 +465,36 @@ export class StoryVM {
           }));
 
         this.recordTrace(`CHOICES [${availableChoices.map(c => c.text).join(', ')}]`);
+
+        if (availableChoices.length === 0) {
+          // No visible choices — jump to menu fallthrough rather than soft-locking.
+          const fallback = (inst as { readonly fallbackLabel?: string }).fallbackLabel;
+          const err = new Error('Runtime Warning: Choice menu evaluated to zero available options; continuing.');
+          this.emitError(err);
+          if (fallback && this.story.labels[fallback]) {
+            this.state = {
+              ...this.state,
+              choices: null,
+              pendingPauseMs: null,
+              isWaitingForInput: false,
+              currentLabel: fallback,
+              instructionPointer: 0
+            };
+          } else {
+            this.state = {
+              ...this.state,
+              choices: null,
+              pendingPauseMs: null,
+              isWaitingForInput: false
+            };
+          }
+          break;
+        }
+
         this.state = {
           ...this.state,
           choices: availableChoices,
+          pendingPauseMs: null,
           isWaitingForInput: true
         };
         break;
@@ -449,8 +527,10 @@ export class StoryVM {
 
       case 'pause': {
         this.recordTrace(`PAUSE${inst.duration !== undefined ? ` ${inst.duration}` : ''}`);
+        // Duration is treated as milliseconds (matches README / parser examples like `pause 1200`).
         this.state = {
           ...this.state,
+          pendingPauseMs: inst.duration !== undefined && inst.duration > 0 ? inst.duration : null,
           isWaitingForInput: true
         };
         break;

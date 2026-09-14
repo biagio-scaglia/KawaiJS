@@ -220,7 +220,7 @@ Every UI component uses clear semantic class names that can be overridden:
 | <kbd>Space</kbd> / <kbd>Enter</kbd> | Advance dialogue / Complete typewriter text |
 | <kbd>Backspace</kbd> | Rollback to previous dialogue state |
 | <kbd>A</kbd> | Toggle Auto-Forward Mode |
-| <kbd>Tab</kbd> / <kbd>Ctrl</kbd> | Hold or toggle Fast Skip Mode |
+| <kbd>Ctrl</kbd> | Toggle Fast Skip Mode |
 | <kbd>S</kbd> | Open Save Game modal |
 | <kbd>L</kbd> | Open Load Game modal |
 | <kbd>H</kbd> | Open Dialogue History Backlog |

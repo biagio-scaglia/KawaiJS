@@ -1,6 +1,7 @@
 import type { AssetType } from '../types.js';
 import type { VfxState } from '@kawaijs/runtime';
 import { VfxLayerComponent } from './vfx-layer.js';
+import { escapeHtml } from '../utils/rich-text.js';
 
 export class StageLayerComponent {
   public readonly stageEl: HTMLDivElement;
@@ -141,7 +142,7 @@ export class StageLayerComponent {
           if (!div.querySelector('.kawa-sprite-placeholder')) {
             const ph = document.createElement('div');
             ph.className = 'kawa-sprite-placeholder';
-            ph.innerHTML = `<span class="kawa-sprite-placeholder-icon">👤</span><span class="kawa-sprite-placeholder-name">${id}</span>`;
+            ph.innerHTML = `<span class="kawa-sprite-placeholder-icon">👤</span><span class="kawa-sprite-placeholder-name">${escapeHtml(id)}</span>`;
             div.appendChild(ph);
           }
         };

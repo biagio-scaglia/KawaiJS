@@ -169,7 +169,7 @@ export interface CameraStmtNode extends BaseNode {
 
 export interface PauseStmtNode extends BaseNode {
   readonly type: 'PauseStmt';
-  readonly duration?: number; // duration in seconds, or undefined for click-to-continue
+  readonly duration?: number; // duration in milliseconds, or undefined for click-to-continue
 }
 
 export interface CgStmtNode extends BaseNode {

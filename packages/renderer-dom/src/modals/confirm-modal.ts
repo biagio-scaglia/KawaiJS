@@ -1,4 +1,5 @@
 import { SVG_ICONS } from '../icons.js';
+import { escapeHtml } from '../utils/rich-text.js';
 
 export function showConfirmModal(
   rootEl: HTMLElement,
@@ -28,7 +29,7 @@ export function showConfirmModal(
 
   const title = document.createElement('div');
   title.className = 'kawa-modal-title';
-  title.innerHTML = `<span>${options.title || 'Confirmation'}</span>`;
+  title.innerHTML = `<span>${escapeHtml(options.title || 'Confirmation')}</span>`;
 
   const closeBtn = document.createElement('button');
   closeBtn.className = 'kawa-btn';

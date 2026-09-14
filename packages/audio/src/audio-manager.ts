@@ -30,7 +30,7 @@ export class AudioManager {
   private soundPool: HTMLAudioElement[] = [];
   private isUnlocked = false;
   private pendingMusic: { src: string; options: PlayMusicOptions } | null = null;
-  private musicFadeInterval: ReturnType<typeof setInterval> | null = null;
+  private musicFadeIntervals = new Map<HTMLAudioElement, ReturnType<typeof setInterval>>();
   private unlockHandler: (() => void) | null = null;
 
   constructor(options: AudioOptions = {}) {
@@ -175,17 +175,13 @@ export class AudioManager {
     this.currentMusicAudio = null;
     this.currentMusicTrack = null;
 
-    if (this.musicFadeInterval) {
-      clearInterval(this.musicFadeInterval);
-      this.musicFadeInterval = null;
-    }
-
     if (fadeout > 0) {
       this.fadeVolume(audio, audio.volume, 0, fadeout * 1000, () => {
         audio.pause();
         audio.src = '';
       });
     } else {
+      this.clearFade(audio);
       audio.pause();
       audio.src = '';
     }
@@ -243,6 +239,14 @@ export class AudioManager {
 
   public destroy(): void {
     this.removeUnlockListeners();
+    for (const [audio, interval] of this.musicFadeIntervals) {
+      clearInterval(interval);
+      try {
+        audio.pause();
+        audio.src = '';
+      } catch {}
+    }
+    this.musicFadeIntervals.clear();
     this.stopMusic();
     this.stopSound();
     this.stopVoice();
@@ -277,6 +281,14 @@ export class AudioManager {
     });
   }
 
+  private clearFade(audio: HTMLAudioElement): void {
+    const existing = this.musicFadeIntervals.get(audio);
+    if (existing) {
+      clearInterval(existing);
+      this.musicFadeIntervals.delete(audio);
+    }
+  }
+
   private fadeVolume(
     audio: HTMLAudioElement,
     from: number,
@@ -284,10 +296,7 @@ export class AudioManager {
     durationMs: number,
     onComplete?: () => void
   ): void {
-    if (this.musicFadeInterval) {
-      clearInterval(this.musicFadeInterval);
-      this.musicFadeInterval = null;
-    }
+    this.clearFade(audio);
 
     if (durationMs <= 0) {
       audio.volume = Math.max(0, Math.min(1, to));
@@ -300,18 +309,25 @@ export class AudioManager {
     const volumeStep = (to - from) / steps;
     let currentStep = 0;
 
-    this.musicFadeInterval = setInterval(() => {
+    const interval = setInterval(() => {
       currentStep++;
-      audio.volume = Math.max(0, Math.min(1, from + volumeStep * currentStep));
+      try {
+        audio.volume = Math.max(0, Math.min(1, from + volumeStep * currentStep));
+      } catch {
+        clearInterval(interval);
+        this.musicFadeIntervals.delete(audio);
+        return;
+      }
       if (currentStep >= steps) {
-        if (this.musicFadeInterval) {
-          clearInterval(this.musicFadeInterval);
-          this.musicFadeInterval = null;
-        }
-        audio.volume = Math.max(0, Math.min(1, to));
+        clearInterval(interval);
+        this.musicFadeIntervals.delete(audio);
+        try {
+          audio.volume = Math.max(0, Math.min(1, to));
+        } catch {}
         if (onComplete) onComplete();
       }
     }, stepTime);
+    this.musicFadeIntervals.set(audio, interval);
   }
 
   private updateActiveVolumes(): void {

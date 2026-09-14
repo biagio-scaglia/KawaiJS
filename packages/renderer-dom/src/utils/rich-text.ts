@@ -2,21 +2,25 @@
  * Parses inline rich text markup: {b}...{/b}, {i}...{/i}, {color=#hex}...{/color}, {size=1.2em}...{/size}
  * Includes sanitization against attribute injection and XSS.
  */
-export function formatRichText(raw: string): string {
-  let formatted = (raw || '')
+export function escapeHtml(raw: string): string {
+  return (raw || '')
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#39;');
+}
+
+export function formatRichText(raw: string): string {
+  let formatted = escapeHtml(raw);
 
   // {b}...{/b}
   formatted = formatted.replace(/\{b\}(.*?)\{\/b\}/gi, '<strong class="kawa-bold">$1</strong>');
   // {i}...{/i}
   formatted = formatted.replace(/\{i\}(.*?)\{\/i\}/gi, '<em class="kawa-italic">$1</em>');
-  // {color=#hex|name}...{/color}
-  formatted = formatted.replace(/\{color=([#a-zA-Z0-9_().,\s-]+)\}(.*?)\{\/color\}/gi, (_match, colorVal, inner) => {
-    const cleanColor = colorVal.replace(/[^#a-zA-Z0-9_().,\s-]/g, '').trim();
+  // {color=#hex|name}...{/color} — reject parentheses to reduce CSS injection surface
+  formatted = formatted.replace(/\{color=([#a-zA-Z0-9_.,\s-]+)\}(.*?)\{\/color\}/gi, (_match, colorVal, inner) => {
+    const cleanColor = colorVal.replace(/[^#a-zA-Z0-9_.,\s-]/g, '').trim();
     return `<span style="color:${cleanColor}">${inner}</span>`;
   });
   // {size=1.2em}...{/size}

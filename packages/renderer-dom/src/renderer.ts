@@ -20,6 +20,7 @@ import { showSettingsModal } from './modals/settings-modal.js';
 import { showHistoryModal } from './modals/history-modal.js';
 import { showAboutModal } from './modals/about-modal.js';
 import { showGalleryModal } from './modals/gallery-modal.js';
+import { escapeHtml } from './utils/rich-text.js';
 
 import { ViewportAdapter } from './layout/viewport-adapter.js';
 
@@ -86,6 +87,8 @@ export class DOMRenderer {
   private isSkipMode = false;
   private autoTimer: number | null = null;
   private skipInterval: number | null = null;
+  private pauseTimer: number | null = null;
+  private errorToastTimer: number | null = null;
 
   private unsubscribeVMState?: () => void;
   private unsubscribeCamera?: () => void;
@@ -215,9 +218,19 @@ export class DOMRenderer {
     }
     if (this.autoTimer) {
       clearTimeout(this.autoTimer);
+      this.autoTimer = null;
     }
     if (this.skipInterval) {
       clearInterval(this.skipInterval);
+      this.skipInterval = null;
+    }
+    if (this.pauseTimer) {
+      clearTimeout(this.pauseTimer);
+      this.pauseTimer = null;
+    }
+    if (this.errorToastTimer) {
+      clearTimeout(this.errorToastTimer);
+      this.errorToastTimer = null;
     }
     if (this.boundKeyHandler && typeof window !== 'undefined') {
       window.removeEventListener('keydown', this.boundKeyHandler);
@@ -228,13 +241,17 @@ export class DOMRenderer {
   public showErrorToast(message: string): void {
     const existing = this.rootEl.querySelector('.kawa-error-toast');
     if (existing) existing.remove();
+    if (this.errorToastTimer) {
+      clearTimeout(this.errorToastTimer);
+      this.errorToastTimer = null;
+    }
 
     const toast = document.createElement('div');
     toast.className = 'kawa-error-toast';
     toast.setAttribute('role', 'alert');
     toast.innerHTML = `
       <span>⚠️</span>
-      <span class="kawa-error-toast-msg">${message}</span>
+      <span class="kawa-error-toast-msg">${escapeHtml(message)}</span>
       <button class="kawa-error-toast-close" aria-label="Dismiss error">${SVG_ICONS.close}</button>
     `;
 
@@ -243,7 +260,8 @@ export class DOMRenderer {
     });
 
     this.rootEl.appendChild(toast);
-    setTimeout(() => {
+    this.errorToastTimer = window.setTimeout(() => {
+      this.errorToastTimer = null;
       if (toast.parentElement) toast.remove();
     }, 8000);
   }
@@ -560,7 +578,8 @@ export class DOMRenderer {
         this.vm.rollback();
       } else if (e.key === 'a' || e.key === 'A') {
         this.toggleAutoMode();
-      } else if (e.key === 'Tab' || e.key === 'Control') {
+      } else if (e.key === 'Control') {
+        // Ctrl toggles skip (Ren'Py-style). Tab is left for accessibility focus navigation.
         e.preventDefault();
         this.toggleSkipMode();
       } else if (e.key === 's' || e.key === 'S') {
@@ -599,6 +618,22 @@ export class DOMRenderer {
 
   private render(state: StoryState): void {
     this.quickMenu.setBackDisabled(!this.vm.canRollback());
+
+    // Timed pause: auto-advance after pendingPauseMs (click still skips via handleUserAdvance)
+    if (this.pauseTimer) {
+      clearTimeout(this.pauseTimer);
+      this.pauseTimer = null;
+    }
+    if (state.pendingPauseMs != null && state.pendingPauseMs > 0 && !state.isFinished) {
+      const delay = state.pendingPauseMs;
+      this.pauseTimer = window.setTimeout(() => {
+        this.pauseTimer = null;
+        const cur = this.vm.getState();
+        if (cur.pendingPauseMs != null && !cur.isFinished) {
+          this.vm.next();
+        }
+      }, delay);
+    }
 
     // 1. Background scene
     this.stageLayer.updateBackground(state.visual.background, state.visual.transition);

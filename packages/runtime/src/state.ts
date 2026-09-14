@@ -47,6 +47,11 @@ export interface StoryState {
   readonly dialogue: DialogueState | null;
   readonly choices: readonly ChoiceOption[] | null;
   readonly unlockedCGs: Record<string, boolean>;
+  /**
+   * When set, the presentation layer should auto-advance after this many ms.
+   * Click/keyboard advance may skip the remaining delay.
+   */
+  readonly pendingPauseMs: number | null;
   readonly isWaitingForInput: boolean;
   readonly isFinished: boolean;
 }
@@ -77,6 +82,7 @@ export function createInitialState(startLabel = 'start'): StoryState {
     dialogue: null,
     choices: null,
     unlockedCGs: Object.create(null) as Record<string, boolean>,
+    pendingPauseMs: null,
     isWaitingForInput: false,
     isFinished: false
   };
@@ -101,6 +107,7 @@ export function cloneState(state: StoryState): StoryState {
     dialogue: state.dialogue ? { ...state.dialogue } : null,
     choices: state.choices ? state.choices.map(c => ({ ...c })) : null,
     unlockedCGs: Object.assign(Object.create(null), state.unlockedCGs),
+    pendingPauseMs: state.pendingPauseMs,
     isWaitingForInput: state.isWaitingForInput,
     isFinished: state.isFinished
   };

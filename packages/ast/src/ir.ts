@@ -17,7 +17,7 @@ export type Instruction =
   | { readonly type: 'show'; readonly character: string; readonly expression?: string; readonly position?: string; readonly transition?: string; readonly loc?: SourceLocation }
   | { readonly type: 'hide'; readonly character: string; readonly transition?: string; readonly loc?: SourceLocation }
   | { readonly type: 'dialogue'; readonly speaker?: string; readonly text: string; readonly loc?: SourceLocation }
-  | { readonly type: 'choice'; readonly prompt?: string; readonly choices: readonly ChoiceOption[]; readonly loc?: SourceLocation }
+  | { readonly type: 'choice'; readonly prompt?: string; readonly choices: readonly ChoiceOption[]; readonly fallbackLabel?: string; readonly loc?: SourceLocation }
   | { readonly type: 'jump'; readonly targetLabel: string; readonly loc?: SourceLocation }
   | { readonly type: 'set'; readonly variable: string; readonly operator?: '=' | '+=' | '-='; readonly value: unknown; readonly isVariable?: boolean; readonly loc?: SourceLocation }
   | { readonly type: 'branch'; readonly condition: string; readonly thenLabel: string; readonly elseLabel?: string; readonly loc?: SourceLocation }

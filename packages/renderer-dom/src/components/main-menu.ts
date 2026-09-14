@@ -6,6 +6,7 @@ import { showSettingsModal } from '../modals/settings-modal.js';
 import { showAboutModal } from '../modals/about-modal.js';
 import { showConfirmModal } from '../modals/confirm-modal.js';
 import { showGalleryModal } from '../modals/gallery-modal.js';
+import { escapeHtml } from '../utils/rich-text.js';
 
 export interface MainMenuComponentCallbacks {
   onStartNewGame: () => void;
@@ -207,7 +208,7 @@ export class MainMenuComponent {
       btn.className = `kawa-main-menu-btn ${item.className || ''}`.trim();
       btn.setAttribute('data-action', typeof item.action === 'string' ? item.action : 'custom');
       if (item.id) btn.id = item.id;
-      btn.innerHTML = `${item.icon ? item.icon + ' ' : ''}<span>${item.label}</span>`;
+      btn.innerHTML = `${item.icon ? item.icon + ' ' : ''}<span>${escapeHtml(item.label)}</span>`;
 
       if (item.action === 'continue') {
         void this.vm.getSaveManager().listSlots(6).then((slots) => {
@@ -269,7 +270,9 @@ export class MainMenuComponent {
 
     const footerEl = document.createElement('footer');
     footerEl.className = 'kawa-main-menu-footer';
-    footerEl.innerHTML = this.options?.customFooter || `${SVG_ICONS.sakura} <span>Powered by Kawaijs Engine</span>`;
+    footerEl.innerHTML = this.options?.customFooter
+      ? escapeHtml(this.options.customFooter)
+      : `${SVG_ICONS.sakura} <span>Powered by Kawaijs Engine</span>`;
 
     contentEl.appendChild(headerEl);
     contentEl.appendChild(navEl);

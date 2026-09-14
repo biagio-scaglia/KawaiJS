@@ -440,6 +440,19 @@ label start:
 
     renderer.destroy();
   });
+
+  it('escapes error toast messages against XSS', () => {
+    const story = compileScript(sampleScript);
+    const vm = new StoryVM(story);
+    const renderer = new DOMRenderer(vm, { container, mainMenu: { enabled: false }, typewriterSpeed: 0 });
+
+    renderer.showErrorToast('<img src=x onerror=alert(1)>');
+    const toast = container.querySelector('.kawa-error-toast-msg');
+    expect(toast?.innerHTML).toContain('&lt;img');
+    expect(toast?.querySelector('img')).toBeNull();
+
+    renderer.destroy();
+  });
 });
 
 

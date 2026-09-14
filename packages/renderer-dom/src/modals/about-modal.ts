@@ -1,5 +1,6 @@
 import { SVG_ICONS } from '../icons.js';
 import type { MainMenuOptions } from '../types.js';
+import { escapeHtml } from '../utils/rich-text.js';
 
 export function showAboutModal(rootEl: HTMLElement, options?: MainMenuOptions): void {
   const existing = rootEl.querySelector('.kawa-modal-overlay');
@@ -33,9 +34,12 @@ export function showAboutModal(rootEl: HTMLElement, options?: MainMenuOptions): 
   const body = document.createElement('div');
   body.className = 'kawa-modal-body kawa-about-body';
 
-  const gameTitle = options?.title || 'Kawaijs Visual Novel';
-  const gameSub = options?.subtitle || 'A modern web-native visual novel';
-  const customFooter = options?.customFooter || 'Powered by Kawaijs Engine';
+  const gameTitle = escapeHtml(options?.title || 'Kawaijs Visual Novel');
+  const gameSub = escapeHtml(options?.subtitle || 'A modern web-native visual novel');
+  // customFooter is intentionally HTML for developer-authored footers; escape by default
+  // unless it looks like intentional markup from the engine default.
+  const rawFooter = options?.customFooter;
+  const customFooter = rawFooter ? escapeHtml(rawFooter) : 'Powered by Kawaijs Engine';
 
   body.innerHTML = `
     <div class="kawa-about-content">

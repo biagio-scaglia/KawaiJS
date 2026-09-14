@@ -121,9 +121,13 @@ export function startDevServer(projectDir = '.', options: DevServerOptions = {})
       }
 
       const safeAssetPath = path.normalize(relativeAssetPath).replace(/^(\.\.[/\\])+/, '');
-      const filePath = path.join(assetsDir, safeAssetPath);
+      const assetsRoot = path.resolve(assetsDir);
+      const filePath = path.resolve(assetsDir, safeAssetPath);
+      const isInsideAssets =
+        filePath === assetsRoot ||
+        filePath.startsWith(assetsRoot + path.sep);
 
-      if (fs.existsSync(filePath) && fs.statSync(filePath).isFile()) {
+      if (isInsideAssets && fs.existsSync(filePath) && fs.statSync(filePath).isFile()) {
         const ext = path.extname(filePath).toLowerCase();
         const mimeTypes: Record<string, string> = {
           '.png': 'image/png',
@@ -147,15 +151,16 @@ export function startDevServer(projectDir = '.', options: DevServerOptions = {})
 
     // 4. Combined Stylesheet
     const activeConfig = loadProjectConfig(rootDir);
+    const sanitizeCssValue = (v: string) => v.replace(/[;{}<>\\]/g, '').slice(0, 120);
     let configCss = ':root {\n';
     if (activeConfig.theme?.primaryColor) {
-      configCss += `  --kawa-primary-accent: ${activeConfig.theme.primaryColor};\n`;
+      configCss += `  --kawa-primary-accent: ${sanitizeCssValue(activeConfig.theme.primaryColor)};\n`;
     }
     if (activeConfig.theme?.fontFamily) {
-      configCss += `  --kawa-font-body: ${activeConfig.theme.fontFamily};\n`;
+      configCss += `  --kawa-font-body: ${sanitizeCssValue(activeConfig.theme.fontFamily)};\n`;
     }
     if (activeConfig.theme?.headingFont) {
-      configCss += `  --kawa-font-heading: ${activeConfig.theme.headingFont};\n`;
+      configCss += `  --kawa-font-heading: ${sanitizeCssValue(activeConfig.theme.headingFont)};\n`;
     }
     configCss += '}\n';
 
@@ -183,7 +188,11 @@ export function startDevServer(projectDir = '.', options: DevServerOptions = {})
       }
     }
 
-    const gameTitle = activeConfig.title || 'Kawaijs Visual Novel';
+    const gameTitle = (activeConfig.title || 'Kawaijs Visual Novel')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
 
     res.writeHead(200, {
       'Content-Type': 'text/html; charset=utf-8',
