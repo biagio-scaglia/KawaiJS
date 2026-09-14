@@ -9,6 +9,7 @@ export * from './lexer.js';
 export * from './parser.js';
 export * from './compiler.js';
 export * from './validator.js';
+export * from './suggest.js';
 
 /**
  * Convenience helper to compile a raw Kawa Script string directly into a StoryPackage IR.

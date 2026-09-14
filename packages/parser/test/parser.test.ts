@@ -194,6 +194,38 @@ label helper:
     }
   });
 
+  it('accepts case-insensitive keywords and suggests near-misses', () => {
+    const ok = Parser.fromSource(`label start:
+    Style dialogue glass
+    Theme "noir"
+    "hi"
+`, 'script.kawa').parse();
+    const start = ok.statements.find((s) => s.type === 'LabelDecl');
+    expect(start?.type).toBe('LabelDecl');
+    if (start?.type === 'LabelDecl') {
+      expect(start.body.some((s) => s.type === 'StyleStmt')).toBe(true);
+      expect(start.body.some((s) => s.type === 'ThemeStmt')).toBe(true);
+    }
+
+    try {
+      Parser.fromSource(`label start:
+    stlye dialogue glass
+`, 'script.kawa').parse();
+      expect.unreachable('should throw');
+    } catch (e) {
+      expect(e).toBeInstanceOf(KawaError);
+      if (e instanceof KawaError) {
+        expect(e.diagnostic.code).toBe('E0100');
+        expect(e.diagnostic.hint).toContain("Did you mean 'style'");
+        expect(e.diagnostic.hint).toContain('style dialogue glass');
+        const formatted = formatDiagnostic(e.diagnostic, `label start:
+    stlye dialogue glass
+`);
+        expect(formatted).toContain('Hint:');
+      }
+    }
+  });
+
   it('performs semantic validation and catches undefined labels and undeclared characters', () => {
     const scriptWithErrors = `character yumia "Yumia"
 

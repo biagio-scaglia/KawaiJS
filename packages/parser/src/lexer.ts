@@ -431,7 +431,7 @@ export class Lexer {
       idStr += this.advance();
     }
 
-    const keywordType = KEYWORDS_MAP.get(idStr);
+    const keywordType = KEYWORDS_MAP.get(idStr) ?? KEYWORDS_MAP.get(idStr.toLowerCase());
     return {
       type: keywordType ?? 'IDENTIFIER',
       value: idStr,

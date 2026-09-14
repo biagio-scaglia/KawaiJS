@@ -33,6 +33,7 @@ import type {
 import { createLocation } from '@kawaijs/ast';
 import { Token, TokenType } from './token.js';
 import { KawaError } from './diagnostic.js';
+import { unexpectedStatementHint } from './suggest.js';
 import { Lexer } from './lexer.js';
 
 export class Parser {
@@ -137,9 +138,10 @@ export class Parser {
         }
         throw new KawaError({
           code: 'E0100',
-          message: `Unexpected identifier '${token.value}'. Did you mean to use a command like 'show', 'scene', 'jump' or a dialogue statement?`,
+          message: `Unexpected statement '${token.value}'.`,
           severity: 'error',
-          loc: token.loc
+          loc: token.loc,
+          hint: unexpectedStatementHint(token.value)
         });
       }
       default:
@@ -147,7 +149,8 @@ export class Parser {
           code: 'E0101',
           message: `Unexpected token '${token.value}' (${token.type})`,
           severity: 'error',
-          loc: token.loc
+          loc: token.loc,
+          hint: unexpectedStatementHint(token.value)
         });
     }
   }
@@ -732,14 +735,15 @@ export class Parser {
   private parseThemeStmt(): ThemeStmtNode {
     const startTok = this.consume('THEME', 'Expected "theme" keyword');
     let name: string;
-    if (this.check('STRING') || this.check('IDENTIFIER')) {
+    if (this.check('STRING') || this.checkSoftIdentifier()) {
       name = this.advance().value;
     } else {
       throw new KawaError({
         code: 'E0112',
         message: 'Expected theme name after "theme"',
         severity: 'error',
-        loc: this.currentLocation()
+        loc: this.currentLocation(),
+        hint: 'Example: theme "noir"   or   theme sakura'
       });
     }
     this.consumeOptionalNewline();
@@ -752,18 +756,26 @@ export class Parser {
 
   private parseStyleStmt(): StyleStmtNode {
     const startTok = this.consume('STYLE', 'Expected "style" keyword');
-    const targetTok = this.consume('IDENTIFIER', 'Expected style target (dialogue, stage, root, choices)');
-    const nameTok = this.check('STRING') || this.check('IDENTIFIER')
-      ? this.advance()
-      : null;
-    if (!nameTok) {
+    if (!this.check('STRING') && !this.checkSoftIdentifier()) {
+      throw new KawaError({
+        code: 'E0113',
+        message: 'Expected style target after "style"',
+        severity: 'error',
+        loc: this.currentLocation(),
+        hint: 'Example: style dialogue glass\n     Targets: dialogue, stage, root, choices'
+      });
+    }
+    const targetTok = this.advance();
+    if (!this.check('STRING') && !this.checkSoftIdentifier()) {
       throw new KawaError({
         code: 'E0113',
         message: 'Expected style name after target',
         severity: 'error',
-        loc: this.currentLocation()
+        loc: this.currentLocation(),
+        hint: 'Example: style dialogue glass'
       });
     }
+    const nameTok = this.advance();
     this.consumeOptionalNewline();
     return {
       type: 'StyleStmt',
@@ -783,13 +795,22 @@ export class Parser {
         code: 'E0114',
         message: 'Expected hotspot id after "hotspot"',
         severity: 'error',
-        loc: this.currentLocation()
+        loc: this.currentLocation(),
+        hint: 'Example: hotspot door 40 50 18 12 jump courtyard\n     Coordinates are percent of the stage (0–100) or fractions (0–1).'
       });
     }
 
     const readCoord = (label: string): number => {
-      const tok = this.consume('NUMBER', `Expected ${label} coordinate after hotspot id`);
-      return Number(tok.value);
+      if (!this.check('NUMBER')) {
+        throw new KawaError({
+          code: 'E0114',
+          message: `Expected ${label} coordinate after hotspot id`,
+          severity: 'error',
+          loc: this.currentLocation(),
+          hint: 'Example: hotspot door 40 50 18 12 jump courtyard'
+        });
+      }
+      return Number(this.advance().value);
     };
 
     const x = readCoord('x');
@@ -797,7 +818,16 @@ export class Parser {
     const w = readCoord('w');
     const h = readCoord('h');
 
-    this.consume('JUMP', 'Expected "jump" after hotspot rectangle');
+    if (!this.check('JUMP')) {
+      throw new KawaError({
+        code: 'E0114',
+        message: 'Expected "jump" after hotspot rectangle',
+        severity: 'error',
+        loc: this.currentLocation(),
+        hint: 'Example: hotspot door 40 50 18 12 jump courtyard'
+      });
+    }
+    this.advance();
     const target = this.consume('IDENTIFIER', 'Expected target label after hotspot jump').value;
 
     this.consumeOptionalNewline();
