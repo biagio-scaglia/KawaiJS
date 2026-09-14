@@ -407,7 +407,12 @@ export function canonicalBaseUrl(canonicalUrl: string): string | null {
 
 /** Simple robots.txt when a canonical site URL is configured. */
 export function renderRobotsTxt(canonicalUrl?: string): string {
-  const lines = ['User-agent: *', 'Allow: /'];
+  const lines = [
+    'User-agent: *',
+    'Allow: /',
+    '',
+    '# Google Search Console / crawlers'
+  ];
   if (canonicalUrl) {
     const base = canonicalBaseUrl(canonicalUrl);
     if (base) {
@@ -417,38 +422,137 @@ export function renderRobotsTxt(canonicalUrl?: string): string {
   return `${lines.join('\n')}\n`;
 }
 
+export type SitemapChangeFreq =
+  | 'always'
+  | 'hourly'
+  | 'daily'
+  | 'weekly'
+  | 'monthly'
+  | 'yearly'
+  | 'never';
+
+export interface SitemapEntryOptions {
+  readonly loc?: string;
+  readonly path?: string;
+  readonly changefreq?: SitemapChangeFreq;
+  readonly priority?: number;
+  readonly lastmod?: string;
+  /** Alternate language URLs for xhtml:link hreflang annotations. */
+  readonly alternates?: readonly { readonly hreflang: string; readonly href: string }[];
+}
+
+const SITEMAP_SKIP_RE =
+  /(?:^|\/)(?:robots\.txt|sw\.js|manifest\.webmanifest|favicon\.ico|favicon\.svg|icon\.svg)(?:$|\?)/i;
+
+function resolveSitemapLoc(base: string, entry: string | SitemapEntryOptions): string | null {
+  if (typeof entry === 'string') {
+    if (!entry) return null;
+    if (entry.startsWith('http://') || entry.startsWith('https://')) return entry;
+    return `${base}${entry.replace(/^\//, '')}`;
+  }
+  if (entry.loc) return entry.loc;
+  if (entry.path) {
+    if (entry.path.startsWith('http://') || entry.path.startsWith('https://')) return entry.path;
+    return `${base}${entry.path.replace(/^\//, '')}`;
+  }
+  return null;
+}
+
+function defaultPriority(loc: string, home: string): number {
+  if (loc === home) return 1.0;
+  if (/\/showcase\/?$/.test(loc) || /\/playground\/?$/.test(loc)) return 0.9;
+  if (/\?lang=/.test(loc)) return 0.8;
+  if (/\?at=/.test(loc)) return 0.65;
+  if (/llms\.txt$/i.test(loc)) return 0.4;
+  return 0.7;
+}
+
+function defaultChangefreq(loc: string, home: string): SitemapChangeFreq {
+  if (loc === home || /\/showcase\/?$/.test(loc) || /\/playground\/?$/.test(loc)) return 'weekly';
+  if (/\?at=/.test(loc) || /\?lang=/.test(loc)) return 'monthly';
+  return 'monthly';
+}
+
 /** sitemap.xml for the built site (+ deep-link paths / extra entries). */
 export function renderSitemapXml(
   canonicalUrl: string,
-  extraPaths: readonly string[] = []
+  extraPaths: readonly (string | SitemapEntryOptions)[] = []
 ): string {
-  const base = canonicalBaseUrl(canonicalUrl) ?? canonicalUrl;
-  const urls = new Set<string>([base.replace(/\/?$/, '/')]);
-
-  for (const p of extraPaths) {
-    if (!p) continue;
-    if (p.startsWith('http://') || p.startsWith('https://')) {
-      urls.add(p);
-      continue;
-    }
-    const clean = p.replace(/^\//, '');
-    urls.add(`${base.replace(/\/?$/, '/')}${clean}`);
-  }
-
+  const baseRaw = canonicalBaseUrl(canonicalUrl) ?? canonicalUrl;
+  const base = baseRaw.replace(/\/?$/, '/');
+  const home = base;
   const today = new Date().toISOString().slice(0, 10);
-  const body = [...urls]
-    .map(
-      (loc) => `  <url>
-    <loc>${escapeXml(loc)}</loc>
-    <lastmod>${today}</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>${loc === base.replace(/\/?$/, '/') ? '1.0' : '0.7'}</priority>
-  </url>`
-    )
+
+  type Normalized = {
+    loc: string;
+    changefreq: SitemapChangeFreq;
+    priority: number;
+    lastmod: string;
+    alternates: { hreflang: string; href: string }[];
+  };
+
+  const byLoc = new Map<string, Normalized>();
+
+  const upsert = (entry: string | SitemapEntryOptions): void => {
+    const loc = resolveSitemapLoc(base, entry);
+    if (!loc || SITEMAP_SKIP_RE.test(loc)) return;
+    // Utility / duplicate views — keep out of GSC sitemap
+    if (/[?&]embed=/.test(loc)) return;
+
+    const opts = typeof entry === 'string' ? {} : entry;
+    const existing = byLoc.get(loc);
+    const alternates = [...(existing?.alternates ?? [])];
+    if (opts.alternates) {
+      for (const alt of opts.alternates) {
+        if (!alternates.some((a) => a.hreflang === alt.hreflang && a.href === alt.href)) {
+          alternates.push({ hreflang: alt.hreflang, href: alt.href });
+        }
+      }
+    }
+
+    byLoc.set(loc, {
+      loc,
+      lastmod: opts.lastmod ?? existing?.lastmod ?? today,
+      changefreq: opts.changefreq ?? existing?.changefreq ?? defaultChangefreq(loc, home),
+      priority: opts.priority ?? existing?.priority ?? defaultPriority(loc, home),
+      alternates
+    });
+  };
+
+  upsert(home);
+  for (const p of extraPaths) upsert(p);
+
+  // Stable order: home first, then alpha
+  const entries = [...byLoc.values()].sort((a, b) => {
+    if (a.loc === home) return -1;
+    if (b.loc === home) return 1;
+    return a.loc.localeCompare(b.loc);
+  });
+
+  const hasAlternates = entries.some((e) => e.alternates.length > 0);
+  const ns = hasAlternates
+    ? 'xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"\n        xmlns:xhtml="http://www.w3.org/1999/xhtml"'
+    : 'xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"';
+
+  const body = entries
+    .map((e) => {
+      const altLines = e.alternates
+        .map(
+          (a) =>
+            `    <xhtml:link rel="alternate" hreflang="${escapeXml(a.hreflang)}" href="${escapeXml(a.href)}" />`
+        )
+        .join('\n');
+      return `  <url>
+    <loc>${escapeXml(e.loc)}</loc>
+    <lastmod>${escapeXml(e.lastmod)}</lastmod>
+    <changefreq>${e.changefreq}</changefreq>
+    <priority>${e.priority.toFixed(1)}</priority>${altLines ? `\n${altLines}` : ''}
+  </url>`;
+    })
     .join('\n');
 
   return `<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+<urlset ${ns}>
 ${body}
 </urlset>
 `;

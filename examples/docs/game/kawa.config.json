@@ -216,12 +216,10 @@
       "https://biagio-scaglia.github.io/KawaiJS/"
     ],
     "sitemapPaths": [
-      "llms.txt",
-      "robots.txt",
       "showcase/",
       "playground/",
-      "?lang=it",
-      "?embed=1"
+      "llms.txt",
+      "?lang=it"
     ],
     "faq": [
       {

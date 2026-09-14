@@ -97,7 +97,90 @@ if (fs.existsSync(pgIndex)) {
   fs.writeFileSync(pgIndex, pg, 'utf8');
 }
 
+// Site-wide sitemap + robots for Google Search Console (authoritative for the Pages site)
+const siteOrigin = 'https://biagio-scaglia.github.io/KawaiJS/';
+const today = new Date().toISOString().slice(0, 10);
+const lessonLabels = [
+  'hub',
+  'lesson_install',
+  'lesson_script',
+  'lesson_stage',
+  'lesson_branch',
+  'lesson_deploy',
+  'lesson_seo'
+];
+
+function esc(s) {
+  return String(s)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+function urlEntry(loc, { priority = 0.7, changefreq = 'weekly', alternates = [] } = {}) {
+  const alts = alternates
+    .map(
+      (a) =>
+        `    <xhtml:link rel="alternate" hreflang="${esc(a.hreflang)}" href="${esc(a.href)}" />`
+    )
+    .join('\n');
+  return `  <url>
+    <loc>${esc(loc)}</loc>
+    <lastmod>${today}</lastmod>
+    <changefreq>${changefreq}</changefreq>
+    <priority>${Number(priority).toFixed(1)}</priority>${alts ? `\n${alts}` : ''}
+  </url>`;
+}
+
+const home = siteOrigin;
+const homeIt = `${siteOrigin}?lang=it`;
+const entries = [
+  urlEntry(home, {
+    priority: 1.0,
+    changefreq: 'weekly',
+    alternates: [
+      { hreflang: 'en', href: home },
+      { hreflang: 'it', href: homeIt },
+      { hreflang: 'x-default', href: home }
+    ]
+  }),
+  urlEntry(`${siteOrigin}showcase/`, { priority: 0.9, changefreq: 'weekly' }),
+  urlEntry(`${siteOrigin}playground/`, { priority: 0.9, changefreq: 'weekly' }),
+  urlEntry(homeIt, {
+    priority: 0.8,
+    changefreq: 'monthly',
+    alternates: [
+      { hreflang: 'en', href: home },
+      { hreflang: 'it', href: homeIt },
+      { hreflang: 'x-default', href: home }
+    ]
+  }),
+  ...lessonLabels.map((label) =>
+    urlEntry(`${siteOrigin}?at=${encodeURIComponent(label)}`, {
+      priority: 0.6,
+      changefreq: 'monthly'
+    })
+  ),
+  urlEntry(`${siteOrigin}llms.txt`, { priority: 0.4, changefreq: 'monthly' })
+];
+
+const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:xhtml="http://www.w3.org/1999/xhtml">
+${entries.join('\n')}
+</urlset>
+`;
+
+fs.writeFileSync(path.join(docsOut, 'sitemap.xml'), sitemap, 'utf8');
+fs.writeFileSync(
+  path.join(docsOut, 'robots.txt'),
+  `User-agent: *\nAllow: /\n\n# Google Search Console\nSitemap: ${siteOrigin}sitemap.xml\n`,
+  'utf8'
+);
+
 console.log(`✅ Assembled GitHub Pages site → ${docsOut}`);
 console.log('   /           interactive docs + CTA');
 console.log('   /showcase/  After the Bell demo');
 console.log('   /playground/ zero-install editor');
+console.log('   /sitemap.xml + /robots.txt (GSC-ready)');

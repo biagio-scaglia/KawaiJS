@@ -1,3 +1,5 @@
 User-agent: *
 Allow: /
+
+# Google Search Console / crawlers
 Sitemap: https://biagio-scaglia.github.io/KawaiJS/showcase/sitemap.xml
