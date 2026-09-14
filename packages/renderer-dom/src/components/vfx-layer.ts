@@ -64,13 +64,29 @@ export class VfxLayerComponent {
       return;
     }
 
+    // Color tint is an overlay and can layer over sakura/rain/snow/fog.
+    if (vfxState.color || vfxState.effect === 'tint') {
+      this.tintEl.style.display = 'block';
+      this.tintEl.style.backgroundColor = vfxState.color || 'rgba(244, 63, 94, 0.2)';
+    } else {
+      this.tintEl.style.display = 'none';
+    }
+
+    if (vfxState.effect === 'tint') {
+      // Tint-only (no active weather) — keep overlay, clear particles.
+      if (!this.currentEffect || this.currentEffect === 'tint') {
+        this.currentEffect = 'tint';
+        this.stopParticleLoop();
+        this.fogEl.style.display = 'none';
+      }
+      return;
+    }
+
     const prefersReducedMotion =
       typeof window !== 'undefined' &&
       typeof window.matchMedia === 'function' &&
       window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-    // Particle systems are decorative — skip them when the user prefers reduced motion.
-    // Tint/fog still apply as static overlays.
     if (
       prefersReducedMotion &&
       (vfxState.effect === 'rain' ||
@@ -79,36 +95,27 @@ export class VfxLayerComponent {
     ) {
       this.stopParticleLoop();
       this.currentEffect = vfxState.effect;
-      this.tintEl.style.display = 'none';
       this.fogEl.style.display = 'none';
       return;
     }
 
-    if (this.currentEffect === vfxState.effect && vfxState.effect !== 'tint') {
-      return;
-    }
-
-    this.currentEffect = vfxState.effect;
-
-    // Reset overlay elements
-    this.tintEl.style.display = 'none';
-    this.fogEl.style.display = 'none';
-
-    if (vfxState.effect === 'tint') {
-      this.stopParticleLoop();
-      this.tintEl.style.display = 'block';
-      this.tintEl.style.backgroundColor = vfxState.color || 'rgba(244, 63, 94, 0.2)';
-      return;
-    }
-
     if (vfxState.effect === 'fog') {
+      this.currentEffect = 'fog';
       this.stopParticleLoop();
       this.fogEl.style.display = 'block';
       return;
     }
 
+    this.fogEl.style.display = 'none';
+
+    if (this.currentEffect === vfxState.effect) {
+      // Same weather — tint overlay may have changed above; keep particles.
+      return;
+    }
+
+    this.currentEffect = vfxState.effect;
+
     if (this.suspended) {
-      // Remember effect but don't burn CPU during skip mode.
       this.stopParticleLoop();
       return;
     }
@@ -267,7 +274,6 @@ export class VfxLayerComponent {
         p.y += p.vy * speedFactor;
         p.rotation = (p.rotation || 0) + (p.rotationSpeed || 0.02) * speedFactor;
 
-        // Wrap vertically
         if (p.y > h + 30) {
           p.y = -30;
           p.x = Math.random() * (w + 40) - 20;
@@ -275,41 +281,26 @@ export class VfxLayerComponent {
           p.y = h + 20;
           p.x = Math.random() * (w + 40) - 20;
         }
-
-        // Wrap horizontally (handles both left and right wind drift)
-        if (p.x > w + 40) {
-          p.x = -30;
-        } else if (p.x < -40) {
-          p.x = w + 30;
-        }
+        if (p.x > w + 40) p.x = -20;
+        if (p.x < -40) p.x = w + 20;
       } else if (effect === 'rain') {
         p.x += p.vx * speedFactor;
         p.y += p.vy * speedFactor;
         if (p.y > h + 20) {
           p.y = -20;
-          p.x = Math.random() * (w + 100);
+          p.x = Math.random() * w;
         }
-        if (p.x < -50) {
-          p.x = w + 50;
-        }
+        if (p.x < -20) p.x = w + 10;
       } else if (effect === 'snow') {
         p.swingAngle = (p.swingAngle || 0) + (p.swingSpeed || 0.02) * speedFactor;
         p.x += (p.vx + Math.sin(p.swingAngle) * 0.8) * speedFactor;
         p.y += p.vy * speedFactor;
-
-        if (p.y > h + 20) {
-          p.y = -20;
-          p.x = Math.random() * (w + 40) - 20;
-        } else if (p.y < -30) {
-          p.y = h + 10;
-          p.x = Math.random() * (w + 40) - 20;
+        if (p.y > h + 10) {
+          p.y = -10;
+          p.x = Math.random() * w;
         }
-
-        if (p.x > w + 30) {
-          p.x = -20;
-        } else if (p.x < -30) {
-          p.x = w + 20;
-        }
+        if (p.x > w + 10) p.x = -10;
+        if (p.x < -10) p.x = w + 10;
       }
     }
   }
@@ -317,36 +308,35 @@ export class VfxLayerComponent {
   private renderParticles(effect: string): void {
     const ctx = this.ctx;
     if (!ctx) return;
-
-    ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+    const w = this.canvas.width;
+    const h = this.canvas.height;
+    ctx.clearRect(0, 0, w, h);
 
     for (const p of this.particles) {
-      ctx.save();
       ctx.globalAlpha = p.alpha;
-
       if (effect === 'sakura') {
+        ctx.save();
         ctx.translate(p.x, p.y);
         ctx.rotate(p.rotation || 0);
         ctx.fillStyle = '#fda4af'; // Soft sakura pink
         ctx.beginPath();
-        // Draw petal curve
-        ctx.ellipse(0, 0, p.size, p.size * 0.55, 0, 0, Math.PI * 2);
+        ctx.ellipse(0, 0, p.size * 0.55, p.size * 0.35, 0, 0, Math.PI * 2);
         ctx.fill();
+        ctx.restore();
       } else if (effect === 'rain') {
-        ctx.strokeStyle = '#93c5fd';
+        ctx.strokeStyle = 'rgba(186, 230, 253, 0.85)';
         ctx.lineWidth = 1.5;
         ctx.beginPath();
         ctx.moveTo(p.x, p.y);
-        ctx.lineTo(p.x + p.vx * 1.5, p.y + p.size);
+        ctx.lineTo(p.x + p.vx * 0.4, p.y + p.size);
         ctx.stroke();
       } else if (effect === 'snow') {
-        ctx.fillStyle = '#ffffff';
+        ctx.fillStyle = '#f8fafc';
         ctx.beginPath();
-        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+        ctx.arc(p.x, p.y, p.size * 0.5, 0, Math.PI * 2);
         ctx.fill();
       }
-
-      ctx.restore();
     }
+    ctx.globalAlpha = 1;
   }
 }

@@ -7,7 +7,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![npm version](https://img.shields.io/npm/v/kawaijs.svg)](https://www.npmjs.com/package/kawaijs)
 [![TypeScript](https://img.shields.io/badge/TypeScript-Strict-blue?logo=typescript)](https://www.typescriptlang.org/)
-[![Tests](https://img.shields.io/badge/Tests-53%2F53%20Passing-brightgreen)](https://github.com/biagio-scaglia/KawaiJS)
+[![Tests](https://img.shields.io/badge/Tests-77%2B%20Passing-brightgreen)](https://github.com/biagio-scaglia/KawaiJS)
 
 [Quick Start](#-quick-start) • [Syntax Guide](#-kawa-script-syntax-guide) • [Start Menu](#-start-menu--ui-customization) • [Keyboard Shortcuts](#-keyboard-shortcuts) • [Architecture](#-architecture)
 
@@ -44,6 +44,12 @@ cd my-novel
 npx kawa dev
 ```
 
+Try the full showcase (sakura, fades, CG, three endings) from this repo:
+
+```bash
+npx kawa dev ./examples/hello-world
+```
+
 ### 3. Build for Production
 
 ```bash
@@ -67,15 +73,16 @@ character sensei "Sensei" #38bdf8
 # 3. Entry point label
 label start:
     scene bg classroom with fade
+    vfx sakura
     play music "bgm_peaceful.mp3" fadein 2.0 loop
 
-    show yumia happy at center
+    show yumia happy at center with bounce
     yumia "Good morning, Sensei! Welcome to the {b}Game Dev Club{/b}."
     
     set affinity = 10
     set has_key = false
 
-    "The morning breeze blows gently through the open window."
+    "Cherry blossoms drift past the window — that is {b}vfx sakura{/b}."
 
     menu:
         "Ask about the club project":
@@ -88,7 +95,7 @@ label start:
             jump leave_early
 
 label ask_project:
-    show yumia excited at center
+    show yumia excited at center with nod
     yumia "We're building a web-native visual novel engine with {color=#38bdf8}Kawaijs{/color}!"
     set affinity += 15
     return
@@ -111,8 +118,9 @@ label leave_early:
 | **Character** | `character <id> "<Name>" [<color>]` | `character yumia "Yumia" #f43f5e` |
 | **Labels** | `label <name>:` | `label chapter_1:` |
 | **Scene & Background** | `scene bg <name> [with <transition>]` | `scene bg sunset with fade` |
-| **Show Sprite** | `show <char> [<expr>] [at <pos>]` | `show yumia smile at center` |
+| **Show Sprite** | `show <char> [<expr>] [at <pos>] [with <anim>]` | `show yumia smile at center with bounce` |
 | **Hide Sprite** | `hide <char>` | `hide yumia` |
+| **Sprite transitions** | `with bounce` \| `dissolve` \| `nod` \| `shake` \| `slideleft` \| `slideright` | `show yumia with dissolve` |
 | **Dialogue** | `<char> "<text>"` | `yumia "Hello world!"` |
 | **Narration** | `"<text>"` | `"Silence filled the room."` |
 | **Variables** | `set <var> = <val>` / `+=` / `-=` | `set karma += 5` |
@@ -149,26 +157,37 @@ Bring your scenes to life with hardware-accelerated ambient effects and camera d
 
 ```kawa
 label dramatic_scene:
-    # 1. Weather particle systems
-    vfx rain
-    vfx sakura 50
-    vfx fog
-    vfx tint "#3b82f6"
-    vfx stop
+    scene bg courtyard with fade
 
-    # 2. Camera shakes and flashes
+    # 1. Weather particle systems (sakura = cherry blossoms)
+    vfx rain
+    vfx snow
+    vfx sakura
+    vfx sakura 50          # optional intensity
+    vfx fog
+    vfx tint "#fda4af"     # color overlay — layers ON TOP of active weather
+    vfx stop               # clear all VFX
+
+    # 2. Sprite enter animations
+    show yumia happy at center with bounce
+    show kaori normal at right with dissolve
+    show yumia excited with nod
+
+    # 3. Camera shakes and flashes
     camera shake 500
     camera vpunch
     camera hpunch
     camera flash
 
-    # 3. Timed dramatic pause
+    # 4. Timed dramatic pause
     pause 1500
 
-    # 4. Fullscreen CG illustration & unlock in Gallery
+    # 5. Fullscreen CG illustration & unlock in Gallery
     cg "memories_under_rain.jpg" as "rain_cg"
 ```
 
+> **Tip:** A new `scene` clears characters and VFX. Re-apply `vfx sakura` (or fog/rain) after each scene change.  
+> **Showcase:** see [`examples/hello-world`](./examples/hello-world) — also the default `kawa create` template.
 ---
 
 ## 🌸 Start Menu & UI Customization

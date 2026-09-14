@@ -552,14 +552,45 @@ export class StoryVM {
 
       case 'vfx': {
         this.recordTrace(`VFX ${inst.effect}${inst.intensity !== undefined ? ` ${inst.intensity}` : ''}${inst.color ? ` ${inst.color}` : ''}`);
+        if (inst.effect === 'stop') {
+          this.state = {
+            ...this.state,
+            visual: {
+              ...this.state.visual,
+              vfx: null
+            }
+          };
+          break;
+        }
+
+        const prev = this.state.visual.vfx;
+        // Tint is an overlay: keep rain/sakura/snow/fog particles running underneath.
+        if (inst.effect === 'tint') {
+          const baseEffect =
+            prev && prev.effect !== 'tint' && prev.effect !== 'stop' ? prev.effect : 'tint';
+          this.state = {
+            ...this.state,
+            visual: {
+              ...this.state.visual,
+              vfx: {
+                effect: baseEffect,
+                intensity: prev?.intensity,
+                color: inst.color ?? (typeof inst.intensity === 'string' ? inst.intensity : undefined)
+              }
+            }
+          };
+          break;
+        }
+
         this.state = {
           ...this.state,
           visual: {
             ...this.state.visual,
-            vfx: inst.effect === 'stop' ? null : {
+            vfx: {
               effect: inst.effect,
               intensity: inst.intensity,
-              color: inst.color
+              // Preserve active tint color when switching weather effects
+              color: prev?.color
             }
           }
         };

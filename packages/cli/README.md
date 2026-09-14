@@ -23,9 +23,10 @@ character yumia "Yumia" #f43f5e
 
 label start:
     scene bg classroom with fade
-    show yumia happy at center
+    vfx sakura
+    show yumia happy at center with bounce
 
-    yumia "Good morning! Are you ready for the festival?"
+    yumia "Good morning! Ready for the festival under the cherry blossoms?"
 
     menu:
         "Yes, absolutely!":
@@ -35,7 +36,7 @@ label start:
             jump not_ready
 
 label ready:
-    show yumia excited
+    show yumia excited with nod
     yumia "Awesome! Let's get to work."
     return
 
@@ -55,6 +56,8 @@ npx kawaijs create my-novel
 cd my-novel
 ```
 
+`create` copies the showcase starter (fade, sakura, sprite transitions, CG routes). Run `npx kawa dev ./examples/hello-world` in the monorepo for the same demo.
+
 ### 2. Validate Your Script
 
 ```bash
@@ -67,9 +70,10 @@ npx kawaijs validate
 
 - **🌐 Web-Native**: Runs directly in modern browsers with zero backend dependencies. Deploy to GitHub Pages, Netlify, Vercel, Cloudflare Pages, or itch.io.
 - **✍️ Writer-Friendly**: Indentation-based Kawa Script designed for narrative designers and story writers.
+- **🌸 Atmosphere**: `vfx sakura` / rain / snow / fog / tint, scene `with fade`, sprite `with bounce|dissolve|nod`.
 - **🎨 Deep CSS Theming**: Customize dialogue boxes, choice overlays, buttons, fonts, and animations using standard CSS and CSS custom properties.
 - **⏱️ Deterministic Rollback**: Step backwards through dialogue and choices with instant snapshot rollbacks (`vm.rollback()`).
-- **💾 Save & Load**: Built-in persistence for game save slots using LocalStorage / IndexedDB.
+- **💾 Save & Load**: Built-in persistence for game save slots using LocalStorage (schema v2 with history).
 - **📦 Modular Architecture**: Decoupled compiler (`@kawaijs/parser`), headless state machine (`@kawaijs/runtime`), and presentation layer (`@kawaijs/renderer-dom`).
 
 ---

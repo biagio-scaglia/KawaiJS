@@ -16,12 +16,12 @@ function copyDirRecursive(src: string, dest: string): void {
   }
 }
 
-function resolveStarterAssetsDir(): string | null {
+function resolveStarterGameDir(): string | null {
   const here = path.dirname(fileURLToPath(import.meta.url));
   const candidates = [
-    path.resolve(here, '../../../../templates/starter/game/assets'),
-    path.resolve(here, '../../../templates/starter/game/assets'),
-    path.resolve(process.cwd(), 'templates/starter/game/assets')
+    path.resolve(here, '../../../../templates/starter/game'),
+    path.resolve(here, '../../../templates/starter/game'),
+    path.resolve(process.cwd(), 'templates/starter/game')
   ];
   for (const c of candidates) {
     if (fs.existsSync(c)) return c;
@@ -40,60 +40,37 @@ export function createProject(projectName: string): boolean {
   console.log(`\n✨ Creating a new Kawaijs visual novel in: ${targetDir}\n`);
 
   fs.mkdirSync(targetDir, { recursive: true });
-  fs.mkdirSync(path.join(targetDir, 'game', 'assets', 'backgrounds'), { recursive: true });
-  fs.mkdirSync(path.join(targetDir, 'game', 'assets', 'characters'), { recursive: true });
-  fs.mkdirSync(path.join(targetDir, 'game', 'assets', 'audio'), { recursive: true });
 
-  const starterAssets = resolveStarterAssetsDir();
-  if (starterAssets) {
-    copyDirRecursive(starterAssets, path.join(targetDir, 'game', 'assets'));
-  }
-
-  // 1. game/script.kawa
-  const starterScript = `# Kawaijs Visual Novel Script
+  const starterGame = resolveStarterGameDir();
+  if (starterGame) {
+    // Full showcase template: script with sakura/transitions, assets, style
+    copyDirRecursive(starterGame, path.join(targetDir, 'game'));
+  } else {
+    fs.mkdirSync(path.join(targetDir, 'game', 'assets', 'backgrounds'), { recursive: true });
+    fs.mkdirSync(path.join(targetDir, 'game', 'assets', 'characters'), { recursive: true });
+    fs.mkdirSync(path.join(targetDir, 'game', 'assets', 'audio'), { recursive: true });
+    fs.writeFileSync(
+      path.join(targetDir, 'game', 'script.kawa'),
+      `# Kawaijs Visual Novel Script
 character yumia "Yumia" #f43f5e
 
 label start:
-    scene bg classroom
-    show yumia happy at center
-
+    scene bg classroom with fade
+    vfx sakura
+    show yumia happy at center with bounce
     yumia "Hello! Welcome to Kawaijs."
-    yumia "This is a web-native visual novel engine inspired by Ren'Py."
-
-    menu:
-        "Tell me more!":
-            jump tell_more
-
-        "Let's make a game!":
-            jump make_game
-
-label tell_more:
-    show yumia excited at center
-    yumia "Kawaijs scripts compile to pure static web apps that run anywhere!"
-    yumia "You can customize every pixel using standard CSS."
-    jump conclusion
-
-label make_game:
-    yumia "Awesome! Open game/script.kawa and start writing your story."
-    jump conclusion
-
-label conclusion:
-    "Thank you for trying Kawaijs!"
     return
-`;
-  fs.writeFileSync(path.join(targetDir, 'game', 'script.kawa'), starterScript, 'utf-8');
+`,
+      'utf-8'
+    );
+    fs.writeFileSync(
+      path.join(targetDir, 'game', 'style.css'),
+      `:root {\n  --kawa-primary-accent: #f43f5e;\n}\n`,
+      'utf-8'
+    );
+  }
 
-  // 2. game/style.css
-  const starterStyle = `/* Custom Visual Novel Styles */
-:root {
-  --kawa-primary-accent: #f43f5e;
-  --kawa-dialogue-bg: rgba(15, 23, 42, 0.88);
-  --kawa-dialogue-border: rgba(244, 63, 94, 0.4);
-}
-`;
-  fs.writeFileSync(path.join(targetDir, 'game', 'style.css'), starterStyle, 'utf-8');
-
-  // 3. game/kawa.config.json
+  // Project-specific config (always write so title matches folder name)
   const starterConfig = {
     title: projectName,
     author: 'Visual Novel Creator',
@@ -114,11 +91,27 @@ label conclusion:
       soundVolume: 1.0,
       voiceVolume: 1.0
     },
-    gallery: []
+    gallery: [
+      {
+        id: 'sunset_promise',
+        title: 'Sunset Promise',
+        image: 'cg_sunset_promise.svg',
+        description: 'Unlocked on the technical or creative route.'
+      },
+      {
+        id: 'celebration',
+        title: 'Celebration',
+        image: 'cg_celebration.svg',
+        description: 'Unlocked on the master ending.'
+      }
+    ]
   };
-  fs.writeFileSync(path.join(targetDir, 'game', 'kawa.config.json'), JSON.stringify(starterConfig, null, 2), 'utf-8');
+  fs.writeFileSync(
+    path.join(targetDir, 'game', 'kawa.config.json'),
+    JSON.stringify(starterConfig, null, 2),
+    'utf-8'
+  );
 
-  // 4. package.json
   const starterPkg = {
     name: projectName,
     version: '0.1.0',
@@ -135,27 +128,26 @@ label conclusion:
   };
   fs.writeFileSync(path.join(targetDir, 'package.json'), JSON.stringify(starterPkg, null, 2), 'utf-8');
 
-  // 5. README.md
   const starterReadme = `# ${projectName}
 
 A visual novel created with **Kawaijs**.
 
+The starter script is a short showcase of:
+
+- \`scene ... with fade\` background transitions
+- \`vfx sakura\` / \`fog\` / \`tint\` atmosphere
+- Sprite enters: \`with bounce\`, \`dissolve\`, \`nod\`
+- Audio, camera flash/shake, CG unlocks, and branching endings
+
 ## Getting Started
 
-1. Validate script:
-   \`\`\`bash
-   npx kawa validate
-   \`\`\`
+\`\`\`bash
+npx kawa validate
+npx kawa dev
+npx kawa build
+\`\`\`
 
-2. Run development server:
-   \`\`\`bash
-   npx kawa dev
-   \`\`\`
-
-3. Build static web game:
-   \`\`\`bash
-   npx kawa build
-   \`\`\`
+Edit \`game/script.kawa\` and refresh — the live server reloads on script/style changes.
 `;
   fs.writeFileSync(path.join(targetDir, 'README.md'), starterReadme, 'utf-8');
 

@@ -330,6 +330,20 @@ label start:
     expect(vm.getState().visual.vfx).toBeNull();
   });
 
+  it('keeps sakura particles when applying vfx tint overlay', () => {
+    const code = `label start:
+    vfx sakura
+    vfx tint "#fda4af"
+    "Petals under pink light"
+`;
+    const story = compileScript(code);
+    const vm = new StoryVM(story);
+
+    vm.start();
+    expect(vm.getState().visual.vfx?.effect).toBe('sakura');
+    expect(vm.getState().visual.vfx?.color).toBe('#fda4af');
+  });
+
   it('triggers camera events for shake and flash', () => {
     const code = `label start:
     camera shake 600

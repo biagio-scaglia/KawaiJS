@@ -19,7 +19,9 @@ const script = `
 character yumia "Yumia"
 
 label start:
-    scene bg classroom
+    scene bg classroom with fade
+    vfx sakura
+    show yumia happy at center with bounce
     yumia "Hello world!"
 `;
 
@@ -29,6 +31,7 @@ console.log(storyPackage);
 
 ## Features
 - **Indentation Lexer**: Clean Python/Ren'Py-style whitespace and block tracking.
+- **Directives**: `scene`/`show`/`hide` transitions, `vfx` (sakura, rain, snow, fog, tint), `camera`, `pause`, `cg`, audio, `menu`, `if`/`call`/`jump`.
 - **Rich Diagnostics**: Formatted code frames with line numbers, caret underlines, and hint suggestions.
 - **AST to IR Compiler**: Compiles high-level script into an execution instruction stream with label resolution.
 

@@ -1,31 +1,37 @@
-# Kawaijs Showcase Visual Novel — "Code of Hearts"
+# Kawaijs Showcase — "Code of Hearts"
+# A living syntax guide: transitions, sakura petals, audio, camera, CG, branches.
 character yumia "Yumia" #f43f5e
 character kaori "Kaori" #0284c7
 
 label start:
+    set player_name = "Sensei"
     set dev_score = 0
     set creative_score = 0
 
     play music bgm_ambient fade 2
 
-    scene bg classroom
-    show yumia happy at left
-    show kaori normal at right
+    # Scene transition + cherry blossom particles
+    scene bg classroom with fade
+    vfx sakura
+    show yumia happy at left with bounce
+    show kaori normal at right with dissolve
 
-    yumia "Welcome to the Game Development Club! I'm Yumia, the lead writer and designer."
-    kaori "And I'm Kaori. I oversee the engine architecture and Web Audio pipeline."
+    yumia "Welcome to the {b}Game Development Club{/b}, [player_name]! I'm Yumia."
+    kaori "And I'm Kaori. Watch the {color=#fda4af}sakura{/color} — that's {b}vfx sakura{/b} on a {b}scene ... with fade{/b}."
 
-    yumia "We're building our next visual novel using Kawaijs — a modern, web-native scripting engine."
-    kaori "It compiles human-friendly .kawa scripts directly into deterministic bytecode that runs smoothly in any browser."
+    yumia "Sprites can enter with {b}bounce{/b}, {b}dissolve{/b}, or {b}nod{/b} after {b}show{/b}."
+    kaori "Kawaijs compiles .kawa scripts into a deterministic VM that runs in any browser."
 
     play sound sfx_sparkle
-    yumia "We need your help to choose our project's main direction! What is your biggest strength?"
+    camera flash
+    yumia "We need your help choosing our project's direction, [player_name]! What's your strength?"
 
     menu:
         "High-performance architecture & Web Audio":
             play sound sfx_click
+            camera vpunch
             set dev_score += 2
-            show kaori happy at right
+            show kaori happy at right with nod
             show yumia normal at left
             kaori "Impressive. An engineer with an eye for modularity and crisp performance."
             yumia "Hey! Don't forget that great stories need emotional resonance too!"
@@ -33,55 +39,72 @@ label start:
 
         "Rich storytelling, character drama & art":
             play sound sfx_click
+            camera shake 500
             set creative_score += 2
-            show yumia excited at left
+            show yumia excited at left with bounce
             show kaori thinking at right
-            yumia "Yes!! That's the spirit! Players remember characters that touch their hearts."
+            yumia "Yes!! Players remember characters that touch their hearts."
             kaori "A solid script is essential, provided the memory footprint stays lightweight."
             jump creative_route
 
         "Full-stack mastery: Code, Music, and Narrative":
             play sound sfx_click
+            camera flash
             set dev_score += 1
             set creative_score += 1
-            show yumia excited at left
-            show kaori smug at right
+            show yumia excited at left with bounce
+            show kaori smug at right with nod
             kaori "Ambitious. A true solo-dev Renaissance creator."
-            yumia "That means we can make something truly unforgettable together!"
+            yumia "That means we can make something unforgettable together, [player_name]!"
             jump courtyard_scene
 
 label technical_route:
     play music bgm_upbeat fade 1
-    scene bg rooftop
-    show kaori smug at center
+    # New scene clears previous VFX — re-apply weather as needed
+    scene bg rooftop with fade
+    vfx fog
+    show kaori smug at center with dissolve
 
-    kaori "Up here on the rooftop, the architecture comes together cleanly."
-    kaori "With Kawaijs, we get rollback snapshots in O(1) time and instant HMR via the Vite plugin."
-    
+    kaori "Up here on the misty rooftop — {b}vfx fog{/b} after a fade."
+    kaori "Rollback snapshots, live reload, and a modular audio pipeline come free with the toolchain."
+
     play sound sfx_sparkle
-    kaori "Look at the city lights. Every browser tab can be a stage for interactive fiction."
+    camera flash
+    pause 600
+    cg "cg_sunset_promise.svg" as "sunset_promise"
+    kaori "Look at the horizon, [player_name]. Dev score: [dev_score]. That's a fullscreen {b}cg{/b}."
     jump evaluate_ending
 
 label creative_route:
     play music bgm_upbeat fade 1
-    scene bg sunset_courtyard
-    show yumia happy at center
+    scene bg sunset_courtyard with fade
+    vfx sakura
+    # Tint layers ON TOP of sakura — petals keep falling
+    vfx tint "#fda4af"
+    show yumia happy at center with bounce
 
-    yumia "Isn't the sunset courtyard breathtaking?"
-    yumia "With Kawaijs, writers don't need complex code to craft branching paths or dialogue menus."
-    
+    yumia "Isn't the sunset courtyard breathtaking, [player_name]?"
+    yumia "{b}vfx sakura{/b} plus {b}vfx tint{/b} — pink light over falling petals."
+
     play sound sfx_sparkle
-    yumia "The cherry blossoms remind me that great stories bloom when imagination meets great tools."
+    camera flash
+    pause 600
+    cg "cg_sunset_promise.svg" as "sunset_promise"
+    yumia "Creative score: [creative_score]. Great stories bloom when imagination meets great tools."
     jump evaluate_ending
 
 label courtyard_scene:
     play music bgm_upbeat fade 1
-    scene bg sunset_courtyard
-    show yumia happy at left
-    show kaori happy at right
+    scene bg sunset_courtyard with fade
+    vfx sakura
+    show yumia happy at left with bounce
+    show kaori happy at right with nod
 
-    yumia "Look at the sunset! We've already outlined our story branches and characters."
-    kaori "The bundle compiled in under 15ms. The Web Audio controller is initialized and ready."
+    yumia "Look at the sunset! Story branches and characters are already outlined."
+    kaori "The bundle is light. The Web Audio controller is ready."
+
+    camera hpunch
+    yumia "Let's bring all our talents together!"
     jump evaluate_ending
 
 label evaluate_ending:
@@ -94,27 +117,30 @@ label evaluate_ending:
             jump ending_master
 
 label ending_tech:
-    scene bg rooftop
-    show kaori smug at center
-    kaori "You have proven your engineering mastery. Our next release will be revolutionary."
-    narrator "🏆 Ending 1/3: The Master Architect — High Performance & Flawless Code."
+    scene bg rooftop with fade
+    vfx fog
+    show kaori smug at center with dissolve
+    kaori "Engineering mastery with [dev_score] dev points. Our next release will be revolutionary."
+    narrator "{b}Ending 1/3: The Master Architect{/b} — High Performance & Flawless Code."
     stop music fade 2
     return
 
 label ending_creative:
-    scene bg sunset_courtyard
-    show yumia excited at center
-    yumia "Our visual novel is going to touch millions of hearts around the world!"
-    narrator "🌸 Ending 2/3: The Renowned Storyteller — Emotion, Art & Unforgettable Characters."
+    scene bg sunset_courtyard with fade
+    vfx sakura
+    show yumia excited at center with bounce
+    yumia "Creative score [creative_score]! This VN will touch hearts around the world!"
+    narrator "{b}Ending 2/3: The Renowned Storyteller{/b} — Emotion, Art & Unforgettable Characters."
     stop music fade 2
     return
 
 label ending_master:
-    scene bg classroom
-    show yumia excited at left
-    show kaori happy at right
-    yumia "Code, art, music, and story in perfect harmony!"
-    kaori "You have unlocked the full power of Kawaijs."
-    narrator "✨ Ending 3/3: The Renaissance Visionary — A True Master of Interactive Fiction."
+    play sound sfx_sparkle
+    camera flash
+    pause 800
+    cg "cg_celebration.svg" as "celebration"
+    yumia "Code, art, music, and story in harmony! Dev: [dev_score], Creative: [creative_score]!"
+    kaori "You have unlocked the full power of Kawaijs, [player_name]."
+    narrator "{b}Ending 3/3: The Renaissance Visionary{/b} — A True Master of Interactive Fiction."
     stop music fade 2
     return

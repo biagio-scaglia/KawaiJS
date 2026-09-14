@@ -60,6 +60,11 @@ describe('Kawaijs CLI Commands', () => {
     expect(fs.existsSync(path.join(testProjectName, 'game', 'assets', 'backgrounds'))).toBe(true);
     expect(fs.existsSync(path.join(testProjectName, 'package.json'))).toBe(true);
 
+    const script = fs.readFileSync(path.join(testProjectName, 'game', 'script.kawa'), 'utf-8');
+    expect(script).toContain('vfx sakura');
+    expect(script).toContain('with fade');
+    expect(script).toContain('with bounce');
+
     const validated = validateProject(testProjectName);
     expect(validated).toBe(true);
   });
