@@ -1,4 +1,4 @@
-import type { StoryPackage } from '@kawaijs/ast';
+import type { StoryPackage, ChoiceOption } from '@kawaijs/ast';
 
 export type AssetType = 'background' | 'character' | 'audio';
 
@@ -120,6 +120,48 @@ export interface VirtualCanvasOptions {
   readonly scaleMode?: 'contain' | 'cover' | 'stretch';
 }
 
+/**
+ * Minimal contracts so consumers can replace dialogue / choice presentation
+ * without forking DOMRenderer.
+ */
+export interface DialogueBoxLike {
+  readonly el: HTMLElement;
+  setTypewriterSpeed(speed: number): void;
+  getIsTypewriting(): boolean;
+  finishTypewriter(): void;
+  render(
+    dialogue: {
+      speaker?: string;
+      speakerDisplayName?: string;
+      speakerColor?: string;
+      text: string;
+    } | null | undefined,
+    onComplete?: () => void
+  ): void;
+  destroy(): void;
+}
+
+export interface ChoiceMenuLike {
+  readonly el: HTMLElement;
+  render(choices: readonly ChoiceOption[] | null | undefined): void;
+  hide?(): void;
+}
+
+export interface RendererComponentFactories {
+  createDialogueBox?: (typewriterSpeed: number) => DialogueBoxLike;
+  createChoiceMenu?: (callbacks: { onSelect: (index: number) => void }) => ChoiceMenuLike;
+}
+
+export interface RendererFeatureOptions {
+  /** Show the bottom quick menu (default: true). */
+  quickMenu?: boolean;
+  /**
+   * After finishing typewriter text, ignore advance clicks for this many ms
+   * to prevent accidental double-advance (default: 220).
+   */
+  advanceDebounceMs?: number;
+}
+
 export interface DOMRendererOptions {
   container: HTMLElement;
   typewriterSpeed?: number; // ms per character, 0 for instant
@@ -129,4 +171,7 @@ export interface DOMRendererOptions {
   audioManager?: AudioManagerLike;
   virtualCanvas?: VirtualCanvasOptions;
   onError?: (error: Error) => void;
+  /** Optional factories to replace built-in dialogue / choice UI. */
+  components?: RendererComponentFactories;
+  features?: RendererFeatureOptions;
 }

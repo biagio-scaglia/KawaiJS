@@ -8,6 +8,8 @@ import {
   type AssetType,
   type AudioManagerLike,
   type GalleryItem,
+  type DialogueBoxLike,
+  type ChoiceMenuLike,
   defaultAssetResolver
 } from './types.js';
 import { StageLayerComponent } from './components/stage-layer.js';
@@ -27,6 +29,7 @@ import { ViewportAdapter } from './layout/viewport-adapter.js';
 export * from './icons.js';
 export * from './types.js';
 export * from './utils/rich-text.js';
+export * from './utils/focus-trap.js';
 export * from './layout/viewport-adapter.js';
 export * from './modals/save-load-modal.js';
 export * from './modals/settings-modal.js';
@@ -77,8 +80,8 @@ export class DOMRenderer {
 
   private rootEl!: HTMLDivElement;
   private stageLayer!: StageLayerComponent;
-  private dialogueBox!: DialogueBoxComponent;
-  private choiceMenu!: ChoiceMenuComponent;
+  private dialogueBox!: DialogueBoxLike;
+  private choiceMenu!: ChoiceMenuLike;
   private quickMenu!: QuickMenuComponent;
   private mainMenu!: MainMenuComponent;
   private viewportAdapter?: ViewportAdapter;
@@ -89,6 +92,7 @@ export class DOMRenderer {
   private skipInterval: number | null = null;
   private pauseTimer: number | null = null;
   private errorToastTimer: number | null = null;
+  private advanceLockUntil = 0;
 
   private unsubscribeVMState?: () => void;
   private unsubscribeCamera?: () => void;
@@ -455,13 +459,21 @@ export class DOMRenderer {
     const uiLayerEl = document.createElement('div');
     uiLayerEl.className = 'kawa-ui-layer';
 
-    this.choiceMenu = new ChoiceMenuComponent({
-      onSelect: (index) => {
-        this.vm.choose(index);
-      }
-    });
+    this.choiceMenu = this.options.components?.createChoiceMenu
+      ? this.options.components.createChoiceMenu({
+          onSelect: (index) => {
+            this.vm.choose(index);
+          }
+        })
+      : new ChoiceMenuComponent({
+          onSelect: (index) => {
+            this.vm.choose(index);
+          }
+        });
 
-    this.dialogueBox = new DialogueBoxComponent(this.typewriterSpeed);
+    this.dialogueBox = this.options.components?.createDialogueBox
+      ? this.options.components.createDialogueBox(this.typewriterSpeed)
+      : new DialogueBoxComponent(this.typewriterSpeed);
 
     this.quickMenu = new QuickMenuComponent({
       onTitle: () => this.showMainMenu(),
@@ -477,6 +489,10 @@ export class DOMRenderer {
       onLoad: () => void this.showSaveLoadModal('load'),
       onSettings: () => this.showSettingsModal()
     });
+
+    if (this.options.features?.quickMenu === false) {
+      this.quickMenu.el.style.display = 'none';
+    }
 
     uiLayerEl.appendChild(this.choiceMenu.el);
     uiLayerEl.appendChild(this.dialogueBox.el);
@@ -548,6 +564,24 @@ export class DOMRenderer {
 
     // Keyboard controls
     this.boundKeyHandler = (e: KeyboardEvent) => {
+      const confirm = this.rootEl.querySelector('.kawa-confirm-overlay');
+      if (confirm) {
+        if (e.key === 'Escape') {
+          e.preventDefault();
+          confirm.remove();
+        }
+        return;
+      }
+
+      const lightbox = this.rootEl.querySelector('.kawa-gallery-lightbox');
+      if (lightbox) {
+        if (e.key === 'Escape') {
+          e.preventDefault();
+          lightbox.remove();
+        }
+        return;
+      }
+
       const modal = this.rootEl.querySelector('.kawa-modal-overlay');
       if (modal) {
         if (e.key === 'Escape') modal.remove();
@@ -605,6 +639,12 @@ export class DOMRenderer {
 
     if (this.dialogueBox.getIsTypewriting()) {
       this.dialogueBox.finishTypewriter();
+      const debounce = this.options.features?.advanceDebounceMs ?? 220;
+      this.advanceLockUntil = Date.now() + Math.max(0, debounce);
+      return;
+    }
+
+    if (Date.now() < this.advanceLockUntil) {
       return;
     }
 

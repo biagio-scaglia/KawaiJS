@@ -270,10 +270,34 @@ const renderer = new DOMRenderer(vm, {
 
 ```bash
 kawa create <directory>       # Scaffold a new visual novel template
-kawa validate [directory]     # Lint and validate syntax and assets
+kawa validate [directory]     # Lint script labels/syntax and report missing assets
 kawa dev [directory]          # Start local dev server with hot reload
 kawa build [directory]        # Export static standalone HTML5 distribution
 ```
+
+---
+
+## 🧩 Custom UI & Component Overrides
+
+Kawaijs ships a full Ren'Py-style player, but you can replace dialogue and choice rendering without forking the engine:
+
+```typescript
+import { DOMRenderer, DialogueBoxComponent, ChoiceMenuComponent } from '@kawaijs/renderer-dom';
+
+const renderer = new DOMRenderer(vm, {
+  container: document.getElementById('app')!,
+  features: {
+    quickMenu: true,
+    advanceDebounceMs: 220 // prevents double-click skip after typewriter
+  },
+  components: {
+    createDialogueBox: (speed) => new DialogueBoxComponent(speed),
+    createChoiceMenu: ({ onSelect }) => new ChoiceMenuComponent({ onSelect })
+  }
+});
+```
+
+Style via CSS variables / `.kawa-*` classes, or supply your own classes that implement `DialogueBoxLike` / `ChoiceMenuLike`.
 
 ---
 

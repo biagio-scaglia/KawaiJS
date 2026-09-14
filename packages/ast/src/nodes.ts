@@ -11,6 +11,7 @@ export type ASTNodeType =
   | 'MenuStmt'
   | 'ChoiceItem'
   | 'JumpStmt'
+  | 'CallStmt'
   | 'ReturnStmt'
   | 'SetStmt'
   | 'IfStmt'
@@ -42,6 +43,7 @@ export type StatementNode =
   | DialogueStmtNode
   | MenuStmtNode
   | JumpStmtNode
+  | CallStmtNode
   | ReturnStmtNode
   | SetStmtNode
   | IfStmtNode
@@ -106,6 +108,11 @@ export interface MenuStmtNode extends BaseNode {
 
 export interface JumpStmtNode extends BaseNode {
   readonly type: 'JumpStmt';
+  readonly targetLabel: string;
+}
+
+export interface CallStmtNode extends BaseNode {
+  readonly type: 'CallStmt';
   readonly targetLabel: string;
 }
 

@@ -4,6 +4,19 @@
   "description": "Standard semantic DOM and CSS rendering engine for Kawaijs visual novels",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
+  "module": "./dist/index.js",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./theme.css": "./src/theme.css",
+    "./dist/theme.css": "./src/theme.css"
+  },
+  "sideEffects": [
+    "./src/theme.css",
+    "**/*.css"
+  ],
   "type": "module",
   "files": [
     "dist",

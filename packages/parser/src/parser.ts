@@ -7,6 +7,7 @@ import type {
   HideStmtNode,
   IfStmtNode,
   JumpStmtNode,
+  CallStmtNode,
   LabelDeclNode,
   MenuStmtNode,
   PlayStmtNode,
@@ -86,6 +87,8 @@ export class Parser {
         return this.parseMenuStmt();
       case 'JUMP':
         return this.parseJumpStmt();
+      case 'CALL':
+        return this.parseCallStmt();
       case 'RETURN':
         return this.parseReturnStmt();
       case 'SET':
@@ -332,6 +335,18 @@ export class Parser {
 
     return {
       type: 'JumpStmt',
+      targetLabel: labelTok.value,
+      loc: createLocation(this.file, startTok.loc.start, labelTok.loc.end)
+    };
+  }
+
+  private parseCallStmt(): CallStmtNode {
+    const startTok = this.consume('CALL', 'Expected "call" keyword');
+    const labelTok = this.consume('IDENTIFIER', 'Expected target label name after "call"');
+    this.consumeOptionalNewline();
+
+    return {
+      type: 'CallStmt',
       targetLabel: labelTok.value,
       loc: createLocation(this.file, startTok.loc.start, labelTok.loc.end)
     };

@@ -60,6 +60,26 @@ export class VfxLayerComponent {
       return;
     }
 
+    const prefersReducedMotion =
+      typeof window !== 'undefined' &&
+      typeof window.matchMedia === 'function' &&
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    // Particle systems are decorative — skip them when the user prefers reduced motion.
+    // Tint/fog still apply as static overlays.
+    if (
+      prefersReducedMotion &&
+      (vfxState.effect === 'rain' ||
+        vfxState.effect === 'snow' ||
+        vfxState.effect === 'sakura')
+    ) {
+      this.stopParticleLoop();
+      this.currentEffect = vfxState.effect;
+      this.tintEl.style.display = 'none';
+      this.fogEl.style.display = 'none';
+      return;
+    }
+
     if (this.currentEffect === vfxState.effect && vfxState.effect !== 'tint') {
       return;
     }

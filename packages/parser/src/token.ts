@@ -11,6 +11,7 @@ export type TokenType =
   | 'WITH'
   | 'MENU'
   | 'JUMP'
+  | 'CALL'
   | 'RETURN'
   | 'SET'
   | 'IF'
@@ -72,6 +73,7 @@ export const KEYWORDS_MAP = new Map<string, TokenType>([
   ['with', 'WITH'],
   ['menu', 'MENU'],
   ['jump', 'JUMP'],
+  ['call', 'CALL'],
   ['return', 'RETURN'],
   ['set', 'SET'],
   ['if', 'IF'],

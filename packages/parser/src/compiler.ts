@@ -120,6 +120,15 @@ export class Compiler {
           const mergeLabel = `__menu_merge_${currentLabel}_${this.anonymousLabelCounter}`;
 
           const choiceOptions: ChoiceOption[] = [];
+          if (stmt.choices.length === 0) {
+            throw new KawaError({
+              code: 'E0204',
+              message: `Menu in '${currentLabel}' has no choices.`,
+              severity: 'error',
+              loc: stmt.loc,
+              hint: 'Add at least one choice option under the menu block.'
+            });
+          }
           for (const choice of stmt.choices) {
             this.anonymousLabelCounter += 1;
             const syntheticLabel = `__choice_${currentLabel}_${this.anonymousLabelCounter}`;
@@ -159,6 +168,14 @@ export class Compiler {
         case 'JumpStmt':
           instructions.push({
             type: 'jump',
+            targetLabel: stmt.targetLabel,
+            loc: stmt.loc
+          });
+          break;
+
+        case 'CallStmt':
+          instructions.push({
+            type: 'call',
             targetLabel: stmt.targetLabel,
             loc: stmt.loc
           });
@@ -324,7 +341,7 @@ export class Compiler {
 
     for (const [labelName, instructions] of Object.entries(labels)) {
       for (const inst of instructions) {
-        if (inst.type === 'jump' && !knownLabels.has(inst.targetLabel)) {
+        if ((inst.type === 'jump' || inst.type === 'call') && !knownLabels.has(inst.targetLabel)) {
           let closestLabel: string | undefined;
           let minDistance = Infinity;
 
@@ -343,7 +360,7 @@ export class Compiler {
 
           throw new KawaError({
             code: 'E0202',
-            message: `Unknown label '${inst.targetLabel}' referenced in '${labelName.startsWith('__') ? 'block' : labelName}'`,
+            message: `Unknown label '${inst.targetLabel}' referenced by ${inst.type} in '${labelName.startsWith('__') ? 'block' : labelName}'`,
             severity: 'error',
             loc: inst.loc,
             hint

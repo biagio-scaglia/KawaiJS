@@ -4,6 +4,14 @@
   "description": "Abstract Syntax Tree and Story Intermediate Representation definitions for Kawaijs",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
+  "module": "./dist/index.js",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "sideEffects": false,
   "type": "module",
   "files": [
     "dist"

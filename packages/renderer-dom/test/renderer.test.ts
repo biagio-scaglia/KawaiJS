@@ -3,6 +3,8 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { compileScript } from '@kawaijs/parser';
 import { StoryVM } from '@kawaijs/runtime';
 import { DOMRenderer } from '../src/renderer.js';
+import { DialogueBoxComponent } from '../src/components/dialogue-box.js';
+import { ChoiceMenuComponent } from '../src/components/choice-menu.js';
 
 describe('DOMRenderer Component & Accessibility', () => {
   let container: HTMLDivElement;
@@ -450,6 +452,60 @@ label start:
     const toast = container.querySelector('.kawa-error-toast-msg');
     expect(toast?.innerHTML).toContain('&lt;img');
     expect(toast?.querySelector('img')).toBeNull();
+
+    renderer.destroy();
+  });
+
+  it('supports custom dialogue/choice component factories and hides quick menu', () => {
+    const story = compileScript(sampleScript);
+    const vm = new StoryVM(story);
+
+    let dialogueCreated = false;
+    let choiceCreated = false;
+
+    const renderer = new DOMRenderer(vm, {
+      container,
+      mainMenu: { enabled: false },
+      typewriterSpeed: 0,
+      features: { quickMenu: false },
+      components: {
+        createDialogueBox: (speed) => {
+          dialogueCreated = true;
+          return new DialogueBoxComponent(speed);
+        },
+        createChoiceMenu: (cb) => {
+          choiceCreated = true;
+          return new ChoiceMenuComponent(cb);
+        }
+      }
+    });
+
+    expect(dialogueCreated).toBe(true);
+    expect(choiceCreated).toBe(true);
+    expect((container.querySelector('.kawa-quick-menu') as HTMLElement)?.style.display).toBe('none');
+
+    renderer.destroy();
+  });
+
+  it('debounces advance after finishing typewriter text', () => {
+    const story = compileScript(`label start:
+    "Hello world this is long enough"
+    "Second"
+`);
+    const vm = new StoryVM(story);
+    const renderer = new DOMRenderer(vm, {
+      container,
+      mainMenu: { enabled: false },
+      typewriterSpeed: 50,
+      features: { advanceDebounceMs: 500 }
+    });
+
+    vm.start();
+    const stage = container.querySelector('.kawa-stage') as HTMLElement;
+    stage.click(); // finish typewriter
+    expect(vm.getState().dialogue?.text).toContain('Hello');
+    stage.click(); // should be ignored due to debounce
+    expect(vm.getState().dialogue?.text).toContain('Hello');
 
     renderer.destroy();
   });

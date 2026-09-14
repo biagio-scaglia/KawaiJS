@@ -1,5 +1,6 @@
 import { SVG_ICONS } from '../icons.js';
 import { escapeHtml } from '../utils/rich-text.js';
+import { trapFocus } from '../utils/focus-trap.js';
 
 export function showConfirmModal(
   rootEl: HTMLElement,
@@ -12,11 +13,10 @@ export function showConfirmModal(
     onCancel?: () => void;
   }
 ): void {
-  const existing = rootEl.querySelector('.kawa-modal-overlay');
-  if (existing) existing.remove();
-
+  // Stack on top of existing modals — do not destroy the parent overlay.
   const overlay = document.createElement('div');
-  overlay.className = 'kawa-modal-overlay';
+  overlay.className = 'kawa-modal-overlay kawa-confirm-overlay';
+  overlay.style.zIndex = '10050';
 
   const card = document.createElement('div');
   card.className = 'kawa-modal-card kawa-confirm-card';
@@ -35,10 +35,16 @@ export function showConfirmModal(
   closeBtn.className = 'kawa-btn';
   closeBtn.innerHTML = `${SVG_ICONS.close} <span>Close</span>`;
   closeBtn.setAttribute('aria-label', 'Close');
-  closeBtn.addEventListener('click', () => {
+
+  const releaseFocus = trapFocus(card);
+
+  const close = (cancelled: boolean): void => {
+    releaseFocus();
     overlay.remove();
-    options.onCancel?.();
-  });
+    if (cancelled) options.onCancel?.();
+  };
+
+  closeBtn.addEventListener('click', () => close(true));
 
   header.appendChild(title);
   header.appendChild(closeBtn);
@@ -66,6 +72,7 @@ export function showConfirmModal(
   confirmBtn.style.padding = '8px 20px';
   confirmBtn.textContent = options.confirmText || 'Confirm';
   confirmBtn.addEventListener('click', () => {
+    releaseFocus();
     overlay.remove();
     options.onConfirm();
   });
@@ -74,10 +81,7 @@ export function showConfirmModal(
   cancelBtn.className = 'kawa-btn';
   cancelBtn.style.padding = '8px 20px';
   cancelBtn.textContent = options.cancelText || 'Cancel';
-  cancelBtn.addEventListener('click', () => {
-    overlay.remove();
-    options.onCancel?.();
-  });
+  cancelBtn.addEventListener('click', () => close(true));
 
   actions.appendChild(cancelBtn);
   actions.appendChild(confirmBtn);

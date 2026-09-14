@@ -32,7 +32,7 @@ export function validateStory(story: StoryPackage): ValidationReport {
   // 1. Validate Start Label
   if (!declaredLabels.has(startLabel)) {
     errors.push({
-      code: 'E0201',
+      code: 'E0203',
       message: `Start label '${startLabel}' is not defined in the story.`,
       severity: 'error',
       hint: `Create a 'label ${startLabel}:' block as the entry point of your visual novel.`

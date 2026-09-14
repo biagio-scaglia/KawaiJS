@@ -1,5 +1,33 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+function copyDirRecursive(src: string, dest: string): void {
+  if (!fs.existsSync(src)) return;
+  fs.mkdirSync(dest, { recursive: true });
+  for (const entry of fs.readdirSync(src, { withFileTypes: true })) {
+    const from = path.join(src, entry.name);
+    const to = path.join(dest, entry.name);
+    if (entry.isDirectory()) {
+      copyDirRecursive(from, to);
+    } else if (entry.isFile()) {
+      fs.copyFileSync(from, to);
+    }
+  }
+}
+
+function resolveStarterAssetsDir(): string | null {
+  const here = path.dirname(fileURLToPath(import.meta.url));
+  const candidates = [
+    path.resolve(here, '../../../../templates/starter/game/assets'),
+    path.resolve(here, '../../../templates/starter/game/assets'),
+    path.resolve(process.cwd(), 'templates/starter/game/assets')
+  ];
+  for (const c of candidates) {
+    if (fs.existsSync(c)) return c;
+  }
+  return null;
+}
 
 export function createProject(projectName: string): boolean {
   const targetDir = path.resolve(process.cwd(), projectName);
@@ -15,6 +43,11 @@ export function createProject(projectName: string): boolean {
   fs.mkdirSync(path.join(targetDir, 'game', 'assets', 'backgrounds'), { recursive: true });
   fs.mkdirSync(path.join(targetDir, 'game', 'assets', 'characters'), { recursive: true });
   fs.mkdirSync(path.join(targetDir, 'game', 'assets', 'audio'), { recursive: true });
+
+  const starterAssets = resolveStarterAssetsDir();
+  if (starterAssets) {
+    copyDirRecursive(starterAssets, path.join(targetDir, 'game', 'assets'));
+  }
 
   // 1. game/script.kawa
   const starterScript = `# Kawaijs Visual Novel Script
@@ -85,7 +118,7 @@ label conclusion:
   };
   fs.writeFileSync(path.join(targetDir, 'game', 'kawa.config.json'), JSON.stringify(starterConfig, null, 2), 'utf-8');
 
-  // 3. package.json
+  // 4. package.json
   const starterPkg = {
     name: projectName,
     version: '0.1.0',
@@ -97,12 +130,12 @@ label conclusion:
       validate: 'kawa validate'
     },
     dependencies: {
-      kawaijs: '^0.1.0'
+      kawaijs: '^0.1.11'
     }
   };
   fs.writeFileSync(path.join(targetDir, 'package.json'), JSON.stringify(starterPkg, null, 2), 'utf-8');
 
-  // 4. README.md
+  // 5. README.md
   const starterReadme = `# ${projectName}
 
 A visual novel created with **Kawaijs**.

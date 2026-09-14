@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { Parser } from '../src/parser.js';
 import { formatDiagnostic, KawaError } from '../src/diagnostic.js';
 import { validateScript } from '../src/validator.js';
+import { compileScript } from '../src/index.js';
 
 describe('Parser', () => {
   it('parses character declarations, labels, dialogue, and narrator', () => {
@@ -102,6 +103,24 @@ label start:
       expect(labelDecl.body[5]?.type).toBe('CgStmt');
       expect(labelDecl.body[6]?.type).toBe('VfxStmt');
     }
+  });
+
+  it('parses call statements as CallStmt', () => {
+    const code = `label start:
+    call helper
+    "Back"
+
+label helper:
+    "Inside"
+    return
+`;
+    const parser = Parser.fromSource(code);
+    const ast = parser.parse();
+    const start = ast.statements.find((s) => s.type === 'LabelDecl' && s.name === 'start');
+    expect(start && start.type === 'LabelDecl' && start.body[0]?.type).toBe('CallStmt');
+
+    const story = compileScript(code);
+    expect(story.labels['start']?.[0]?.type).toBe('call');
   });
 
   it('formats helpful diagnostics on syntax error', () => {

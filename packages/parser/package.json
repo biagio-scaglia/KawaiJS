@@ -4,6 +4,14 @@
   "description": "Lexer, Parser, Compiler, and Diagnostics for Kawa Script",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
+  "module": "./dist/index.js",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "sideEffects": false,
   "type": "module",
   "files": [
     "dist"
