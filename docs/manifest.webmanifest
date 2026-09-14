@@ -1,0 +1,26 @@
+{
+  "name": "Kawaijs Docs - Learn by Playing",
+  "short_name": "Kawaijs Docs",
+  "description": "Official interactive docs for Kawaijs by Biagio Scaglia: a Ren'Py-inspired, TypeScript visual novel engine that ships static sites to GitHub Pages with SEO, PWA, and JSON-LD.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#0f172a",
+  "theme_color": "#f43f5e",
+  "lang": "en",
+  "icons": [
+    {
+      "src": "./icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "./icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ]
+}

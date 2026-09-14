@@ -4,6 +4,9 @@ Playable documentation for **Kawaijs** by **Biagio Scaglia**.
 
 Live site (GitHub Pages): https://biagio-scaglia.github.io/KawaiJS/
 
+> **Pages setup:** Repo → Settings → Pages → Deploy from a branch → Branch `main` → folder **`/docs`** (not `/ root`).
+> That folder is the built interactive VN. Root was showing the README via Jekyll.
+
 ## Local preview
 
 ```bash

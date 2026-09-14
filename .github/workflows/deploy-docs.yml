@@ -1,12 +1,14 @@
 name: Deploy Docs to GitHub Pages
 
+# Publishes the interactive docs VN to /docs on main (branch Pages)
+# and also to the GitHub Actions Pages artifact when enabled.
 on:
   push:
     branches: [main]
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
   pages: write
   id-token: write
 
@@ -15,10 +17,13 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  build:
+  build-and-publish-docs:
+    if: ${{ !contains(github.event.head_commit.message, 'chore(docs): refresh') }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -27,14 +32,33 @@ jobs:
       - run: npx tsc -b
       - name: Build interactive docs
         run: node ./packages/cli/bin/kawa.js build ./examples/docs
+      - name: Sync dist into /docs (branch Pages)
+        run: |
+          rm -rf docs
+          mkdir -p docs
+          cp -a examples/docs/dist/. docs/
+          touch docs/.nojekyll
+      - name: Commit /docs if changed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs
+          if git diff --staged --quiet; then
+            echo "No docs changes"
+          else
+            git commit -m "chore(docs): refresh GitHub Pages site [skip ci]"
+            git push
+          fi
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
           path: examples/docs/dist
 
-  deploy:
-    needs: build
+  deploy-actions-pages:
+    needs: build-and-publish-docs
     runs-on: ubuntu-latest
+    # Succeeds when Pages source is "GitHub Actions"; otherwise ignored/fails soft.
+    continue-on-error: true
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}

@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://biagio-scaglia.github.io/KawaiJS/sitemap.xml

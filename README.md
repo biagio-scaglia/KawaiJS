@@ -1,5 +1,3 @@
-<div align="center">
-
 # 🌸 Kawaijs
 
 **A modern, web-native visual novel engine and toolchain inspired by Ren'Py.**
@@ -10,9 +8,7 @@
 [![Tests](https://img.shields.io/badge/Tests-77%2B%20Passing-brightgreen)](https://github.com/biagio-scaglia/KawaiJS)
 [![Docs](https://img.shields.io/badge/Docs-Playable%20VN-f43f5e)](https://biagio-scaglia.github.io/KawaiJS/)
 
-[Playable Docs](https://biagio-scaglia.github.io/KawaiJS/) • [Quick Start](#-quick-start) • [Syntax Guide](#-kawa-script-syntax-guide) • [Start Menu](#-start-menu--ui-customization) • [Keyboard Shortcuts](#-keyboard-shortcuts) • [Architecture](#-architecture)
-
-</div>
+[Playable Docs](https://biagio-scaglia.github.io/KawaiJS/) · [Quick Start](#-quick-start) · [Syntax Guide](#-kawa-script-syntax-guide) · [Start Menu](#-start-menu--ui-customization) · [Keyboard Shortcuts](#-keyboard-shortcuts) · [Architecture](#-architecture)
 
 ---
 
