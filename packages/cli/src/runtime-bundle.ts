@@ -6,8 +6,6 @@ import * as esbuild from 'esbuild';
 
 const require = createRequire(import.meta.url);
 
-let cachedBundle: string | null = null;
-
 export function getBaseThemeCss(): string {
   const dirname = path.dirname(fileURLToPath(import.meta.url));
   const candidates = [
@@ -59,29 +57,28 @@ function resolveRendererDomEntry(): string {
 }
 
 export function getInlineRuntimeScript(assetPrefix = '/'): string {
-  if (!cachedBundle) {
-    const entry = resolveRendererDomEntry();
-    const result = esbuild.buildSync({
-      entryPoints: [entry],
-      bundle: true,
-      format: 'iife',
-      globalName: 'KawaiJS',
-      write: false,
-      minify: false,
-      target: 'es2022'
-    });
+  // Always rebuild so CLI picks up renderer-dom source edits without a process restart.
+  // Page loads are infrequent enough that sync esbuild cost is acceptable in dev/build.
+  const entry = resolveRendererDomEntry();
+  const result = esbuild.buildSync({
+    entryPoints: [entry],
+    bundle: true,
+    format: 'iife',
+    globalName: 'KawaiJS',
+    write: false,
+    minify: false,
+    target: 'es2022'
+  });
 
-    if (!result.outputFiles || result.outputFiles.length === 0) {
-      throw new Error('Failed to bundle @kawaijs/renderer-dom with esbuild.');
-    }
-
-    cachedBundle = result.outputFiles[0]!.text;
+  if (!result.outputFiles || result.outputFiles.length === 0) {
+    throw new Error('Failed to bundle @kawaijs/renderer-dom with esbuild.');
   }
 
+  const bundle = result.outputFiles[0]!.text;
   const prefix = assetPrefix.endsWith('/') ? assetPrefix : assetPrefix + '/';
   return `
     const ASSET_PREFIX = '${prefix}';
-    ${cachedBundle}
+    ${bundle}
     const { mountKawaApp, DOMRenderer, StoryVM } = KawaiJS;
   `;
 }

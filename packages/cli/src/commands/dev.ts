@@ -46,26 +46,32 @@ export function startDevServer(projectDir = '.', options: DevServerOptions = {})
 
   const clients = new Set<http.ServerResponse>();
 
-  // Debounced file watcher for auto-reload
+  // Debounced file watcher for auto-reload (script/style/config only — never assets).
+  // Watching assets caused full page reloads when the browser fetched audio/images on Start
+  // (especially noticeable in Opera / Windows fs.watch noise).
   let reloadTimeout: NodeJS.Timeout | null = null;
-  const watchDirs = [path.join(rootDir, 'game'), rootDir].filter(d => fs.existsSync(d));
+  const watchTargets = [scriptPath, stylePath, path.join(rootDir, 'game', 'kawa.config.json'), path.join(rootDir, 'kawa.config.json')]
+    .filter((p) => fs.existsSync(p));
+  const watchDirs = [...new Set(watchTargets.map((p) => path.dirname(p)))];
+
   for (const watchDir of watchDirs) {
-    fs.watch(watchDir, { recursive: true }, (_eventType, filename) => {
-      if (
-        filename &&
-        (filename.endsWith('.kawa') || filename.endsWith('.css') || filename.endsWith('.json') || filename.startsWith('assets')) &&
-        !filename.includes('~') &&
-        !filename.startsWith('.') &&
-        !filename.endsWith('.tmp')
-      ) {
-        if (reloadTimeout) clearTimeout(reloadTimeout);
-        reloadTimeout = setTimeout(() => {
-          console.log(`🔄 [${new Date().toLocaleTimeString()}] Change detected in ${filename}, reloading...`);
-          for (const client of clients) {
-            client.write('data: reload\n\n');
-          }
-        }, 120);
+    fs.watch(watchDir, { recursive: false }, (_eventType, filename) => {
+      if (!filename) return;
+      const base = path.basename(filename);
+      const shouldReload =
+        base.endsWith('.kawa') ||
+        base.endsWith('.css') ||
+        base === 'kawa.config.json';
+      if (!shouldReload || base.includes('~') || base.startsWith('.') || base.endsWith('.tmp')) {
+        return;
       }
+      if (reloadTimeout) clearTimeout(reloadTimeout);
+      reloadTimeout = setTimeout(() => {
+        console.log(`🔄 [${new Date().toLocaleTimeString()}] Change detected in ${base}, reloading...`);
+        for (const client of clients) {
+          client.write('data: reload\n\n');
+        }
+      }, 200);
     });
   }
 

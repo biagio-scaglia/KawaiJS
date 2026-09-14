@@ -42,10 +42,14 @@ export async function showSaveLoadModal(
   };
 
   const closeBtn = document.createElement('button');
+  closeBtn.type = 'button';
   closeBtn.className = 'kawa-btn';
   closeBtn.innerHTML = `${SVG_ICONS.close} <span>Close</span>`;
   closeBtn.setAttribute('aria-label', 'Close modal');
-  closeBtn.addEventListener('click', close);
+  closeBtn.addEventListener('click', (e) => {
+    e.preventDefault();
+    close();
+  });
 
   header.appendChild(title);
   header.appendChild(closeBtn);
@@ -133,11 +137,13 @@ export async function showSaveLoadModal(
 
     if (mode === 'save') {
       const saveActionBtn = document.createElement('button');
+      saveActionBtn.type = 'button';
       saveActionBtn.className = 'kawa-slot-btn kawa-slot-btn-save';
       const label = isOccupied ? 'Overwrite' : 'Save Here';
       saveActionBtn.innerHTML = `${SVG_ICONS.save} <span>${label}</span>`;
       saveActionBtn.setAttribute('aria-label', `${label} slot ${slotNum}`);
-      saveActionBtn.addEventListener('click', async () => {
+      saveActionBtn.addEventListener('click', async (e) => {
+        e.preventDefault();
         await vm.save(slotNum);
         close();
         void showSaveLoadModal(rootEl, vm, 'save', onLoaded);
@@ -146,10 +152,12 @@ export async function showSaveLoadModal(
     } else {
       if (slot) {
         const loadActionBtn = document.createElement('button');
+        loadActionBtn.type = 'button';
         loadActionBtn.className = 'kawa-slot-btn kawa-slot-btn-load';
         loadActionBtn.innerHTML = `${SVG_ICONS.load} <span>Load</span>`;
         loadActionBtn.setAttribute('aria-label', `Load slot ${slotNum}`);
-        loadActionBtn.addEventListener('click', async () => {
+        loadActionBtn.addEventListener('click', async (e) => {
+          e.preventDefault();
           const ok = await vm.load(slotNum);
           if (ok) {
             close();
@@ -159,6 +167,7 @@ export async function showSaveLoadModal(
         actions.appendChild(loadActionBtn);
       } else {
         const emptyBtn = document.createElement('button');
+        emptyBtn.type = 'button';
         emptyBtn.className = 'kawa-slot-btn kawa-slot-btn-disabled';
         emptyBtn.disabled = true;
         emptyBtn.innerHTML = `${SVG_ICONS.load} <span>Empty</span>`;
@@ -168,11 +177,13 @@ export async function showSaveLoadModal(
 
     if (slot) {
       const delBtn = document.createElement('button');
+      delBtn.type = 'button';
       delBtn.className = 'kawa-slot-btn kawa-slot-btn-del';
       delBtn.innerHTML = SVG_ICONS.trash;
       delBtn.title = 'Delete Save';
       delBtn.setAttribute('aria-label', `Delete slot ${slotNum}`);
       delBtn.addEventListener('click', (e) => {
+        e.preventDefault();
         e.stopPropagation();
         showConfirmModal(rootEl, {
           title: 'Delete Save',

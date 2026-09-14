@@ -37,12 +37,14 @@ export function showGalleryModal(
   title.innerHTML = `<span>CG &amp; Event Gallery</span>`;
 
   const closeBtn = document.createElement('button');
+  closeBtn.type = 'button';
   closeBtn.className = 'kawa-btn';
   closeBtn.innerHTML = `${SVG_ICONS.close} <span>Close</span>`;
   closeBtn.setAttribute('aria-label', 'Close gallery modal');
 
   const releaseFocus = trapFocus(card);
-  closeBtn.addEventListener('click', () => {
+  closeBtn.addEventListener('click', (e) => {
+    e.preventDefault();
     releaseFocus();
     overlay.remove();
   });
@@ -82,7 +84,8 @@ export function showGalleryModal(
             ${item.description ? `<div class="kawa-gallery-desc">${escapeHtml(item.description)}</div>` : ''}
           </div>
         `;
-        cardEl.addEventListener('click', () => {
+        cardEl.addEventListener('click', (e) => {
+          e.preventDefault();
           showLightbox(rootEl, sanitizeUrl(assetResolver(item.image, 'background')), item.title);
         });
       } else {

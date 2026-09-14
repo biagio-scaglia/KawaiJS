@@ -30,10 +30,14 @@ export function showHistoryModal(rootEl: HTMLElement, vm: StoryVM): void {
   };
 
   const closeBtn = document.createElement('button');
+  closeBtn.type = 'button';
   closeBtn.className = 'kawa-btn';
   closeBtn.innerHTML = `${SVG_ICONS.close} <span>Close</span>`;
   closeBtn.setAttribute('aria-label', 'Close history modal');
-  closeBtn.addEventListener('click', close);
+  closeBtn.addEventListener('click', (e) => {
+    e.preventDefault();
+    close();
+  });
 
   header.appendChild(title);
   header.appendChild(closeBtn);

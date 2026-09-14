@@ -79,17 +79,19 @@ export class MainMenuComponent {
 
   public refresh(): void {
     if (!this.menuEl) return;
-    // Check if saves exist to enable/disable the "Continue" button
-    const continueBtn = this.menuEl.querySelector('button[data-action="continue"]');
+  // Check if saves exist to enable/disable the "Continue" button
+    const continueBtn = this.menuEl.querySelector('button[data-action="continue"]') as HTMLButtonElement | null;
     if (continueBtn) {
       void this.vm.getSaveManager().listSlots(6).then((slots) => {
         const hasSaves = slots.some((s) => s !== null);
         if (!hasSaves) {
           continueBtn.classList.add('disabled');
           continueBtn.setAttribute('aria-disabled', 'true');
+          continueBtn.disabled = true;
         } else {
           continueBtn.classList.remove('disabled');
           continueBtn.removeAttribute('aria-disabled');
+          continueBtn.disabled = false;
         }
       });
     }
@@ -205,9 +207,11 @@ export class MainMenuComponent {
       if (item.condition && !item.condition()) continue;
 
       const btn = document.createElement('button');
+      btn.type = 'button';
       btn.className = `kawa-main-menu-btn ${item.className || ''}`.trim();
       btn.setAttribute('data-action', typeof item.action === 'string' ? item.action : 'custom');
-      if (item.id) btn.id = item.id;
+      // Avoid bare ids like "start" which can collide with window/location quirks in some browsers.
+      if (item.id) btn.id = `kawa-menu-${item.id}`;
       btn.innerHTML = `${item.icon ? item.icon + ' ' : ''}<span>${escapeHtml(item.label)}</span>`;
 
       if (item.action === 'continue') {
@@ -216,13 +220,15 @@ export class MainMenuComponent {
           if (!hasSaves) {
             btn.classList.add('disabled');
             btn.setAttribute('aria-disabled', 'true');
+            btn.disabled = true;
           }
         });
       }
 
       btn.addEventListener('click', (e) => {
+        e.preventDefault();
         e.stopPropagation();
-        if (btn.classList.contains('disabled')) return;
+        if (btn.classList.contains('disabled') || btn.disabled) return;
 
         if (item.action === 'start') {
           this.callbacks.onStartNewGame();

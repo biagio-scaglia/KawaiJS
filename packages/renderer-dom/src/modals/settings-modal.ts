@@ -46,10 +46,14 @@ export function showSettingsModal(rootEl: HTMLElement, options: SettingsModalOpt
   };
 
   const closeBtn = document.createElement('button');
+  closeBtn.type = 'button';
   closeBtn.className = 'kawa-btn';
   closeBtn.innerHTML = `${SVG_ICONS.close} <span>Close</span>`;
   closeBtn.setAttribute('aria-label', 'Close settings');
-  closeBtn.addEventListener('click', close);
+  closeBtn.addEventListener('click', (e) => {
+    e.preventDefault();
+    close();
+  });
 
   header.appendChild(title);
   header.appendChild(closeBtn);

@@ -30,10 +30,14 @@ export function showAboutModal(rootEl: HTMLElement, options?: MainMenuOptions): 
   };
 
   const closeBtn = document.createElement('button');
+  closeBtn.type = 'button';
   closeBtn.className = 'kawa-btn';
   closeBtn.innerHTML = `${SVG_ICONS.close} <span>Close</span>`;
   closeBtn.setAttribute('aria-label', 'Close about modal');
-  closeBtn.addEventListener('click', close);
+  closeBtn.addEventListener('click', (e) => {
+    e.preventDefault();
+    close();
+  });
 
   header.appendChild(title);
   header.appendChild(closeBtn);

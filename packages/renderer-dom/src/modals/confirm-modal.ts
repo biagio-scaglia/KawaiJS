@@ -32,6 +32,7 @@ export function showConfirmModal(
   title.innerHTML = `<span>${escapeHtml(options.title || 'Confirmation')}</span>`;
 
   const closeBtn = document.createElement('button');
+  closeBtn.type = 'button';
   closeBtn.className = 'kawa-btn';
   closeBtn.innerHTML = `${SVG_ICONS.close} <span>Close</span>`;
   closeBtn.setAttribute('aria-label', 'Close');
@@ -44,7 +45,10 @@ export function showConfirmModal(
     if (cancelled) options.onCancel?.();
   };
 
-  closeBtn.addEventListener('click', () => close(true));
+  closeBtn.addEventListener('click', (e) => {
+    e.preventDefault();
+    close(true);
+  });
 
   header.appendChild(title);
   header.appendChild(closeBtn);
@@ -68,20 +72,26 @@ export function showConfirmModal(
   actions.style.justifyContent = 'center';
 
   const confirmBtn = document.createElement('button');
+  confirmBtn.type = 'button';
   confirmBtn.className = 'kawa-btn active';
   confirmBtn.style.padding = '8px 20px';
   confirmBtn.textContent = options.confirmText || 'Confirm';
-  confirmBtn.addEventListener('click', () => {
+  confirmBtn.addEventListener('click', (e) => {
+    e.preventDefault();
     releaseFocus();
     overlay.remove();
     options.onConfirm();
   });
 
   const cancelBtn = document.createElement('button');
+  cancelBtn.type = 'button';
   cancelBtn.className = 'kawa-btn';
   cancelBtn.style.padding = '8px 20px';
   cancelBtn.textContent = options.cancelText || 'Cancel';
-  cancelBtn.addEventListener('click', () => close(true));
+  cancelBtn.addEventListener('click', (e) => {
+    e.preventDefault();
+    close(true);
+  });
 
   actions.appendChild(cancelBtn);
   actions.appendChild(confirmBtn);

@@ -266,7 +266,7 @@ export class DOMRenderer {
     toast.innerHTML = `
       <span>⚠️</span>
       <span class="kawa-error-toast-msg">${escapeHtml(message)}</span>
-      <button class="kawa-error-toast-close" aria-label="Dismiss error">${SVG_ICONS.close}</button>
+      <button type="button" class="kawa-error-toast-close" aria-label="Dismiss error">${SVG_ICONS.close}</button>
     `;
 
     toast.querySelector('.kawa-error-toast-close')?.addEventListener('click', () => {
@@ -355,6 +355,8 @@ export class DOMRenderer {
   }
 
   public startNewGame(): void {
+    // Ignore residual click-through from the Start button onto the stage (Opera / touchpads).
+    this.advanceLockUntil = Date.now() + 350;
     this.vm.start();
     this.hideMainMenu();
     this.mainMenuOptions?.onStart?.();
@@ -731,19 +733,25 @@ export class DOMRenderer {
     `;
 
     const restartBtn = document.createElement('button');
+    restartBtn.type = 'button';
     restartBtn.className = 'kawa-choice-btn';
     restartBtn.style.marginTop = '16px';
     restartBtn.innerHTML = `${SVG_ICONS.replay} Play Again`;
-    restartBtn.addEventListener('click', () => {
+    restartBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
       endingCard.remove();
       this.startNewGame();
     });
 
     const menuBtn = document.createElement('button');
+    menuBtn.type = 'button';
     menuBtn.className = 'kawa-choice-btn';
     menuBtn.style.marginTop = '10px';
     menuBtn.innerHTML = `${SVG_ICONS.home} Main Menu`;
-    menuBtn.addEventListener('click', () => {
+    menuBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
       endingCard.remove();
       this.showMainMenu();
     });

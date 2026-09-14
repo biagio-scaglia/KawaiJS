@@ -239,15 +239,18 @@ label start:
     // Click "Start Game"
     const startBtn = container.querySelector('.kawa-main-menu-btn[data-action="start"]') as HTMLButtonElement;
     expect(startBtn).not.toBeNull();
+    expect(startBtn.type).toBe('button');
+    expect(startBtn.id).toBe('kawa-menu-start');
     startBtn.click();
 
     expect(startCallbackFired).toBe(true);
     expect(renderer.isMainMenuActive()).toBe(false);
     expect(mainMenuEl.style.display).toBe('none');
 
-    // VM is now playing the dialogue
+    // VM is now playing the dialogue — must NOT bounce back to main menu
     const dialogueBox = container.querySelector('.kawa-dialogue-box') as HTMLElement;
     expect(dialogueBox.textContent).toContain('Hello from DOM Renderer!');
+    expect(renderer.isMainMenuActive()).toBe(false);
 
     // Test returning to title screen via Quick Menu Title button
     const titleBtn = container.querySelector('.kawa-quick-menu button[aria-label="Return to Title Screen"]') as HTMLButtonElement;
