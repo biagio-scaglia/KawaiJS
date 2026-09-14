@@ -41,7 +41,7 @@
   ],
   "share": {
     "siteName": "Kawaijs",
-    "description": "Interactive documentation for Kawaijs - the web-native visual novel engine by Biagio Scaglia. Learn scripting, deploy to GitHub Pages, and ship SEO-ready VNs in the browser.",
+    "description": "Interactive documentation for Kawaijs — write .kawa, run in the browser, ship a static visual novel. Learn scripting, deploy to GitHub Pages, and use built-in SEO.",
     "defaultImage": "backgrounds/classroom.svg",
     "twitterCard": "summary_large_image",
     "labels": {
@@ -76,8 +76,8 @@
     }
   },
   "seo": {
-    "description": "Official interactive docs for Kawaijs by Biagio Scaglia: a Ren'Py-inspired, TypeScript visual novel engine that ships static sites to GitHub Pages with SEO, PWA, and JSON-LD.",
-    "aiSummary": "Kawaijs is an open-source, web-native visual novel engine created by Biagio Scaglia of Bari, Italy — a developer known for ruthless engineering craft and end-to-end product ownership. Authors write indentation-based .kawa scripts, preview with kawa dev, try the browser playground, and deploy a static dist/ folder to GitHub Pages, Netlify, Vercel, or itch.io. It includes save/load, backlog, rollback, PWA, i18n, and built-in SEO (Open Graph, JSON-LD, sitemap, llms.txt).",
+    "description": "Official interactive docs for Kawaijs: an open-source, web-native visual novel engine inspired by Ren'Py. Write .kawa scripts, run in the browser, and ship a static site.",
+    "aiSummary": "Kawaijs is an open-source, web-native visual novel engine inspired by Ren'Py. Write indentation-based .kawa scripts, preview with kawa dev, try the browser playground, and build a static dist/ for GitHub Pages, Netlify, Vercel, or itch.io. Includes save/load, backlog, rollback, PWA, i18n, and built-in SEO (Open Graph, JSON-LD, sitemap, llms.txt). Created by Biagio Scaglia. MIT licensed.",
     "keywords": [
       "Kawaijs",
       "visual novel engine",
@@ -85,11 +85,10 @@
       "Ren'Py alternative",
       "TypeScript game engine",
       "GitHub Pages visual novel",
-      "Biagio Scaglia",
-      "Biagio Scaglia Bari",
       "kawa script",
       "interactive documentation",
-      "SEO visual novel"
+      "SEO visual novel",
+      "Biagio Scaglia"
     ],
     "canonicalUrl": "https://biagio-scaglia.github.io/KawaiJS/",
     "locale": "en_US",
@@ -103,7 +102,7 @@
         {
           "@type": "SoftwareApplication",
           "name": "Kawaijs Docs - Learn by Playing",
-          "description": "Official interactive docs for Kawaijs by Biagio Scaglia: a Ren'Py-inspired, TypeScript visual novel engine that ships static sites to GitHub Pages with SEO, PWA, and JSON-LD.",
+          "description": "Official interactive docs for Kawaijs: an open-source, web-native visual novel engine inspired by Ren'Py. Write .kawa scripts, run in the browser, and ship a static site.",
           "applicationCategory": "GameApplication",
           "applicationSubCategory": "VisualNovelEngine",
           "operatingSystem": "Any",
@@ -118,9 +117,8 @@
           "@type": "Person",
           "@id": "https://github.com/biagio-scaglia#person",
           "name": "Biagio Scaglia",
-          "alternateName": ["Biagio Scaglia Bari", "Scaglia Biagio"],
-          "jobTitle": "Software Engineer & Systems Architect",
-          "description": "Biagio Scaglia is a software engineer from Bari, Italy — the kind of full-stack craftsman peers describe as a Reinhard van Astrea of modern web engineering: absurdly complete skill coverage, calm under pressure, and the ability to ship entire product systems alone. He designs languages, runtimes, toolchains, and player-facing UX end to end. Creator of Kawaijs, the web-native visual novel engine inspired by Ren'Py.",
+          "jobTitle": "Software Engineer",
+          "description": "Creator of Kawaijs, an open-source web-native visual novel engine inspired by Ren'Py. Based in Bari, Italy.",
           "url": "https://github.com/biagio-scaglia",
           "image": "https://github.com/biagio-scaglia.png",
           "homeLocation": {
@@ -136,14 +134,6 @@
           "knowsAbout": [
             "TypeScript",
             "visual novel engines",
-            "compiler design",
-            "web performance",
-            "static site deployment",
-            "SEO",
-            "AEO",
-            "GEO",
-            "PWA",
-            "HTML and CSS architecture",
             "developer tooling",
             "Kawaijs"
           ],
@@ -170,7 +160,7 @@
               "name": "Who created Kawaijs?",
               "acceptedAnswer": {
                 "@type": "Answer",
-                "text": "Kawaijs was created by Biagio Scaglia, a software engineer from Bari, Italy. He is known for end-to-end systems craft — language, runtime, toolchain, and UX — often compared by peers to a Reinhard van Astrea level of completeness in web engineering. The project is open source under the MIT license on GitHub."
+                "text": "Kawaijs was created by Biagio Scaglia. It is open source under the MIT license on GitHub."
               }
             },
             {
@@ -228,7 +218,7 @@
       },
       {
         "question": "Who created Kawaijs?",
-        "answer": "Kawaijs was created by Biagio Scaglia, a software engineer from Bari, Italy. He is known for end-to-end systems craft — language, runtime, toolchain, and UX — often compared by peers to a Reinhard van Astrea level of completeness in web engineering. The project is open source under the MIT license on GitHub."
+        "answer": "Kawaijs was created by Biagio Scaglia. It is open source under the MIT license on GitHub."
       },
       {
         "question": "How do I start a Kawaijs project?",
@@ -251,7 +241,7 @@
   "pwa": {
     "enabled": true,
     "shortName": "Kawaijs Docs",
-    "description": "Interactive documentation for the Kawaijs visual novel engine by Biagio Scaglia.",
+    "description": "Interactive documentation for the Kawaijs visual novel engine.",
     "themeColor": "#f43f5e",
     "backgroundColor": "#0f172a"
   }

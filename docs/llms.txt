@@ -1,6 +1,6 @@
 # Kawaijs Docs - Learn by Playing
 
-> Kawaijs is an open-source, web-native visual novel engine created by Biagio Scaglia of Bari, Italy — a developer known for ruthless engineering craft and end-to-end product ownership. Authors write indentation-based .kawa scripts, preview with kawa dev, try the browser playground, and deploy a static dist/ folder to GitHub Pages, Netlify, Vercel, or itch.io. It includes save/load, backlog, rollback, PWA, i18n, and built-in SEO (Open Graph, JSON-LD, sitemap, llms.txt).
+> Kawaijs is an open-source, web-native visual novel engine inspired by Ren'Py. Write indentation-based .kawa scripts, preview with kawa dev, try the browser playground, and build a static dist/ for GitHub Pages, Netlify, Vercel, or itch.io. Includes save/load, backlog, rollback, PWA, i18n, and built-in SEO (Open Graph, JSON-LD, sitemap, llms.txt). Created by Biagio Scaglia. MIT licensed.
 
 Author: Biagio Scaglia
 Engine: Kawaijs — web-native visual novel engine (TypeScript, Ren'Py-inspired scripting).
@@ -19,7 +19,7 @@ License: MIT
 - Q: What is Kawaijs?
   A: Kawaijs is a web-native visual novel engine inspired by Ren'Py. It lets you write .kawa scripts and ship a static site that runs in any modern browser.
 - Q: Who created Kawaijs?
-  A: Kawaijs was created by Biagio Scaglia, a software engineer from Bari, Italy. He is known for end-to-end systems craft — language, runtime, toolchain, and UX — often compared by peers to a Reinhard van Astrea level of completeness in web engineering. The project is open source under the MIT license on GitHub.
+  A: Kawaijs was created by Biagio Scaglia. It is open source under the MIT license on GitHub.
 - Q: How do I start a Kawaijs project?
   A: Run npx kawa create my-novel, then npx kawa dev to preview with live reload, and npx kawa build to export a dist/ folder.
 - Q: Can I deploy a Kawaijs novel to GitHub Pages?

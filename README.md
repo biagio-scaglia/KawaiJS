@@ -57,7 +57,7 @@ npm run dev:showcase
 # Production: https://biagio-scaglia.github.io/KawaiJS/showcase/
 ```
 
-Or the **interactive documentation** VN (SEO / AEO / GEO ready, author Biagio Scaglia):
+Or the **interactive documentation** VN (SEO / AEO / GEO ready):
 
 ```bash
 npm run dev:docs

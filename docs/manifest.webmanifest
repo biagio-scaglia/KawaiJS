@@ -1,7 +1,7 @@
 {
   "name": "Kawaijs Docs - Learn by Playing",
   "short_name": "Kawaijs Docs",
-  "description": "Official interactive docs for Kawaijs by Biagio Scaglia: a Ren'Py-inspired, TypeScript visual novel engine that ships static sites to GitHub Pages with SEO, PWA, and JSON-LD.",
+  "description": "Official interactive docs for Kawaijs: an open-source, web-native visual novel engine inspired by Ren'Py. Write .kawa scripts, run in the browser, and ship a static site.",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
