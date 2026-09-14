@@ -104,6 +104,8 @@ describe('Kawaijs CLI Commands', () => {
     expect(ok).toBe(true);
     expect(fs.existsSync(path.join(outDir, 'favicon.svg'))).toBe(true);
     expect(fs.existsSync(path.join(outDir, 'robots.txt'))).toBe(true);
+    expect(fs.existsSync(path.join(outDir, 'sitemap.xml'))).toBe(true);
+    expect(fs.existsSync(path.join(outDir, 'llms.txt'))).toBe(true);
 
     const html = fs.readFileSync(path.join(outDir, 'index.html'), 'utf-8');
     expect(html).toContain('lang="it"');
@@ -112,6 +114,7 @@ describe('Kawaijs CLI Commands', () => {
     expect(html).toContain('favicon.svg');
     expect(html).toContain('name="author"');
     expect(html).toContain('application/ld+json');
+    expect(html).toContain('<noscript>');
 
     const resolved = resolveFavicon(testDir, {
       ...DEFAULT_KAWA_CONFIG,

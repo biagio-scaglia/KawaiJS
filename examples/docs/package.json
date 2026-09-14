@@ -1,0 +1,13 @@
+{
+  "name": "kawaijs-docs",
+  "version": "0.1.11",
+  "private": true,
+  "type": "module",
+  "description": "Interactive documentation visual novel for Kawaijs by Biagio Scaglia",
+  "author": "Biagio Scaglia",
+  "scripts": {
+    "dev": "kawa dev",
+    "build": "kawa build",
+    "validate": "kawa validate"
+  }
+}

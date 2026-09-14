@@ -8,8 +8,9 @@
 [![npm version](https://img.shields.io/npm/v/kawaijs.svg)](https://www.npmjs.com/package/kawaijs)
 [![TypeScript](https://img.shields.io/badge/TypeScript-Strict-blue?logo=typescript)](https://www.typescriptlang.org/)
 [![Tests](https://img.shields.io/badge/Tests-77%2B%20Passing-brightgreen)](https://github.com/biagio-scaglia/KawaiJS)
+[![Docs](https://img.shields.io/badge/Docs-Playable%20VN-f43f5e)](https://biagio-scaglia.github.io/KawaiJS/)
 
-[Quick Start](#-quick-start) • [Syntax Guide](#-kawa-script-syntax-guide) • [Start Menu](#-start-menu--ui-customization) • [Keyboard Shortcuts](#-keyboard-shortcuts) • [Architecture](#-architecture)
+[Playable Docs](https://biagio-scaglia.github.io/KawaiJS/) • [Quick Start](#-quick-start) • [Syntax Guide](#-kawa-script-syntax-guide) • [Start Menu](#-start-menu--ui-customization) • [Keyboard Shortcuts](#-keyboard-shortcuts) • [Architecture](#-architecture)
 
 </div>
 
@@ -50,6 +51,14 @@ Try the full showcase (sakura, fades, CG, three endings) from this repo:
 
 ```bash
 npx kawa dev ./examples/hello-world
+```
+
+Or the **interactive documentation** VN (SEO / AEO / GEO ready, author Biagio Scaglia):
+
+```bash
+npm run dev:docs
+# → http://localhost:3000
+# Production: https://biagio-scaglia.github.io/KawaiJS/
 ```
 
 ### 3. Build for Production

@@ -1,0 +1,47 @@
+/*
+ * Kawaijs Docs — interactive documentation skin
+ */
+@import url("https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,600;0,9..40,700;1,9..40,400&family=Fraunces:opsz,wght@9..40,600;9..40,700&display=swap");
+
+:root {
+  --kawa-primary-accent: #f43f5e;
+  --kawa-primary-glow: rgba(244, 63, 94, 0.45);
+  --kawa-dialogue-radius: 18px;
+  --kawa-choice-radius: 14px;
+  --kawa-font-body: "DM Sans", "Segoe UI", system-ui, sans-serif;
+  --kawa-font-heading: "Fraunces", Georgia, serif;
+}
+
+.kawa-dialogue-box,
+.kawa-dialogue {
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  box-shadow:
+    0 24px 60px -10px rgba(0, 0, 0, 0.8),
+    0 0 30px rgba(244, 63, 94, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(244, 63, 94, 0.4);
+}
+
+.kawa-speaker-name {
+  font-family: var(--kawa-font-heading);
+  letter-spacing: 0.04em;
+}
+
+.kawa-choice-btn,
+.kawa-choice {
+  transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+  letter-spacing: 0.01em;
+  font-weight: 600;
+}
+
+.kawa-choice-btn:hover,
+.kawa-choice:hover {
+  transform: translateY(-3px) scale(1.02);
+  box-shadow: 0 12px 30px rgba(244, 63, 94, 0.5);
+}
+
+.kawa-main-menu-title {
+  font-family: var(--kawa-font-heading);
+  font-weight: 700;
+}

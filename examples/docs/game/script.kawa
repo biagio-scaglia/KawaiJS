@@ -1,0 +1,178 @@
+# Kawaijs Interactive Documentation
+# Author: Biagio Scaglia - learn the engine by playing a short VN.
+
+character yumia "Yumia" #f43f5e
+character kaori "Kaori" #0284c7
+character guide "Docs" #94a3b8
+
+define bg classroom = "classroom.svg"
+define bg rooftop = "rooftop.svg"
+define bg courtyard = "sunset_courtyard.svg"
+
+label start:
+    set reader_name = "Creator"
+    set lessons_done = 0
+    theme "sakura"
+    style dialogue glass
+    style choices pill
+
+    scene bg classroom with fade
+    vfx sakura
+
+    show yumia happy at left with bounce
+    show kaori normal at right with dissolve
+
+    yumia "{t:welcome}"
+    kaori "I'm Kaori - I'll keep the technical answers precise."
+    yumia "And I'm Yumia. We'll teach by {i}playing{/i}, not by dumping a wall of markdown."
+
+    input reader_name "What should we call you?"
+    yumia "Nice to meet you, [reader_name]!"
+    kaori "{t:author_line}"
+
+    guide "Tip: deep-link any lesson with {b}?at=lesson_install{/b}. Italian strings: {b}?lang=it{/b}."
+    jump hub
+
+label hub:
+    scene bg classroom with dissolve
+    vfx sakura
+    show yumia normal at left
+    show kaori thinking at right
+
+    yumia "{t:hub_prompt}"
+
+    menu:
+        "Quick start - install & first run":
+            jump lesson_install
+        "Script basics - characters & dialogue":
+            jump lesson_script
+        "Stage craft - scenes, sprites, VFX":
+            jump lesson_stage
+        "Branching - menus, if, input":
+            jump lesson_branch
+        "Ship it - GitHub Pages deploy":
+            jump lesson_deploy
+        "Discoverability - SEO, AEO & GEO":
+            jump lesson_seo
+        "I'm done - graduate from the club":
+            jump ending
+
+label lesson_install:
+    scene bg rooftop with wipeleft
+    vfx fog
+    hide yumia
+    show kaori smug at center with dissolve
+
+    kaori "Scaffold a project:"
+    kaori "{b}npx kawa create my-novel{/b}"
+    kaori "Then {b}npx kawa dev{/b} for live reload at localhost, and {b}npx kawa build{/b} for a static {b}dist/{/b}."
+    kaori "Validate anytime with {b}npx kawa validate{/b}. No backend. No canvas lock-in."
+
+    show yumia excited at left with bounce
+    yumia "That's it, [reader_name]! Your novel is already a website."
+    set lessons_done += 1
+    unlock docs_install "First Compile" "Opened the install lesson."
+    jump hub
+
+label lesson_script:
+    scene bg classroom with fade
+    vfx sakura
+    show yumia happy at center with bounce
+
+    yumia "A {b}.kawa{/b} file is indentation-based - easy to read, easy to write."
+    yumia "Declare speakers with {b}character{/b}, start at {b}label start:{/b}, speak with {b}yumia \"Hello!\"{/b}."
+    yumia "Rich text supports bold, italic, and color tags. Variables interpolate like {b}[reader_name]{/b}."
+
+    show kaori normal at right with dissolve
+    kaori "Prefer translation tables? Use {b}t:key{/b} placeholders with {b}game/lang/en.json{/b} and switch via {b}?lang=it{/b}."
+    set lessons_done += 1
+    jump hub
+
+label lesson_stage:
+    scene bg courtyard with dissolve
+    vfx sakura 40
+    show yumia excited at left with bounce
+    show kaori happy at right with nod
+
+    yumia "{b}scene bg courtyard with fade{/b} swaps the background."
+    yumia "{b}show yumia happy at left with bounce{/b} places a sprite. {b}hide yumia{/b} removes it."
+    kaori "Transitions: fade, dissolve, wipeleft… Sprites: bounce, nod, shake. Layers via {b}z{/b} or {b}layer{/b}."
+    kaori "Atmosphere: {b}vfx sakura{/b}, rain, snow, fog, tint. Camera: shake, flash, vpunch."
+    yumia "Themes: {b}theme \"noir\"{/b} · {b}style dialogue glass{/b} - all CSS-native."
+    set lessons_done += 1
+    jump hub
+
+label lesson_branch:
+    scene bg classroom with fade
+    show kaori thinking at center with dissolve
+
+    kaori "Player agency lives in {b}menu:{/b} blocks and {b}if / elif / else{/b}."
+    kaori "{b}jump label{/b} goes there permanently. {b}call{/b} / {b}return{/b} for subroutines."
+    kaori "{b}input var \"prompt\"{/b} asks the player - you already used it for [reader_name]."
+    kaori "Conditionals can gate choices: {b}\"Open door\" if has_key:{/b}"
+
+    menu:
+        "Got it - back to the hub":
+            set lessons_done += 1
+            jump hub
+        "Show me a tiny branch demo":
+            jump branch_demo
+
+label branch_demo:
+    show yumia happy at left with bounce
+    yumia "See? Menus are just documentation that {i}plays{/i}."
+    set lessons_done += 1
+    jump hub
+
+label lesson_deploy:
+    scene bg rooftop with wipeleft
+    vfx fog
+    show kaori smug at left with dissolve
+    show yumia normal at right
+
+    kaori "Production build:"
+    kaori "{b}npx kawa build ./examples/docs{/b} → static {b}dist/{/b}."
+    kaori "Inside: index.html, assets, PWA manifest, {b}robots.txt{/b}, {b}sitemap.xml{/b}, {b}llms.txt{/b}."
+    yumia "This very site deploys to {b}GitHub Pages{/b} from the monorepo workflow."
+    kaori "Set Pages source to {b}GitHub Actions{/b}, push {b}main{/b}, done."
+    kaori "Also works on Netlify, Vercel, Cloudflare Pages, itch.io - anywhere static files land."
+
+    cg "cg_sunset_promise.svg" as "docs_sunset"
+    unlock docs_deploy "Ship It" "Completed the GitHub Pages deploy lesson."
+    set lessons_done += 1
+    jump hub
+
+label lesson_seo:
+    scene bg classroom with fade
+    theme "ocean"
+    style dialogue glass
+    show kaori thinking at center with dissolve
+
+    kaori "Configure discoverability in {b}kawa.config.json{/b}."
+    kaori "{b}author{/b}: Biagio Scaglia · {b}seo.canonicalUrl{/b} · description · keywords · favicon."
+    kaori "{b}SEO{/b}: Open Graph, Twitter cards, canonical, robots."
+    kaori "{b}AEO{/b}: FAQPage JSON-LD + crawlable {b}<noscript>{/b} answers for answer engines."
+    kaori "{b}GEO{/b}: {b}llms.txt{/b}, aiSummary, sameAs links so generative engines cite the right entity."
+    kaori "Per-label share cards via {b}share.labels{/b} - perfect with {b}?at={/b} deep links."
+
+    show yumia happy at left with bounce
+    yumia "So search engines, chatbots, and humans all get a clear story about Kawaijs."
+    set lessons_done += 1
+    theme "sakura"
+    jump hub
+
+label ending:
+    scene bg courtyard with dissolve
+    vfx sakura
+    show yumia excited at left with bounce
+    show kaori happy at right with nod
+
+    yumia "You cleared [lessons_done] lesson hops, [reader_name]. Not bad!"
+    kaori "Next: read the repo README, star the project, and ship your own VN."
+    yumia "Created with care by {b}Biagio Scaglia{/b}. Thanks for visiting the docs club."
+
+    unlock docs_graduate "Club Graduate" "Finished the interactive Kawaijs documentation."
+    cg "cg_celebration.svg" as "docs_celebration"
+
+    guide "Replay from the title menu anytime. Deep links: ?at=hub · ?at=lesson_seo · ?lang=it"
+    return

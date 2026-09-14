@@ -1,0 +1,5 @@
+{
+  "welcome": "Welcome to the {b}Kawaijs{/b} documentation club!",
+  "author_line": "Author: {b}Biagio Scaglia{/b}. Web-native engine inspired by Ren'Py.",
+  "hub_prompt": "Where do you want to go?"
+}

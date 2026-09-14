@@ -9,8 +9,10 @@
   ],
   "scripts": {
     "dev": "node ./packages/cli/bin/kawa.js dev ./examples/hello-world",
+    "dev:docs": "node ./packages/cli/bin/kawa.js dev ./examples/docs",
     "build": "tsc -b",
     "build:example": "node ./packages/cli/bin/kawa.js build ./examples/hello-world",
+    "build:docs": "node ./packages/cli/bin/kawa.js build ./examples/docs",
     "typecheck": "tsc -b",
     "test": "vitest run",
     "test:watch": "vitest",

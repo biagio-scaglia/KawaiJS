@@ -7,6 +7,9 @@ import { buildPwaAssets, buildPwaIconSvg, renderPwaHeadTags, renderPwaRegisterSc
 import {
   renderRobotsTxt,
   renderSeoHeadTags,
+  renderSitemapXml,
+  renderLlmsTxt,
+  renderNoscriptDocs,
   resolveAppleTouchIcon,
   resolveFavicon,
   resolveHtmlLang,
@@ -169,7 +172,32 @@ export function buildProject(projectDir = '.', options: BuildOptions = {}): bool
       renderRobotsTxt(projectConfig.seo.canonicalUrl),
       'utf-8'
     );
+
+    const labelPaths = Object.keys(projectConfig.share?.labels ?? {}).map(
+      (label) => `?at=${encodeURIComponent(label)}`
+    );
+    const extraPaths = [
+      ...(projectConfig.seo.sitemapPaths ?? []),
+      ...labelPaths
+    ];
+    fs.writeFileSync(
+      path.join(outDir, 'sitemap.xml'),
+      renderSitemapXml(projectConfig.seo.canonicalUrl, extraPaths),
+      'utf-8'
+    );
+    console.log(`✅ robots.txt + sitemap.xml written`);
   }
+
+  const shouldWriteLlms =
+    projectConfig.seo?.llmsTxt === true ||
+    typeof projectConfig.seo?.llmsTxt === 'string' ||
+    (projectConfig.seo?.llmsTxt !== false && Boolean(projectConfig.seo?.canonicalUrl));
+  if (shouldWriteLlms) {
+    fs.writeFileSync(path.join(outDir, 'llms.txt'), renderLlmsTxt(projectConfig), 'utf-8');
+    console.log(`✅ llms.txt written (GEO / AI crawlers)`);
+  }
+
+  const noscriptBlock = renderNoscriptDocs(projectConfig);
 
   const htmlContent = `<!DOCTYPE html>
 <html lang="${htmlLang}">
@@ -196,6 +224,7 @@ ${pwaHead}
 </head>
 <body>
   <div id="app"></div>
+${noscriptBlock}
 
   <script type="module">
     const story = ${JSON.stringify(storyPackage, null, 2)};

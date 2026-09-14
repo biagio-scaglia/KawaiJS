@@ -54,6 +54,11 @@ export interface KawaPwaConfig {
   readonly backgroundColor?: string;
 }
 
+export interface KawaSeoFaqItem {
+  readonly question: string;
+  readonly answer: string;
+}
+
 export interface KawaSeoConfig {
   /** Meta description (falls back to share.description). */
   readonly description?: string;
@@ -83,6 +88,21 @@ export interface KawaSeoConfig {
    * Set `false` to disable, or pass a custom object.
    */
   readonly jsonLd?: boolean | Record<string, unknown>;
+  /**
+   * FAQ entries for FAQPage JSON-LD + crawlable `<noscript>` (AEO / GEO).
+   */
+  readonly faq?: readonly KawaSeoFaqItem[];
+  /**
+   * Emit `llms.txt` next to the build (default: true when `canonicalUrl` is set).
+   * Pass a string to override the full file body.
+   */
+  readonly llmsTxt?: boolean | string;
+  /** Extra absolute or site-relative paths included in `sitemap.xml`. */
+  readonly sitemapPaths?: readonly string[];
+  /** Author profile / sameAs links for Person JSON-LD (GitHub, site, etc.). */
+  readonly sameAs?: readonly string[];
+  /** Short factual summary for AI crawlers (also used in llms.txt). */
+  readonly aiSummary?: string;
 }
 
 export interface KawaAchievementConfig {

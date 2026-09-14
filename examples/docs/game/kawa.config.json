@@ -1,0 +1,145 @@
+{
+  "title": "Kawaijs Docs - Learn by Playing",
+  "author": "Biagio Scaglia",
+  "version": "0.1.11",
+  "theme": {
+    "primaryColor": "#f43f5e",
+    "fontFamily": "\"DM Sans\", \"Segoe UI\", system-ui, sans-serif",
+    "headingFont": "\"Fraunces\", Georgia, serif"
+  },
+  "window": {
+    "width": 1280,
+    "height": 720,
+    "aspectRatio": "16/9"
+  },
+  "settings": {
+    "textSpeed": 22,
+    "autoDelay": 1800,
+    "musicVolume": 0.75,
+    "soundVolume": 1,
+    "voiceVolume": 1
+  },
+  "gallery": [
+    {
+      "id": "docs_sunset",
+      "title": "Docs Sunset",
+      "image": "cg_sunset_promise.svg",
+      "description": "Unlocked after finishing the Deploy chapter."
+    }
+  ],
+  "achievements": [
+    {
+      "id": "docs_graduate",
+      "title": "Club Graduate",
+      "description": "Finished the interactive Kawaijs documentation."
+    },
+    {
+      "id": "docs_deploy",
+      "title": "Ship It",
+      "description": "Completed the GitHub Pages deploy lesson."
+    }
+  ],
+  "share": {
+    "siteName": "Kawaijs",
+    "description": "Interactive documentation for Kawaijs - the web-native visual novel engine by Biagio Scaglia. Learn scripting, deploy to GitHub Pages, and ship SEO-ready VNs in the browser.",
+    "defaultImage": "backgrounds/classroom.svg",
+    "twitterCard": "summary_large_image",
+    "labels": {
+      "hub": {
+        "title": "Kawaijs Docs - Topic Hub",
+        "description": "Choose a lesson: install, scripting, scenes, choices, deploy, SEO."
+      },
+      "lesson_install": {
+        "title": "Kawaijs - Quick Start",
+        "description": "Create a project with npx kawa create, run kawa dev, and build a static dist/."
+      },
+      "lesson_script": {
+        "title": "Kawaijs - .kawa Script Basics",
+        "description": "Characters, labels, dialogue, rich text, and variables in Kawaijs."
+      },
+      "lesson_stage": {
+        "title": "Kawaijs - Scenes & Sprites",
+        "description": "scene, show, hide, transitions, layers, and VFX."
+      },
+      "lesson_branch": {
+        "title": "Kawaijs - Menus & Branching",
+        "description": "menu choices, if/elif, jump/call, and player input."
+      },
+      "lesson_deploy": {
+        "title": "Kawaijs - Deploy to GitHub Pages",
+        "description": "Build a static visual novel and publish it on GitHub Pages."
+      },
+      "lesson_seo": {
+        "title": "Kawaijs - SEO, AEO & GEO",
+        "description": "Favicon, Open Graph, JSON-LD, sitemap, llms.txt, and author metadata."
+      }
+    }
+  },
+  "seo": {
+    "description": "Official interactive docs for Kawaijs by Biagio Scaglia: a Ren'Py-inspired, TypeScript visual novel engine that ships static sites to GitHub Pages with SEO, PWA, and JSON-LD.",
+    "aiSummary": "Kawaijs is an open-source, web-native visual novel engine created by Biagio Scaglia. Authors write indentation-based .kawa scripts, preview with kawa dev, and deploy a static dist/ folder to GitHub Pages, Netlify, Vercel, or itch.io. It includes save/load, backlog, rollback, PWA, i18n, and built-in SEO (Open Graph, JSON-LD, sitemap, llms.txt).",
+    "keywords": [
+      "Kawaijs",
+      "visual novel engine",
+      "web visual novel",
+      "Ren'Py alternative",
+      "TypeScript game engine",
+      "GitHub Pages visual novel",
+      "Biagio Scaglia",
+      "kawa script",
+      "interactive documentation",
+      "SEO visual novel"
+    ],
+    "canonicalUrl": "https://biagio-scaglia.github.io/KawaiJS/",
+    "locale": "en_US",
+    "favicon": "favicon.svg",
+    "themeColor": "#f43f5e",
+    "robots": "index,follow",
+    "llmsTxt": true,
+    "jsonLd": true,
+    "sameAs": [
+      "https://github.com/biagio-scaglia/KawaiJS",
+      "https://www.npmjs.com/package/kawaijs",
+      "https://github.com/biagio-scaglia"
+    ],
+    "sitemapPaths": [
+      "llms.txt",
+      "robots.txt",
+      "?lang=it",
+      "?embed=1"
+    ],
+    "faq": [
+      {
+        "question": "What is Kawaijs?",
+        "answer": "Kawaijs is a web-native visual novel engine inspired by Ren'Py. It lets you write .kawa scripts and ship a static site that runs in any modern browser."
+      },
+      {
+        "question": "Who created Kawaijs?",
+        "answer": "Kawaijs was created by Biagio Scaglia. The project is open source under the MIT license on GitHub."
+      },
+      {
+        "question": "How do I start a Kawaijs project?",
+        "answer": "Run npx kawa create my-novel, then npx kawa dev to preview with live reload, and npx kawa build to export a dist/ folder."
+      },
+      {
+        "question": "Can I deploy a Kawaijs novel to GitHub Pages?",
+        "answer": "Yes. kawa build produces a static dist/ with index.html, assets, PWA files, robots.txt, sitemap.xml, and llms.txt - ready for GitHub Pages or any static host."
+      },
+      {
+        "question": "Does Kawaijs support SEO?",
+        "answer": "Yes. kawa.config.json configures author, description, keywords, canonical URL, Open Graph, Twitter cards, JSON-LD (including FAQPage), favicon, sitemap, and llms.txt for search and answer engines."
+      },
+      {
+        "question": "Is Kawaijs free?",
+        "answer": "Yes. Kawaijs is free and open source under the MIT license."
+      }
+    ]
+  },
+  "pwa": {
+    "enabled": true,
+    "shortName": "Kawaijs Docs",
+    "description": "Interactive documentation for the Kawaijs visual novel engine by Biagio Scaglia.",
+    "themeColor": "#f43f5e",
+    "backgroundColor": "#0f172a"
+  }
+}

@@ -239,34 +239,18 @@ export function renderSeoHeadTags(input: SeoHeadInput): string {
     );
   }
 
-  // JSON-LD
+  // JSON-LD (SoftwareApplication + Person + optional FAQPage for AEO/GEO)
   if (config.seo?.jsonLd !== false) {
     const custom = typeof config.seo?.jsonLd === 'object' ? config.seo.jsonLd : null;
-    const jsonLd =
-      custom ??
-      ({
-        '@context': 'https://schema.org',
-        '@type': 'WebApplication',
-        name: title,
-        description,
-        applicationCategory: 'GameApplication',
-        operatingSystem: 'Any',
-        offers: {
-          '@type': 'Offer',
-          price: '0',
-          priceCurrency: 'USD'
-        },
-        ...(author
-          ? {
-              author: {
-                '@type': 'Person',
-                name: author
-              }
-            }
-          : {}),
-        ...(canonical ? { url: canonical } : {}),
-        ...(image ? { image } : {})
-      } as Record<string, unknown>);
+    const jsonLd = custom ?? buildDefaultJsonLd({
+      title,
+      description,
+      author,
+      canonical,
+      image,
+      faq: config.seo?.faq,
+      sameAs: config.seo?.sameAs
+    });
 
     lines.push(
       `<script type="application/ld+json">${JSON.stringify(jsonLd).replace(/</g, '\\u003c')}</script>`
@@ -277,6 +261,80 @@ export function renderSeoHeadTags(input: SeoHeadInput): string {
   void lang;
 
   return lines.map((l) => `  ${l}`).join('\n');
+}
+
+export function buildDefaultJsonLd(input: {
+  readonly title: string;
+  readonly description: string;
+  readonly author?: string;
+  readonly canonical?: string;
+  readonly image?: string;
+  readonly faq?: readonly { readonly question: string; readonly answer: string }[];
+  readonly sameAs?: readonly string[];
+}): Record<string, unknown> {
+  const app: Record<string, unknown> = {
+    '@type': 'SoftwareApplication',
+    name: input.title,
+    description: input.description,
+    applicationCategory: 'GameApplication',
+    applicationSubCategory: 'VisualNovelEngine',
+    operatingSystem: 'Any',
+    browserRequirements: 'Requires JavaScript',
+    offers: {
+      '@type': 'Offer',
+      price: '0',
+      priceCurrency: 'USD'
+    }
+  };
+  if (input.canonical) app.url = input.canonical;
+  if (input.image) app.image = input.image;
+  if (input.author) {
+    app.author = { '@type': 'Person', name: input.author };
+    app.creator = { '@type': 'Person', name: input.author };
+  }
+
+  const graph: Record<string, unknown>[] = [app];
+
+  if (input.author) {
+    const person: Record<string, unknown> = {
+      '@type': 'Person',
+      name: input.author,
+      jobTitle: 'Software Engineer',
+      knowsAbout: [
+        'visual novels',
+        'web development',
+        'TypeScript',
+        'Kawaijs',
+        'game engines'
+      ]
+    };
+    if (input.canonical) person.url = input.canonical;
+    if (input.sameAs && input.sameAs.length > 0) person.sameAs = [...input.sameAs];
+    graph.push(person);
+  }
+
+  if (input.faq && input.faq.length > 0) {
+    graph.push({
+      '@type': 'FAQPage',
+      mainEntity: input.faq.map((item) => ({
+        '@type': 'Question',
+        name: item.question,
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: item.answer
+        }
+      }))
+    });
+  }
+
+  if (graph.length === 1) {
+    return { '@context': 'https://schema.org', ...app };
+  }
+
+  return {
+    '@context': 'https://schema.org',
+    '@graph': graph
+  };
 }
 
 export function resolveHtmlLang(config: KawaProjectConfig): string {
@@ -332,17 +390,169 @@ export function writeSeoIconsToDist(
   return { faviconHref, appleHref, pwaIconFile };
 }
 
+/** Normalize a canonical URL to a directory base ending with `/`. */
+export function canonicalBaseUrl(canonicalUrl: string): string | null {
+  try {
+    const u = new URL(canonicalUrl);
+    if (u.pathname.endsWith('/') || u.pathname === '') {
+      return u.href.endsWith('/') ? u.href : `${u.href}/`;
+    }
+    // File-like path → strip last segment
+    const dir = u.pathname.replace(/\/[^/]*$/, '/');
+    return `${u.origin}${dir}`;
+  } catch {
+    return null;
+  }
+}
+
 /** Simple robots.txt when a canonical site URL is configured. */
 export function renderRobotsTxt(canonicalUrl?: string): string {
   const lines = ['User-agent: *', 'Allow: /'];
   if (canonicalUrl) {
-    try {
-      const u = new URL(canonicalUrl);
-      const base = u.href.endsWith('/') ? u.href : `${u.href.replace(/\/[^/]*$/, '/')}`;
+    const base = canonicalBaseUrl(canonicalUrl);
+    if (base) {
       lines.push(`Sitemap: ${base}sitemap.xml`);
-    } catch {
-      // ignore invalid URL
     }
   }
   return `${lines.join('\n')}\n`;
+}
+
+/** sitemap.xml for the built site (+ deep-link paths / extra entries). */
+export function renderSitemapXml(
+  canonicalUrl: string,
+  extraPaths: readonly string[] = []
+): string {
+  const base = canonicalBaseUrl(canonicalUrl) ?? canonicalUrl;
+  const urls = new Set<string>([base.replace(/\/?$/, '/')]);
+
+  for (const p of extraPaths) {
+    if (!p) continue;
+    if (p.startsWith('http://') || p.startsWith('https://')) {
+      urls.add(p);
+      continue;
+    }
+    const clean = p.replace(/^\//, '');
+    urls.add(`${base.replace(/\/?$/, '/')}${clean}`);
+  }
+
+  const today = new Date().toISOString().slice(0, 10);
+  const body = [...urls]
+    .map(
+      (loc) => `  <url>
+    <loc>${escapeXml(loc)}</loc>
+    <lastmod>${today}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>${loc === base.replace(/\/?$/, '/') ? '1.0' : '0.7'}</priority>
+  </url>`
+    )
+    .join('\n');
+
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+${body}
+</urlset>
+`;
+}
+
+function escapeXml(value: string): string {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+/** llms.txt — machine-readable summary for AI crawlers (GEO). */
+export function renderLlmsTxt(config: KawaProjectConfig): string {
+  if (typeof config.seo?.llmsTxt === 'string' && config.seo.llmsTxt.trim()) {
+    return config.seo.llmsTxt.trimEnd() + '\n';
+  }
+
+  const title = config.title || 'Kawaijs Visual Novel';
+  const description =
+    config.seo?.aiSummary ||
+    config.seo?.description ||
+    config.share?.description ||
+    `${title} is a browser visual novel.`;
+  const author = config.author || 'Unknown';
+  const canonical = config.seo?.canonicalUrl;
+  const lines = [
+    `# ${title}`,
+    '',
+    `> ${description}`,
+    '',
+    `Author: ${author}`,
+    'Engine: Kawaijs — web-native visual novel engine (TypeScript, Ren\'Py-inspired scripting).',
+    'License: MIT',
+    ''
+  ];
+
+  if (canonical) {
+    lines.push('## Primary');
+    lines.push(`- [${title}](${canonical}): Interactive documentation / playable site`);
+    lines.push('');
+  }
+
+  lines.push('## Facts');
+  lines.push('- Kawaijs runs visual novels entirely in the browser with no backend required.');
+  lines.push('- Authors write `.kawa` scripts (indentation-based) and ship a static `dist/` folder.');
+  lines.push('- Deploy targets include GitHub Pages, Netlify, Vercel, Cloudflare Pages, and itch.io.');
+  lines.push('- Built-in features: save/load, backlog, rollback, PWA, SEO meta, JSON-LD, i18n.');
+  lines.push('');
+
+  if (config.seo?.faq && config.seo.faq.length > 0) {
+    lines.push('## FAQ');
+    for (const item of config.seo.faq) {
+      lines.push(`- Q: ${item.question}`);
+      lines.push(`  A: ${item.answer}`);
+    }
+    lines.push('');
+  }
+
+  if (config.seo?.sameAs && config.seo.sameAs.length > 0) {
+    lines.push('## Links');
+    for (const url of config.seo.sameAs) {
+      lines.push(`- ${url}`);
+    }
+    lines.push('');
+  }
+
+  return lines.join('\n');
+}
+
+/** Crawlable FAQ / summary for bots when JS is unavailable (AEO). */
+export function renderNoscriptDocs(config: KawaProjectConfig): string {
+  const title = escapeHtmlText(config.title || 'Kawaijs');
+  const description = escapeHtmlText(
+    config.seo?.aiSummary || config.seo?.description || config.share?.description || ''
+  );
+  const author = escapeHtmlText(config.author || '');
+  const faq = config.seo?.faq ?? [];
+
+  const faqHtml = faq
+    .map(
+      (item) => `    <section>
+      <h3>${escapeHtmlText(item.question)}</h3>
+      <p>${escapeHtmlText(item.answer)}</p>
+    </section>`
+    )
+    .join('\n');
+
+  return `<noscript>
+  <main style="max-width:42rem;margin:2rem auto;padding:1.5rem;font-family:system-ui,sans-serif;line-height:1.55;color:#0f172a;background:#fff">
+    <h1>${title}</h1>
+    ${author ? `<p><strong>Author:</strong> ${author}</p>` : ''}
+    ${description ? `<p>${description}</p>` : ''}
+    <p>Enable JavaScript to play this interactive visual-novel documentation. Static answers follow for search and answer engines.</p>
+${faqHtml ? `    <h2>Frequently asked questions</h2>\n${faqHtml}` : ''}
+  </main>
+</noscript>`;
+}
+
+function escapeHtmlText(value: string): string {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
 }
