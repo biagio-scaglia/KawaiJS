@@ -281,6 +281,9 @@ export class StoryVM {
     const prev = this.snapshotStack[this.snapshotStack.length - 1];
     if (prev) {
       this.state = cloneState(prev.state);
+      const histLen =
+        typeof prev.historyLength === 'number' ? prev.historyLength : this.historyManager.getLength();
+      this.historyManager.trimTo(histLen);
       this.recordTrace(`ROLLBACK`);
       this.resyncAudio(prevMusic);
       this.notifyStateChanged();
@@ -298,7 +301,13 @@ export class StoryVM {
     const currentSnapshot = this.captureSnapshot();
     const previewText = this.state.dialogue?.text ?? 'Game in progress';
     this.recordTrace(`SAVE slot_${slotId}`);
-    return await this.saveManager.saveSlot(slotId, currentSnapshot, previewText, this.storyHash);
+    return await this.saveManager.saveSlot(
+      slotId,
+      currentSnapshot,
+      previewText,
+      this.storyHash,
+      this.historyManager.getEntries()
+    );
   }
 
   public async load(slotId: string, validateStoryHash = true): Promise<boolean> {
@@ -314,7 +323,16 @@ export class StoryVM {
 
     const prevMusic = this.state.audio.music;
     this.state = cloneState(res.slot.snapshot.state);
-    this.snapshotStack = [res.slot.snapshot];
+    const restoredHistory = res.slot.historyEntries ?? [];
+    this.historyManager.replaceAll(restoredHistory);
+    const snap: Snapshot = {
+      ...res.slot.snapshot,
+      historyLength:
+        typeof res.slot.snapshot.historyLength === 'number'
+          ? res.slot.snapshot.historyLength
+          : restoredHistory.length
+    };
+    this.snapshotStack = [snap];
     this.recordTrace(`LOAD slot_${slotId}`);
     this.resyncAudio(prevMusic);
     this.notifyStateChanged();
@@ -747,7 +765,8 @@ export class StoryVM {
     return {
       id: `snap_${Date.now()}_${this.snapshotStack.length}`,
       timestamp: Date.now(),
-      state: cloneState(this.state)
+      state: cloneState(this.state),
+      historyLength: this.historyManager.getLength()
     };
   }
 

@@ -314,13 +314,21 @@ export class DOMRenderer {
     }
     this.updateModeUI();
 
+    // Suspend decorative particle loops while skipping to cut CPU during fast-forward.
+    this.stageLayer.vfxLayer.setSuspended(this.isSkipMode);
+
     if (this.isSkipMode) {
       if (this.autoTimer) {
         clearTimeout(this.autoTimer);
         this.autoTimer = null;
       }
       if (!this.skipInterval) {
+        // Coalesce advances (~10/s) instead of hammering every 55ms.
         this.skipInterval = window.setInterval(() => {
+          if (this.destroyed) {
+            this.toggleSkipMode(false);
+            return;
+          }
           const state = this.vm.getState();
           if (state.isFinished || (state.choices && state.choices.length > 0)) {
             this.toggleSkipMode(false);
@@ -330,7 +338,7 @@ export class DOMRenderer {
             this.dialogueBox.finishTypewriter();
           }
           this.vm.next();
-        }, 55);
+        }, 100);
       }
     } else {
       if (this.skipInterval) {
@@ -680,6 +688,7 @@ export class DOMRenderer {
       const delay = state.pendingPauseMs;
       this.pauseTimer = window.setTimeout(() => {
         this.pauseTimer = null;
+        if (this.destroyed) return;
         const cur = this.vm.getState();
         if (cur.pendingPauseMs != null && !cur.isFinished) {
           this.vm.next();

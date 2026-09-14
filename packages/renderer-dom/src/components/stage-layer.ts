@@ -18,6 +18,7 @@ export class StageLayerComponent {
 
   private activeCharacters = new Map<string, { div: HTMLDivElement; img: HTMLImageElement; expression?: string; position?: string; transition?: string }>();
   private pendingRemovals = new Map<string, { div: HTMLDivElement; timer: ReturnType<typeof setTimeout> }>();
+  private flashTimer: ReturnType<typeof setTimeout> | null = null;
   private readonly assetResolver: (path: string, type: AssetType) => string;
 
   constructor(assetResolver: (path: string, type: AssetType) => string) {
@@ -209,15 +210,26 @@ export class StageLayerComponent {
   public flashScreen(): void {
     const existing = this.stageEl.querySelector('.kawa-flash-overlay');
     if (existing) existing.remove();
+    if (this.flashTimer) {
+      clearTimeout(this.flashTimer);
+      this.flashTimer = null;
+    }
 
     const flash = document.createElement('div');
     flash.className = 'kawa-flash-overlay';
     this.stageEl.appendChild(flash);
-    setTimeout(() => flash.remove(), 600);
+    this.flashTimer = setTimeout(() => {
+      this.flashTimer = null;
+      flash.remove();
+    }, 600);
   }
 
   public destroy(): void {
     this.vfxLayer.destroy();
+    if (this.flashTimer) {
+      clearTimeout(this.flashTimer);
+      this.flashTimer = null;
+    }
     for (const pending of this.pendingRemovals.values()) {
       clearTimeout(pending.timer);
     }

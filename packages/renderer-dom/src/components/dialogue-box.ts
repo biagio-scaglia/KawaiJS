@@ -9,6 +9,7 @@ export class DialogueBoxComponent {
   public readonly el: HTMLDivElement;
   private readonly speakerTagEl: HTMLDivElement;
   private readonly dialogueTextEl: HTMLDivElement;
+  private readonly announceEl: HTMLDivElement;
   private readonly indicatorEl: HTMLDivElement;
 
   private typewriterSpeed: number;
@@ -31,7 +32,23 @@ export class DialogueBoxComponent {
 
     this.dialogueTextEl = document.createElement('div');
     this.dialogueTextEl.className = 'kawa-dialogue-text kawa-text';
-    this.dialogueTextEl.setAttribute('aria-live', 'polite');
+    // Visible typewriter must NOT be live — per-character updates spam screen readers.
+    this.dialogueTextEl.setAttribute('aria-hidden', 'true');
+
+    this.announceEl = document.createElement('div');
+    this.announceEl.className = 'kawa-dialogue-announce';
+    this.announceEl.setAttribute('aria-live', 'polite');
+    this.announceEl.setAttribute('aria-atomic', 'true');
+    // Visually hidden but available to AT
+    this.announceEl.style.position = 'absolute';
+    this.announceEl.style.width = '1px';
+    this.announceEl.style.height = '1px';
+    this.announceEl.style.padding = '0';
+    this.announceEl.style.margin = '-1px';
+    this.announceEl.style.overflow = 'hidden';
+    this.announceEl.style.clip = 'rect(0, 0, 0, 0)';
+    this.announceEl.style.whiteSpace = 'nowrap';
+    this.announceEl.style.border = '0';
 
     this.indicatorEl = document.createElement('div');
     this.indicatorEl.className = 'kawa-continue-indicator';
@@ -40,6 +57,7 @@ export class DialogueBoxComponent {
 
     this.el.appendChild(this.speakerTagEl);
     this.el.appendChild(this.dialogueTextEl);
+    this.el.appendChild(this.announceEl);
     this.el.appendChild(this.indicatorEl);
   }
 
@@ -57,6 +75,7 @@ export class DialogueBoxComponent {
   ): void {
     if (!dialogue) {
       this.el.style.display = 'none';
+      this.announceEl.textContent = '';
       return;
     }
 
@@ -84,13 +103,18 @@ export class DialogueBoxComponent {
       this.typewriterInterval = null;
     }
 
+    // Clear previous announcement while typing so AT only hears the finished line.
+    this.announceEl.textContent = '';
+    this.el.setAttribute('aria-busy', 'true');
+
     if (this.typewriterSpeed <= 0) {
       this.dialogueTextEl.innerHTML = formatRichText(this.fullCurrentText);
       this.isTypewriting = false;
       this.indicatorEl.style.opacity = '1';
+      this.announceFinishedLine(dialogue);
       this.onTypewriterComplete?.();
     } else {
-      this.startTypewriter(this.fullCurrentText);
+      this.startTypewriter(this.fullCurrentText, dialogue);
     }
   }
 
@@ -103,10 +127,33 @@ export class DialogueBoxComponent {
     this.isTypewriting = false;
     this.dialogueTextEl.innerHTML = formatRichText(this.fullCurrentText);
     this.indicatorEl.style.opacity = '1';
+    const speaker = this.speakerTagEl.style.display === 'none' ? undefined : this.speakerTagEl.textContent || undefined;
+    this.announceFinishedLine({
+      speakerDisplayName: speaker,
+      text: this.fullCurrentText
+    });
     this.onTypewriterComplete?.();
   }
 
-  private startTypewriter(text: string): void {
+  private announceFinishedLine(dialogue: {
+    speaker?: string;
+    speakerDisplayName?: string;
+    text: string;
+  }): void {
+    this.el.setAttribute('aria-busy', 'false');
+    const who = dialogue.speakerDisplayName || dialogue.speaker;
+    const plain = (() => {
+      const temp = document.createElement('div');
+      temp.innerHTML = formatRichText(dialogue.text);
+      return temp.textContent || dialogue.text;
+    })();
+    this.announceEl.textContent = who ? `${who}: ${plain}` : plain;
+  }
+
+  private startTypewriter(
+    text: string,
+    dialogue: { speaker?: string; speakerDisplayName?: string; text: string }
+  ): void {
     this.isTypewriting = true;
     this.indicatorEl.style.opacity = '0';
     this.dialogueTextEl.innerHTML = '';
@@ -128,6 +175,9 @@ export class DialogueBoxComponent {
         this.dialogueTextEl.textContent = graphemes.slice(0, charIdx).join('');
       }
     }, this.typewriterSpeed);
+
+    // Keep dialogue ref for finish path via fullCurrentText / speakerTag
+    void dialogue;
   }
 
   public destroy(): void {

@@ -1,7 +1,8 @@
 import type { StoryPackage } from '@kawaijs/ast';
+import type { DialogueHistoryEntry } from './history.js';
 import { normalizeStoryState, type Snapshot, type StoryState } from './state.js';
 
-export const CURRENT_SAVE_SCHEMA_VERSION = 1;
+export const CURRENT_SAVE_SCHEMA_VERSION = 2;
 
 export interface SaveSlot {
   readonly schemaVersion?: number;
@@ -12,6 +13,8 @@ export interface SaveSlot {
   readonly snapshot: Snapshot;
   readonly previewText?: string;
   readonly screenshotUrl?: string;
+  /** Persisted dialogue backlog (schema v2+). */
+  readonly historyEntries?: readonly DialogueHistoryEntry[];
 }
 
 export type LoadFailureReason = 'not_found' | 'corrupt' | 'incompatible_schema' | 'incompatible_story';
@@ -46,6 +49,40 @@ export function computeStoryHash(story: StoryPackage): string {
   return fnv1a(parts.join('\n'));
 }
 
+function normalizeHistoryEntries(raw: unknown): DialogueHistoryEntry[] {
+  if (!Array.isArray(raw)) return [];
+  const out: DialogueHistoryEntry[] = [];
+  for (const item of raw) {
+    if (!item || typeof item !== 'object') continue;
+    const e = item as Record<string, unknown>;
+    if (typeof e['text'] !== 'string') continue;
+    out.push({
+      id: typeof e['id'] === 'string' ? e['id'] : `hist_${out.length}`,
+      speaker: typeof e['speaker'] === 'string' ? e['speaker'] : undefined,
+      speakerDisplayName: typeof e['speakerDisplayName'] === 'string' ? e['speakerDisplayName'] : undefined,
+      text: e['text'] as string,
+      timestamp: typeof e['timestamp'] === 'number' ? e['timestamp'] : 0
+    });
+  }
+  return out;
+}
+
+/** Explicit v1 → v2: add historyEntries (empty if missing). */
+export function migrateSaveV1ToV2(slot: SaveSlot): SaveSlot {
+  return {
+    ...slot,
+    schemaVersion: 2,
+    historyEntries: slot.historyEntries ? [...slot.historyEntries] : [],
+    snapshot: {
+      ...slot.snapshot,
+      historyLength:
+        typeof slot.snapshot.historyLength === 'number'
+          ? slot.snapshot.historyLength
+          : (slot.historyEntries?.length ?? 0)
+    }
+  };
+}
+
 /**
  * Migrate / normalize a parsed save slot to the current schema.
  * Returns null if the slot cannot be recovered.
@@ -63,9 +100,10 @@ export function migrateSaveSlot(raw: unknown): SaveSlot | null {
 
   const id = typeof slot['id'] === 'string' ? slot['id'] : 'unknown';
   const timestamp = typeof slot['timestamp'] === 'number' ? slot['timestamp'] : Date.now();
+  const rawVersion = typeof slot['schemaVersion'] === 'number' ? slot['schemaVersion'] : 1;
 
-  const migrated: SaveSlot = {
-    schemaVersion: CURRENT_SAVE_SCHEMA_VERSION,
+  let migrated: SaveSlot = {
+    schemaVersion: rawVersion,
     storyHash: typeof slot['storyHash'] === 'string' ? slot['storyHash'] : undefined,
     id,
     name: typeof slot['name'] === 'string' ? slot['name'] : `Slot ${id}`,
@@ -73,11 +111,22 @@ export function migrateSaveSlot(raw: unknown): SaveSlot | null {
     snapshot: {
       id: typeof snap['id'] === 'string' ? snap['id'] : `snap_${timestamp}`,
       timestamp: typeof snap['timestamp'] === 'number' ? snap['timestamp'] : timestamp,
-      state: normalizedState
+      state: normalizedState,
+      historyLength: typeof snap['historyLength'] === 'number' ? snap['historyLength'] : undefined
     },
     previewText: typeof slot['previewText'] === 'string' ? slot['previewText'] : undefined,
-    screenshotUrl: typeof slot['screenshotUrl'] === 'string' ? slot['screenshotUrl'] : undefined
+    screenshotUrl: typeof slot['screenshotUrl'] === 'string' ? slot['screenshotUrl'] : undefined,
+    historyEntries: normalizeHistoryEntries(slot['historyEntries'])
   };
+
+  if (migrated.schemaVersion === undefined || migrated.schemaVersion < 2) {
+    migrated = migrateSaveV1ToV2(migrated);
+  } else {
+    migrated = {
+      ...migrated,
+      schemaVersion: CURRENT_SAVE_SCHEMA_VERSION
+    };
+  }
 
   return migrated;
 }
@@ -134,7 +183,8 @@ export class SaveManager {
     slotId: string,
     snapshot: Snapshot,
     previewText?: string,
-    storyHash = ''
+    storyHash = '',
+    historyEntries: readonly DialogueHistoryEntry[] = []
   ): Promise<SaveSlot> {
     const slot: SaveSlot = {
       schemaVersion: CURRENT_SAVE_SCHEMA_VERSION,
@@ -143,7 +193,8 @@ export class SaveManager {
       name: `Slot ${slotId}`,
       timestamp: Date.now(),
       snapshot,
-      previewText
+      previewText,
+      historyEntries: [...historyEntries]
     };
 
     const key = `${this.storagePrefix}${slotId}`;

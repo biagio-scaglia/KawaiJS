@@ -127,6 +127,39 @@ label normal_end:
     // Roll back to Step 1
     vm.rollback();
     expect(vm.getState().dialogue?.text).toBe('Step 1');
+    expect(vm.getHistoryManager().getEntries().map((e) => e.text)).toEqual(['Step 1']);
+  });
+
+  it('trims dialogue history on rollback and restores it on save/load', async () => {
+    const code = `label start:
+    "Alpha"
+    "Beta"
+    "Gamma"
+`;
+    const story = compileScript(code);
+    const storage = new MemoryStorageAdapter();
+    const vm = new StoryVM(story, { saveManager: new SaveManager(storage) });
+
+    vm.start();
+    vm.next();
+    vm.next();
+    expect(vm.getHistoryManager().getEntries().map((e) => e.text)).toEqual(['Alpha', 'Beta', 'Gamma']);
+
+    expect(vm.rollback()).toBe(true);
+    expect(vm.getState().dialogue?.text).toBe('Beta');
+    expect(vm.getHistoryManager().getEntries().map((e) => e.text)).toEqual(['Alpha', 'Beta']);
+
+    const slot = await vm.save('1');
+    expect(slot.schemaVersion).toBe(2);
+    expect(slot.historyEntries?.map((e) => e.text)).toEqual(['Alpha', 'Beta']);
+
+    vm.next();
+    expect(vm.getHistoryManager().getLength()).toBe(3);
+
+    const loaded = await vm.load('1');
+    expect(loaded).toBe(true);
+    expect(vm.getState().dialogue?.text).toBe('Beta');
+    expect(vm.getHistoryManager().getEntries().map((e) => e.text)).toEqual(['Alpha', 'Beta']);
   });
 
   it('executes structured if/else with fallthrough code seamlessly', () => {
@@ -523,6 +556,8 @@ label start:
       }
     });
     expect(migrated).not.toBeNull();
+    expect(migrated?.schemaVersion).toBe(2);
+    expect(migrated?.historyEntries).toEqual([]);
     expect(migrated?.snapshot.state.pendingPauseMs).toBeNull();
     expect(migrated?.snapshot.state.unlockedCGs).toBeDefined();
     expect(migrated?.snapshot.state.variables['a']).toBe(1);

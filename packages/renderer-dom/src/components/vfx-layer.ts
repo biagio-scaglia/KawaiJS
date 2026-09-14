@@ -22,6 +22,9 @@ export class VfxLayerComponent {
   private animationFrameId: number | null = null;
   private tintEl: HTMLDivElement;
   private fogEl: HTMLDivElement;
+  private suspended = false;
+  private resizeTimer: ReturnType<typeof setTimeout> | null = null;
+  private destroyed = false;
 
   private boundResizeHandler?: () => void;
   private boundVisibilityHandler?: () => void;
@@ -55,6 +58,7 @@ export class VfxLayerComponent {
   }
 
   public setVfx(vfxState: VfxState | null): void {
+    if (this.destroyed) return;
     if (!vfxState || vfxState.effect === 'stop') {
       this.clear();
       return;
@@ -103,7 +107,32 @@ export class VfxLayerComponent {
       return;
     }
 
+    if (this.suspended) {
+      // Remember effect but don't burn CPU during skip mode.
+      this.stopParticleLoop();
+      return;
+    }
+
     this.startParticleEffect(vfxState.effect, vfxState.intensity);
+  }
+
+  /** Pause particle rAF (e.g. while skip mode is active). Tint/fog stay. */
+  public setSuspended(suspended: boolean): void {
+    if (this.suspended === suspended) return;
+    this.suspended = suspended;
+    if (suspended) {
+      this.stopParticleLoop();
+      if (this.ctx) {
+        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+      }
+    } else if (
+      this.currentEffect &&
+      this.currentEffect !== 'tint' &&
+      this.currentEffect !== 'fog' &&
+      this.currentEffect !== 'stop'
+    ) {
+      this.startParticleEffect(this.currentEffect);
+    }
   }
 
   public clear(): void {
@@ -117,7 +146,12 @@ export class VfxLayerComponent {
   }
 
   public destroy(): void {
+    this.destroyed = true;
     this.clear();
+    if (this.resizeTimer) {
+      clearTimeout(this.resizeTimer);
+      this.resizeTimer = null;
+    }
     if (typeof window !== 'undefined' && this.boundResizeHandler) {
       window.removeEventListener('resize', this.boundResizeHandler);
     }
@@ -130,6 +164,7 @@ export class VfxLayerComponent {
   private initListeners(): void {
     if (typeof window !== 'undefined') {
       this.boundResizeHandler = () => {
+        if (this.destroyed) return;
         const rect = this.el.getBoundingClientRect();
         const w = rect.width || 1280;
         const h = rect.height || 720;
@@ -139,11 +174,12 @@ export class VfxLayerComponent {
         }
       };
       window.addEventListener('resize', this.boundResizeHandler);
-      setTimeout(this.boundResizeHandler, 50);
+      this.resizeTimer = setTimeout(this.boundResizeHandler, 50);
     }
 
     if (typeof document !== 'undefined') {
       this.boundVisibilityHandler = () => {
+        if (this.destroyed || this.suspended) return;
         if (document.hidden) {
           this.stopParticleLoop();
         } else if (this.currentEffect && this.currentEffect !== 'tint' && this.currentEffect !== 'fog') {
@@ -155,6 +191,7 @@ export class VfxLayerComponent {
   }
 
   private startParticleEffect(effect: string, intensity?: number | string): void {
+    if (this.destroyed || this.suspended) return;
     this.stopParticleLoop();
     const count = typeof intensity === 'number' ? Math.min(150, Math.max(10, intensity * 50)) : 50;
 

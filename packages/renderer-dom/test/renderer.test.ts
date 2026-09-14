@@ -84,8 +84,13 @@ label start:
     expect(speakerTag.style.backgroundColor).toBe('#f43f5e');
 
     const dialogueText = container.querySelector('.kawa-dialogue-text') as HTMLElement;
-    expect(dialogueText.getAttribute('aria-live')).toBe('polite');
+    expect(dialogueText.getAttribute('aria-hidden')).toBe('true');
+    expect(dialogueText.getAttribute('aria-live')).toBeNull();
     expect(dialogueText.textContent).toBe('Hello from DOM Renderer!');
+
+    const announce = container.querySelector('.kawa-dialogue-announce') as HTMLElement;
+    expect(announce.getAttribute('aria-live')).toBe('polite');
+    expect(announce.textContent).toContain('Hello from DOM Renderer!');
 
     renderer.destroy();
   });

@@ -34,9 +34,20 @@ vm.rollback(); // Rolls back to Welcome
 
 ## Features
 - **Deterministic Virtual Machine**: Headless execution loop.
-- **Time-Travel Rollback**: Deep state snapshots for backwards navigation.
-- **Save & Load**: Pluggable storage adapters (LocalStorage, Memory).
-- **Dialogue History**: Built-in history logging for spoken lines.
+- **Time-Travel Rollback**: Deep state snapshots for backwards navigation (dialogue history trims with rollback).
+- **Save & Load**: Pluggable storage adapters (LocalStorage, Memory). Schema **v2** persists dialogue history and migrates older slots via `migrateSaveSlot` / `migrateSaveV1ToV2`.
+- **Dialogue History**: Built-in backlog with `trimTo` / `replaceAll` for rollback and load restore.
+
+## Save schema
+
+Current version: **2** (`CURRENT_SAVE_SCHEMA_VERSION`).
+
+| Version | Notes |
+|--------|--------|
+| 1 | Snapshot + storyHash; history not persisted |
+| 2 | Adds `historyEntries`; snapshot may include `historyLength` for rollback |
+
+Loads always run through `migrateSaveSlot`, which normalizes missing fields and upgrades v1 → v2.
 
 ## License
 MIT © Biagio Scaglia

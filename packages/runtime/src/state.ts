@@ -60,6 +60,8 @@ export interface Snapshot {
   readonly id: string;
   readonly timestamp: number;
   readonly state: StoryState;
+  /** Dialogue history length at snapshot time — used to trim backlog on rollback. */
+  readonly historyLength?: number;
 }
 
 export function createInitialState(startLabel = 'start'): StoryState {
