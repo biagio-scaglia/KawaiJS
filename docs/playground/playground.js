@@ -28857,7 +28857,13 @@ var ViewportAdapter = class {
     let scale = 1;
     let stageWidth = virtualWidth;
     let stageHeight = virtualHeight;
-    if (scaleMode === "contain") {
+    const isPortrait = containerHeight > containerWidth * 1.05;
+    const preferFill = isPortrait && typeof window !== "undefined" && typeof window.matchMedia === "function" && (window.matchMedia("(max-width: 900px)").matches || window.matchMedia("(pointer: coarse)").matches);
+    if (preferFill && scaleMode !== "stretch") {
+      stageWidth = Math.round(containerWidth);
+      stageHeight = Math.round(containerHeight);
+      scale = stageWidth / virtualWidth;
+    } else if (scaleMode === "contain") {
       const scaleX = containerWidth / virtualWidth;
       const scaleY = containerHeight / virtualHeight;
       scale = Math.min(scaleX, scaleY);

@@ -1904,13 +1904,31 @@ body.kawa-fullscreen {
   }
 
   .kawa-stage {
-    width: 100%;
-    max-width: 100%;
-    max-height: 100%;
+    width: 100% !important;
+    max-width: none;
+    max-height: none;
     border-radius: 0;
     box-shadow: none;
     border-left: none;
     border-right: none;
+  }
+
+  @media (orientation: portrait) {
+    .kawa-stage {
+      height: 100% !important;
+      aspect-ratio: auto;
+    }
+  }
+
+  .kawa-main-menu-backdrop {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+
+  .kawa-main-menu-btn {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    width: min(100%, 420px);
   }
 
   .kawa-ui-layer {
@@ -2167,6 +2185,51 @@ body.kawa-fullscreen {
   </style>
 </head>
 <body>
+
+<style>
+.kawa-product-bar{position:fixed;top:0;left:0;right:0;z-index:99999;display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;padding:8px 12px;padding-top:max(8px,env(safe-area-inset-top));background:rgba(7,11,20,.96);border-bottom:1px solid rgba(244,63,94,.35);font-family:system-ui,sans-serif}
+.kawa-product-bar strong{color:#fff;font-size:.9rem}
+.kawa-product-bar span{color:#94a3b8;font-size:.8rem;flex:1;min-width:140px}
+.kawa-product-bar a,.kawa-product-bar code,.kawa-product-bar button{display:inline-flex;align-items:center;justify-content:center;padding:8px 12px;border-radius:10px;font-size:.8rem;font-weight:600;text-decoration:none;min-height:40px;border:0;cursor:pointer}
+.kawa-product-bar a.primary{background:linear-gradient(135deg,#f43f5e,#e11d48);color:#fff}
+.kawa-product-bar a.secondary{background:rgba(30,41,59,.9);color:#e2e8f0;border:1px solid rgba(148,163,184,.25)}
+.kawa-product-bar code{background:rgba(15,23,42,.9);color:#38bdf8;border:1px solid rgba(56,189,248,.25)}
+.kawa-product-bar .kawa-product-dismiss{background:transparent;color:#94a3b8;padding:6px 10px;min-width:40px}
+body.kawa-fullscreen.has-kawa-product-bar .kawa-root,html.kawa-fullscreen.has-kawa-product-bar .kawa-root{padding-top:calc(48px + env(safe-area-inset-top))}
+@media(max-width:720px){
+  .kawa-product-bar span,.kawa-product-bar code{display:none}
+  .kawa-product-bar{gap:6px}
+  .kawa-product-bar a{flex:1}
+}
+</style>
+<div class="kawa-product-bar" id="kawa-product-bar" role="banner">
+  <strong>Kawaijs</strong>
+  <span>Ren'Py for the Web — narrative script, static deploy, native CSS.</span>
+  <a class="primary" href="./showcase/">Play demo</a>
+  <a class="secondary" href="./playground/">Try in browser</a>
+  <code>npx kawa create my-novel</code>
+  <button type="button" class="kawa-product-dismiss" id="kawa-product-dismiss" aria-label="Hide toolbar">✕</button>
+</div>
+<script>
+(function(){
+  var bar=document.getElementById('kawa-product-bar');
+  var btn=document.getElementById('kawa-product-dismiss');
+  if(!bar) return;
+  function hide(){
+    bar.remove();
+    document.documentElement.classList.remove('has-kawa-product-bar');
+    document.body.classList.remove('has-kawa-product-bar');
+    try{sessionStorage.setItem('kawa-hide-product-bar','1')}catch(e){}
+  }
+  try{
+    if(sessionStorage.getItem('kawa-hide-product-bar')==='1'){hide();return;}
+  }catch(e){}
+  document.documentElement.classList.add('has-kawa-product-bar');
+  document.body.classList.add('has-kawa-product-bar');
+  if(btn) btn.addEventListener('click',hide);
+})();
+</script>
+
   <div id="app"></div>
 <noscript>
   <main style="max-width:42rem;margin:2rem auto;padding:1.5rem;font-family:system-ui,sans-serif;line-height:1.55;color:#0f172a;background:#fff">
@@ -8656,7 +8719,13 @@ var KawaiJS = (() => {
       let scale = 1;
       let stageWidth = virtualWidth;
       let stageHeight = virtualHeight;
-      if (scaleMode === "contain") {
+      const isPortrait = containerHeight > containerWidth * 1.05;
+      const preferFill = isPortrait && typeof window !== "undefined" && typeof window.matchMedia === "function" && (window.matchMedia("(max-width: 900px)").matches || window.matchMedia("(pointer: coarse)").matches);
+      if (preferFill && scaleMode !== "stretch") {
+        stageWidth = Math.round(containerWidth);
+        stageHeight = Math.round(containerHeight);
+        scale = stageWidth / virtualWidth;
+      } else if (scaleMode === "contain") {
         const scaleX = containerWidth / virtualWidth;
         const scaleY = containerHeight / virtualHeight;
         scale = Math.min(scaleX, scaleY);

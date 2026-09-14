@@ -56,7 +56,22 @@ export class ViewportAdapter {
     let stageWidth = virtualWidth;
     let stageHeight = virtualHeight;
 
-    if (scaleMode === 'contain') {
+    // Portrait phones: letterboxed 16:9 shrinks the whole UI (menu included) to ~220px.
+    // Fill the viewport so Start / dialogue remain tappable.
+    const isPortrait = containerHeight > containerWidth * 1.05;
+    const preferFill =
+      isPortrait &&
+      typeof window !== 'undefined' &&
+      typeof window.matchMedia === 'function' &&
+      (window.matchMedia('(max-width: 900px)').matches ||
+        window.matchMedia('(pointer: coarse)').matches);
+
+    if (preferFill && scaleMode !== 'stretch') {
+      stageWidth = Math.round(containerWidth);
+      stageHeight = Math.round(containerHeight);
+      // Fit virtual width; extra vertical space is usable UI chrome.
+      scale = stageWidth / virtualWidth;
+    } else if (scaleMode === 'contain') {
       const scaleX = containerWidth / virtualWidth;
       const scaleY = containerHeight / virtualHeight;
       scale = Math.min(scaleX, scaleY);

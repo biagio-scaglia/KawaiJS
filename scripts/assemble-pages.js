@@ -85,7 +85,7 @@ body.kawa-fullscreen.has-kawa-product-bar .kawa-root,html.kawa-fullscreen.has-ka
 </script>
 `;
 
-if (!html.includes('kawa-product-bar')) {
+if (!html.includes('id="kawa-product-bar"')) {
   html = html.replace('<body>', `<body>\n${cta}`);
   fs.writeFileSync(indexPath, html, 'utf8');
 }
