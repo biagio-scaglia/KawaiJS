@@ -135,6 +135,33 @@ body.kawa-fullscreen {
   opacity: 1;
 }
 
+/* Slower crossfade for `with dissolve` */
+.kawa-background[data-transition="dissolve"] .kawa-bg-layer {
+  transition: opacity 0.85s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Directional wipe transitions */
+.kawa-background[data-transition="wipeleft"] .kawa-bg-layer,
+.kawa-background[data-transition="wiperight"] .kawa-bg-layer {
+  transition: opacity 0.55s ease, clip-path 0.55s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.kawa-bg-layer.kawa-wipe-from-left {
+  clip-path: inset(0 100% 0 0);
+}
+
+.kawa-bg-layer.kawa-wipe-from-left.active {
+  clip-path: inset(0 0 0 0);
+}
+
+.kawa-bg-layer.kawa-wipe-from-right {
+  clip-path: inset(0 0 0 100%);
+}
+
+.kawa-bg-layer.kawa-wipe-from-right.active {
+  clip-path: inset(0 0 0 0);
+}
+
 /* Characters Layer */
 .kawa-characters {
   position: absolute;
@@ -462,6 +489,24 @@ body.kawa-fullscreen {
   font-size: 0.85rem;
   color: var(--kawa-primary-accent);
   font-weight: 700;
+}
+
+.kawa-input-field {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 12px 14px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(15, 23, 42, 0.9);
+  color: #f8fafc;
+  font-size: 1.05rem;
+  font-family: inherit;
+  outline: none;
+}
+
+.kawa-input-field:focus {
+  border-color: var(--kawa-primary-accent);
+  box-shadow: 0 0 0 3px rgba(244, 63, 94, 0.25);
 }
 
 .kawa-slider {

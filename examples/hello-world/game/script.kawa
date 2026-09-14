@@ -1,29 +1,37 @@
 # Kawaijs Showcase — "Code of Hearts"
-# A living syntax guide: transitions, sakura petals, audio, camera, CG, branches.
+# Living syntax guide: define, input, transitions, sakura, audio, camera, CG.
 character yumia "Yumia" #f43f5e
 character kaori "Kaori" #0284c7
+
+define bg classroom = "classroom.svg"
+define bg rooftop = "rooftop.svg"
+define bg sunset_courtyard = "sunset_courtyard.svg"
+define music ambient = "bgm_ambient"
+define music upbeat = "bgm_upbeat"
 
 label start:
     set player_name = "Sensei"
     set dev_score = 0
     set creative_score = 0
 
-    play music bgm_ambient fade 2
+    play music ambient fade 2
 
-    # Scene transition + cherry blossom particles
     scene bg classroom with fade
     vfx sakura
     show yumia happy at left with bounce
     show kaori normal at right with dissolve
 
-    yumia "Welcome to the {b}Game Development Club{/b}, [player_name]! I'm Yumia."
-    kaori "And I'm Kaori. Watch the {color=#fda4af}sakura{/color} — that's {b}vfx sakura{/b} on a {b}scene ... with fade{/b}."
+    yumia "Welcome to the {b}Game Development Club{/b}! I'm Yumia."
+    kaori "And I'm Kaori. Before we begin — what should we call you?"
 
-    yumia "Sprites can enter with {b}bounce{/b}, {b}dissolve{/b}, or {b}nod{/b} after {b}show{/b}."
-    kaori "Kawaijs compiles .kawa scripts into a deterministic VM that runs in any browser."
+    input player_name "What is your name?"
+    yumia "Nice to meet you, [player_name]! Watch the {color=#fda4af}sakura{/color} — that's {b}vfx sakura{/b}."
+    kaori "Scenes use {b}define{/b} aliases and transitions like {b}fade{/b}, {b}dissolve{/b}, or {b}wipeleft{/b}."
 
-    play sound sfx_sparkle
-    camera flash
+    window hide
+    pause 700
+    window show
+
     yumia "We need your help choosing our project's direction, [player_name]! What's your strength?"
 
     menu:
@@ -59,13 +67,12 @@ label start:
             jump courtyard_scene
 
 label technical_route:
-    play music bgm_upbeat fade 1
-    # New scene clears previous VFX — re-apply weather as needed
-    scene bg rooftop with fade
+    play music upbeat fade 1
+    scene bg rooftop with wipeleft
     vfx fog
     show kaori smug at center with dissolve
 
-    kaori "Up here on the misty rooftop — {b}vfx fog{/b} after a fade."
+    kaori "Up here on the misty rooftop — {b}vfx fog{/b} after a wipe transition."
     kaori "Rollback snapshots, live reload, and a modular audio pipeline come free with the toolchain."
 
     play sound sfx_sparkle
@@ -76,10 +83,9 @@ label technical_route:
     jump evaluate_ending
 
 label creative_route:
-    play music bgm_upbeat fade 1
-    scene bg sunset_courtyard with fade
+    play music upbeat fade 1
+    scene bg sunset_courtyard with dissolve
     vfx sakura
-    # Tint layers ON TOP of sakura — petals keep falling
     vfx tint "#fda4af"
     show yumia happy at center with bounce
 
@@ -94,8 +100,8 @@ label creative_route:
     jump evaluate_ending
 
 label courtyard_scene:
-    play music bgm_upbeat fade 1
-    scene bg sunset_courtyard with fade
+    play music upbeat fade 1
+    scene bg sunset_courtyard with wiperight
     vfx sakura
     show yumia happy at left with bounce
     show kaori happy at right with nod
@@ -104,7 +110,7 @@ label courtyard_scene:
     kaori "The bundle is light. The Web Audio controller is ready."
 
     camera hpunch
-    yumia "Let's bring all our talents together!"
+    yumia "Let's bring all our talents together, [player_name]!"
     jump evaluate_ending
 
 label evaluate_ending:

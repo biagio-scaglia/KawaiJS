@@ -78,6 +78,30 @@ label start:
     }
   });
 
+  it('parses define, input, and window directives', () => {
+    const code = `define bg classroom = "classroom.svg"
+define music ambient = "bgm_ambient"
+
+label start:
+    input player_name "Your name?"
+    window hide
+    pause 100
+    window show
+    scene bg classroom with dissolve
+    play music ambient
+    "Hello [player_name]"
+`;
+    const parser = Parser.fromSource(code, 'script.kawa');
+    const ast = parser.parse();
+    expect(ast.statements.some((s) => s.type === 'DefineDecl')).toBe(true);
+    const label = ast.statements.find((s) => s.type === 'LabelDecl');
+    expect(label?.type).toBe('LabelDecl');
+    if (label?.type === 'LabelDecl') {
+      expect(label.body.some((s) => s.type === 'InputStmt')).toBe(true);
+      expect(label.body.some((s) => s.type === 'WindowStmt')).toBe(true);
+    }
+  });
+
   it('parses vfx, camera, pause, and cg directives', () => {
     const code = `label start:
     vfx sakura

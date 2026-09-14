@@ -22,7 +22,10 @@ import type {
   VfxStmtNode,
   CameraStmtNode,
   PauseStmtNode,
-  CgStmtNode
+  CgStmtNode,
+  DefineDeclNode,
+  InputStmtNode,
+  WindowStmtNode
 } from '@kawaijs/ast';
 import { createLocation } from '@kawaijs/ast';
 import { Token, TokenType } from './token.js';
@@ -75,6 +78,8 @@ export class Parser {
     switch (token.type) {
       case 'CHARACTER':
         return this.parseCharacterDecl();
+      case 'DEFINE':
+        return this.parseDefineDecl();
       case 'LABEL':
         return this.parseLabelDecl();
       case 'SCENE':
@@ -107,6 +112,10 @@ export class Parser {
         return this.parsePauseStmt();
       case 'CG':
         return this.parseCgStmt();
+      case 'INPUT':
+        return this.parseInputStmt();
+      case 'WINDOW':
+        return this.parseWindowStmt();
       case 'STRING':
         // Narration without speaker identifier
         return this.parseDialogueStmt();
@@ -636,6 +645,78 @@ export class Parser {
       type: 'CgStmt',
       image: imageTok.value,
       unlockId,
+      loc: createLocation(this.file, startTok.loc.start, this.previousLocation().end)
+    };
+  }
+
+  private parseDefineDecl(): DefineDeclNode {
+    const startTok = this.consume('DEFINE', 'Expected "define" keyword');
+    const nameParts: string[] = [];
+    while (this.check('IDENTIFIER') || this.check('MUSIC') || this.check('SOUND') || this.check('VOICE')) {
+      // Allow `define music ambient = "..."` (channel keywords as name parts)
+      nameParts.push(this.advance().value);
+      if (this.check('EQUALS') || this.check('STRING')) break;
+    }
+    if (nameParts.length === 0) {
+      throw new KawaError({
+        code: 'E0110',
+        message: 'Expected alias name after "define"',
+        severity: 'error',
+        loc: this.currentLocation()
+      });
+    }
+    this.consume('EQUALS', 'Expected "=" after define name');
+    const valueTok = this.consume('STRING', 'Expected string value after "define ... ="');
+    this.consumeOptionalNewline();
+    return {
+      type: 'DefineDecl',
+      name: nameParts.join(' '),
+      value: valueTok.value,
+      loc: createLocation(this.file, startTok.loc.start, this.previousLocation().end)
+    };
+  }
+
+  private parseInputStmt(): InputStmtNode {
+    const startTok = this.consume('INPUT', 'Expected "input" keyword');
+    const varTok = this.consume('IDENTIFIER', 'Expected variable name after "input"');
+    let prompt = 'Enter text';
+    if (this.check('STRING')) {
+      prompt = this.advance().value;
+    }
+    this.consumeOptionalNewline();
+    return {
+      type: 'InputStmt',
+      variable: varTok.value,
+      prompt,
+      loc: createLocation(this.file, startTok.loc.start, this.previousLocation().end)
+    };
+  }
+
+  private parseWindowStmt(): WindowStmtNode {
+    const startTok = this.consume('WINDOW', 'Expected "window" keyword');
+    let actionRaw: string;
+    if (this.check('SHOW') || this.check('HIDE') || this.check('IDENTIFIER')) {
+      actionRaw = this.advance().value.toLowerCase();
+    } else {
+      throw new KawaError({
+        code: 'E0111',
+        message: 'Expected "show" or "hide" after "window"',
+        severity: 'error',
+        loc: this.currentLocation()
+      });
+    }
+    if (actionRaw !== 'show' && actionRaw !== 'hide') {
+      throw new KawaError({
+        code: 'E0111',
+        message: `Invalid window action '${actionRaw}'. Expected "show" or "hide".`,
+        severity: 'error',
+        loc: startTok.loc
+      });
+    }
+    this.consumeOptionalNewline();
+    return {
+      type: 'WindowStmt',
+      action: actionRaw as 'show' | 'hide',
       loc: createLocation(this.file, startTok.loc.start, this.previousLocation().end)
     };
   }

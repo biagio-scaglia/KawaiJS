@@ -31,6 +31,9 @@ export type TokenType =
   | 'PAUSE'
   | 'CG'
   | 'AS'
+  | 'DEFINE'
+  | 'INPUT'
+  | 'WINDOW'
   // Literals & Identifiers
   | 'IDENTIFIER'
   | 'STRING'
@@ -94,6 +97,9 @@ export const KEYWORDS_MAP = new Map<string, TokenType>([
   ['pause', 'PAUSE'],
   ['cg', 'CG'],
   ['as', 'AS'],
+  ['define', 'DEFINE'],
+  ['input', 'INPUT'],
+  ['window', 'WINDOW'],
   ['true', 'BOOLEAN'],
   ['false', 'BOOLEAN']
 ]);

@@ -195,8 +195,39 @@ export class StoryVM {
       return;
     }
 
+    if (this.state.pendingInput) {
+      // Must call submitInput(); clicking the stage must not skip the prompt.
+      return;
+    }
+
     this.state = {
       ...this.state,
+      isWaitingForInput: false,
+      pendingPauseMs: null
+    };
+
+    this.executeUntilWaiting();
+  }
+
+  /**
+   * Completes a pending `input` prompt and continues the story.
+   */
+  public submitInput(value: string): void {
+    if (this.isExecuting || !this.state.pendingInput) return;
+
+    const variable = this.state.pendingInput.variable;
+    const trimmed = String(value ?? '').trim();
+    this.recordTrace(`INPUT ${variable}="${trimmed}"`);
+
+    const nextVars = { ...this.state.variables };
+    if (isSafeKey(variable)) {
+      nextVars[variable] = trimmed;
+    }
+
+    this.state = {
+      ...this.state,
+      variables: nextVars,
+      pendingInput: null,
       isWaitingForInput: false,
       pendingPauseMs: null
     };
@@ -766,6 +797,28 @@ export class StoryVM {
             }
           };
         }
+        break;
+      }
+
+      case 'input': {
+        const prompt = interpolateVariables(inst.prompt, this.state.variables);
+        this.recordTrace(`INPUT_WAIT ${inst.variable} "${prompt}"`);
+        this.state = {
+          ...this.state,
+          pendingInput: { variable: inst.variable, prompt },
+          choices: null,
+          pendingPauseMs: null,
+          isWaitingForInput: true
+        };
+        break;
+      }
+
+      case 'window': {
+        this.recordTrace(`WINDOW ${inst.action}`);
+        this.state = {
+          ...this.state,
+          windowVisible: inst.action === 'show'
+        };
         break;
       }
 

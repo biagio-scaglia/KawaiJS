@@ -52,6 +52,10 @@ export interface StoryState {
    * Click/keyboard advance may skip the remaining delay.
    */
   readonly pendingPauseMs: number | null;
+  /** Text prompt waiting for the player (`input` directive). */
+  readonly pendingInput: { readonly variable: string; readonly prompt: string } | null;
+  /** When false, the dialogue window should be hidden (`window hide`). */
+  readonly windowVisible: boolean;
   readonly isWaitingForInput: boolean;
   readonly isFinished: boolean;
 }
@@ -85,6 +89,8 @@ export function createInitialState(startLabel = 'start'): StoryState {
     choices: null,
     unlockedCGs: Object.create(null) as Record<string, boolean>,
     pendingPauseMs: null,
+    pendingInput: null,
+    windowVisible: true,
     isWaitingForInput: false,
     isFinished: false
   };
@@ -157,6 +163,8 @@ export function normalizeStoryState(raw: unknown): StoryState | null {
         ? Object.assign(Object.create(null), s['unlockedCGs'])
         : Object.create(null),
     pendingPauseMs: typeof s['pendingPauseMs'] === 'number' ? s['pendingPauseMs'] : null,
+    pendingInput: null, // never restore mid-prompt from saves
+    windowVisible: s['windowVisible'] === false ? false : true,
     isWaitingForInput: Boolean(s['isWaitingForInput']),
     isFinished: Boolean(s['isFinished'])
   };
@@ -182,6 +190,8 @@ export function cloneState(state: StoryState): StoryState {
     choices: state.choices ? state.choices.map(c => ({ ...c })) : null,
     unlockedCGs: Object.assign(Object.create(null), state.unlockedCGs),
     pendingPauseMs: state.pendingPauseMs ?? null,
+    pendingInput: state.pendingInput ? { ...state.pendingInput } : null,
+    windowVisible: state.windowVisible !== false,
     isWaitingForInput: state.isWaitingForInput,
     isFinished: state.isFinished
   };

@@ -22,6 +22,7 @@ import { showSettingsModal } from './modals/settings-modal.js';
 import { showHistoryModal } from './modals/history-modal.js';
 import { showAboutModal } from './modals/about-modal.js';
 import { showGalleryModal } from './modals/gallery-modal.js';
+import { showInputModal } from './modals/input-modal.js';
 import { escapeHtml } from './utils/rich-text.js';
 
 import { ViewportAdapter } from './layout/viewport-adapter.js';
@@ -37,6 +38,7 @@ export * from './modals/history-modal.js';
 export * from './modals/about-modal.js';
 export * from './modals/gallery-modal.js';
 export * from './modals/confirm-modal.js';
+export * from './modals/input-modal.js';
 export * from './components/main-menu.js';
 export * from './components/dialogue-box.js';
 export * from './components/choice-menu.js';
@@ -656,6 +658,7 @@ export class DOMRenderer {
 
   private handleUserAdvance(): void {
     if (this.isMainMenuActive()) return;
+    if (this.vm.getState().pendingInput) return;
 
     if (this.dialogueBox.getIsTypewriting()) {
       this.dialogueBox.finishTypewriter();
@@ -711,12 +714,39 @@ export class DOMRenderer {
     // 5. Branching Choice Menu
     this.choiceMenu.render(state.choices);
 
-    // 6. Dialogue Box
-    this.dialogueBox.render(state.dialogue, () => {
-      if (this.isAutoMode && !state.isFinished && (!state.choices || state.choices.length === 0)) {
-        this.scheduleAutoAdvance();
+    // 6. Dialogue Box (respect `window hide` / `window show`)
+    if (state.windowVisible === false) {
+      this.dialogueBox.render(null);
+    } else {
+      this.dialogueBox.render(state.dialogue, () => {
+        if (
+          this.isAutoMode &&
+          !state.isFinished &&
+          (!state.choices || state.choices.length === 0) &&
+          !state.pendingInput
+        ) {
+          this.scheduleAutoAdvance();
+        }
+      });
+    }
+
+    // 6b. Text input prompt (`input var "prompt"`)
+    if (state.pendingInput) {
+      if (!this.rootEl.querySelector('.kawa-input-overlay')) {
+        const prompt = state.pendingInput.prompt;
+        const current =
+          typeof state.variables[state.pendingInput.variable] === 'string'
+            ? String(state.variables[state.pendingInput.variable])
+            : '';
+        showInputModal(this.rootEl, {
+          prompt,
+          defaultValue: current,
+          onSubmit: (value) => this.vm.submitInput(value)
+        });
       }
-    });
+    } else {
+      this.rootEl.querySelector('.kawa-input-overlay')?.remove();
+    }
 
     // 7. Ending Screen if finished
     if (state.isFinished) {

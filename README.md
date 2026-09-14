@@ -118,9 +118,13 @@ label leave_early:
 | **Character** | `character <id> "<Name>" [<color>]` | `character yumia "Yumia" #f43f5e` |
 | **Labels** | `label <name>:` | `label chapter_1:` |
 | **Scene & Background** | `scene bg <name> [with <transition>]` | `scene bg sunset with fade` |
+| **Scene transitions** | `fade` \| `dissolve` \| `wipeleft` \| `wiperight` | `scene bg park with wipeleft` |
 | **Show Sprite** | `show <char> [<expr>] [at <pos>] [with <anim>]` | `show yumia smile at center with bounce` |
-| **Hide Sprite** | `hide <char>` | `hide yumia` |
+| **Hide Sprite** | `hide <char> [with <anim>]` | `hide yumia` |
 | **Sprite transitions** | `with bounce` \| `dissolve` \| `nod` \| `shake` \| `slideleft` \| `slideright` | `show yumia with dissolve` |
+| **Define alias** | `define <name...> = "<path>"` | `define bg classroom = "classroom.svg"` |
+| **Player input** | `input <var> ["prompt"]` | `input player_name "Your name?"` |
+| **Dialogue window** | `window show` \| `window hide` | `window hide` |
 | **Dialogue** | `<char> "<text>"` | `yumia "Hello world!"` |
 | **Narration** | `"<text>"` | `"Silence filled the room."` |
 | **Variables** | `set <var> = <val>` / `+=` / `-=` | `set karma += 5` |
@@ -156,8 +160,11 @@ Kawaijs supports inline text tags and dynamic variable interpolation:
 Bring your scenes to life with hardware-accelerated ambient effects and camera dynamics:
 
 ```kawa
+define bg courtyard = "courtyard.svg"
+define music rain = "bgm_rain"
+
 label dramatic_scene:
-    scene bg courtyard with fade
+    scene bg courtyard with dissolve
 
     # 1. Weather particle systems (sakura = cherry blossoms)
     vfx rain
@@ -179,14 +186,21 @@ label dramatic_scene:
     camera hpunch
     camera flash
 
-    # 4. Timed dramatic pause
+    # 4. Timed dramatic pause / hide textbox
+    window hide
     pause 1500
+    window show
 
-    # 5. Fullscreen CG illustration & unlock in Gallery
+    # 5. Ask the player
+    input player_name "What is your name?"
+
+    # 6. Fullscreen CG illustration & unlock in Gallery
     cg "memories_under_rain.jpg" as "rain_cg"
+    play music rain
 ```
 
 > **Tip:** A new `scene` clears characters and VFX. Re-apply `vfx sakura` (or fog/rain) after each scene change.  
+> **Tip:** `define` aliases are resolved at compile time for `scene`, `play`, and `cg`.  
 > **Showcase:** see [`examples/hello-world`](./examples/hello-world) — also the default `kawa create` template.
 ---
 

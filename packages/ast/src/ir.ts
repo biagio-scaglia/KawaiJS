@@ -28,7 +28,9 @@ export type Instruction =
   | { readonly type: 'pause'; readonly duration?: number; readonly loc?: SourceLocation }
   | { readonly type: 'cg'; readonly image: string; readonly unlockId?: string; readonly loc?: SourceLocation }
   | { readonly type: 'call'; readonly targetLabel: string; readonly loc?: SourceLocation }
-  | { readonly type: 'return'; readonly loc?: SourceLocation };
+  | { readonly type: 'return'; readonly loc?: SourceLocation }
+  | { readonly type: 'input'; readonly variable: string; readonly prompt: string; readonly loc?: SourceLocation }
+  | { readonly type: 'window'; readonly action: 'show' | 'hide'; readonly loc?: SourceLocation };
 
 export interface StoryMeta {
   readonly title?: string;
@@ -40,5 +42,7 @@ export interface StoryMeta {
 export interface StoryPackage {
   readonly meta: StoryMeta;
   readonly characters: Record<string, CharacterDefinition>;
+  /** Optional asset/string aliases from `define` declarations. */
+  readonly defines?: Record<string, string>;
   readonly labels: Record<string, readonly Instruction[]>;
 }

@@ -3,6 +3,7 @@ import type { SourceLocation } from './source.js';
 export type ASTNodeType =
   | 'Program'
   | 'CharacterDecl'
+  | 'DefineDecl'
   | 'LabelDecl'
   | 'SceneStmt'
   | 'ShowStmt'
@@ -22,7 +23,9 @@ export type ASTNodeType =
   | 'VfxStmt'
   | 'CameraStmt'
   | 'PauseStmt'
-  | 'CgStmt';
+  | 'CgStmt'
+  | 'InputStmt'
+  | 'WindowStmt';
 
 export interface BaseNode {
   readonly type: ASTNodeType;
@@ -36,6 +39,7 @@ export interface ProgramNode extends BaseNode {
 
 export type StatementNode =
   | CharacterDeclNode
+  | DefineDeclNode
   | LabelDeclNode
   | SceneStmtNode
   | ShowStmtNode
@@ -52,13 +56,22 @@ export type StatementNode =
   | VfxStmtNode
   | CameraStmtNode
   | PauseStmtNode
-  | CgStmtNode;
+  | CgStmtNode
+  | InputStmtNode
+  | WindowStmtNode;
 
 export interface CharacterDeclNode extends BaseNode {
   readonly type: 'CharacterDecl';
   readonly id: string;
   readonly displayName: string;
   readonly color?: string;
+}
+
+/** Asset / string alias: `define bg classroom = "classroom.svg"` */
+export interface DefineDeclNode extends BaseNode {
+  readonly type: 'DefineDecl';
+  readonly name: string;
+  readonly value: string;
 }
 
 export interface LabelDeclNode extends BaseNode {
@@ -183,5 +196,18 @@ export interface CgStmtNode extends BaseNode {
   readonly type: 'CgStmt';
   readonly image: string;
   readonly unlockId?: string;
+}
+
+/** Prompt the player and store the result in a variable. */
+export interface InputStmtNode extends BaseNode {
+  readonly type: 'InputStmt';
+  readonly variable: string;
+  readonly prompt: string;
+}
+
+/** Show/hide the dialogue window without advancing the story. */
+export interface WindowStmtNode extends BaseNode {
+  readonly type: 'WindowStmt';
+  readonly action: 'show' | 'hide';
 }
 

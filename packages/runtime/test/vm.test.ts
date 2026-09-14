@@ -344,6 +344,34 @@ label start:
     expect(vm.getState().visual.vfx?.color).toBe('#fda4af');
   });
 
+  it('supports define aliases, input prompts, and window hide/show', () => {
+    const code = `define music theme = "bgm_theme"
+
+label start:
+    input player_name "Name?"
+    window hide
+    window show
+    play music theme
+    "Hi [player_name]"
+`;
+    const story = compileScript(code);
+    expect(story.defines?.['music theme']).toBe('bgm_theme');
+
+    const vm = new StoryVM(story);
+    vm.start();
+    expect(vm.getState().pendingInput?.variable).toBe('player_name');
+    expect(vm.getState().isWaitingForInput).toBe(true);
+
+    vm.next(); // must not skip input
+    expect(vm.getState().pendingInput).not.toBeNull();
+
+    vm.submitInput('Alex');
+    expect(vm.getState().variables['player_name']).toBe('Alex');
+    expect(vm.getState().windowVisible).toBe(true);
+    expect(vm.getState().audio.music).toBe('bgm_theme');
+    expect(vm.getState().dialogue?.text).toBe('Hi Alex');
+  });
+
   it('triggers camera events for shake and flash', () => {
     const code = `label start:
     camera shake 600

@@ -16,6 +16,7 @@ export class Compiler {
   private readonly program: ProgramNode;
   private readonly options: CompilerOptions;
   private anonymousLabelCounter = 0;
+  private defines: Record<string, string> = {};
 
   constructor(program: ProgramNode, options: CompilerOptions = { validateLabels: true }) {
     this.program = program;
@@ -25,8 +26,9 @@ export class Compiler {
   public compile(): StoryPackage {
     const characters: Record<string, CharacterDefinition> = {};
     const labels: Record<string, Instruction[]> = {};
+    this.defines = {};
 
-    // 1. First pass: Collect character declarations and label bodies
+    // 1. First pass: Collect character / define declarations and label bodies
     for (const stmt of this.program.statements) {
       if (stmt.type === 'CharacterDecl') {
         characters[stmt.id] = {
@@ -34,6 +36,16 @@ export class Compiler {
           name: stmt.displayName,
           color: stmt.color
         };
+      } else if (stmt.type === 'DefineDecl') {
+        if (this.defines[stmt.name]) {
+          throw new KawaError({
+            code: 'E0205',
+            message: `Duplicate define '${stmt.name}'`,
+            severity: 'error',
+            loc: stmt.loc
+          });
+        }
+        this.defines[stmt.name] = stmt.value;
       } else if (stmt.type === 'LabelDecl') {
         if (labels[stmt.name]) {
           throw new KawaError({
@@ -59,8 +71,19 @@ export class Compiler {
         startLabel: labels['start'] ? 'start' : Object.keys(labels)[0]
       },
       characters,
+      defines: { ...this.defines },
       labels
     };
+  }
+
+  /** Resolve `define` aliases. Returns `fallback` (or `primary`) when unset. */
+  private resolveAlias(primary: string, fallback?: string): string {
+    if (this.defines[primary]) return this.defines[primary]!;
+    if (fallback !== undefined) {
+      if (this.defines[fallback]) return this.defines[fallback]!;
+      return fallback;
+    }
+    return primary;
   }
 
   private compileBlock(
@@ -78,7 +101,7 @@ export class Compiler {
         case 'SceneStmt':
           instructions.push({
             type: 'scene',
-            background: stmt.background,
+            background: this.resolveAlias(stmt.background),
             transition: stmt.transition,
             loc: stmt.loc
           });
@@ -278,7 +301,7 @@ export class Compiler {
           instructions.push({
             type: 'play_audio',
             channel: stmt.channel,
-            track: stmt.track,
+            track: this.resolveAlias(`${stmt.channel} ${stmt.track}`, stmt.track),
             fade: stmt.fade,
             loop: stmt.loop,
             loc: stmt.loc
@@ -324,10 +347,33 @@ export class Compiler {
         case 'CgStmt':
           instructions.push({
             type: 'cg',
-            image: stmt.image,
+            image: this.resolveAlias(stmt.image),
             unlockId: stmt.unlockId,
             loc: stmt.loc
           });
+          break;
+
+        case 'InputStmt':
+          instructions.push({
+            type: 'input',
+            variable: stmt.variable,
+            prompt: stmt.prompt,
+            loc: stmt.loc
+          });
+          break;
+
+        case 'WindowStmt':
+          instructions.push({
+            type: 'window',
+            action: stmt.action,
+            loc: stmt.loc
+          });
+          break;
+
+        case 'CharacterDecl':
+        case 'DefineDecl':
+        case 'LabelDecl':
+          // Declarations belong at top level; ignore if nested.
           break;
       }
     }

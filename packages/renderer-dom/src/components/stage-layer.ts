@@ -72,18 +72,34 @@ export class StageLayerComponent {
       return;
     }
 
-    this.backgroundEl.dataset.transition = transition ?? 'none';
+    const transitionName = (transition ?? 'none').toLowerCase();
+    this.backgroundEl.dataset.transition = transitionName;
     const cleanBg = background.replace(/^bg[\s_]+/i, '').trim();
     const primaryUrl = this.assetResolver(cleanBg, 'background');
 
     if (primaryUrl !== this.currentBgUrl) {
       this.currentBgUrl = primaryUrl;
 
-      if (transition === 'fade') {
+      const crossfade =
+        transitionName === 'fade' ||
+        transitionName === 'dissolve' ||
+        transitionName === 'wipeleft' ||
+        transitionName === 'wiperight';
+
+      if (crossfade) {
         const nextLayer = this.activeBgLayer === 'A' ? this.bgLayerB : this.bgLayerA;
         const curLayer = this.activeBgLayer === 'A' ? this.bgLayerA : this.bgLayerB;
 
         nextLayer.style.backgroundImage = `url("${primaryUrl}")`;
+        // Reset wipe classes then apply for this transition
+        nextLayer.classList.remove('kawa-wipe-from-left', 'kawa-wipe-from-right');
+        curLayer.classList.remove('kawa-wipe-from-left', 'kawa-wipe-from-right');
+        if (transitionName === 'wipeleft') {
+          nextLayer.classList.add('kawa-wipe-from-right');
+        } else if (transitionName === 'wiperight') {
+          nextLayer.classList.add('kawa-wipe-from-left');
+        }
+
         nextLayer.classList.add('active');
         curLayer.classList.remove('active');
 
