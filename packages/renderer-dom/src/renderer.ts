@@ -728,8 +728,10 @@ export class DOMRenderer {
   }
 
   private renderEndingCard(): void {
-    const existing = this.stageLayer.stageEl.querySelector('.kawa-ending-card');
-    if (existing) existing.remove();
+    // Don't remount — recreating replayed the pop animation and looked like a jump.
+    if (this.stageLayer.stageEl.querySelector('.kawa-ending-card')) {
+      return;
+    }
 
     const endingCard = document.createElement('div');
     endingCard.className = 'kawa-ending-card';
@@ -743,7 +745,7 @@ export class DOMRenderer {
 
     const restartBtn = document.createElement('button');
     restartBtn.type = 'button';
-    restartBtn.className = 'kawa-choice-btn';
+    restartBtn.className = 'kawa-choice-btn kawa-ending-btn';
     restartBtn.style.marginTop = '16px';
     restartBtn.innerHTML = `${SVG_ICONS.replay} Play Again`;
     restartBtn.addEventListener('click', (e) => {
@@ -755,7 +757,7 @@ export class DOMRenderer {
 
     const menuBtn = document.createElement('button');
     menuBtn.type = 'button';
-    menuBtn.className = 'kawa-choice-btn';
+    menuBtn.className = 'kawa-choice-btn kawa-ending-btn';
     menuBtn.style.marginTop = '10px';
     menuBtn.innerHTML = `${SVG_ICONS.home} Main Menu`;
     menuBtn.addEventListener('click', (e) => {

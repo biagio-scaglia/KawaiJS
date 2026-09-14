@@ -912,12 +912,15 @@ body.kawa-fullscreen {
   margin-bottom: 4px;
 }
 
-/* Ending Card Overlay */
+/* Ending Card Overlay — centered with inset/margin so pop animation
+   does not fight translate(-50%, -50%) (that caused a bottom→top jump). */
 .kawa-ending-card {
   position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
+  inset: 0;
+  margin: auto;
+  width: max-content;
+  max-width: min(90%, 440px);
+  height: max-content;
   background: linear-gradient(180deg, rgba(20, 28, 48, 0.95) 0%, rgba(10, 15, 29, 0.98) 100%);
   backdrop-filter: blur(24px);
   -webkit-backdrop-filter: blur(24px);
@@ -930,7 +933,18 @@ body.kawa-fullscreen {
   text-align: center;
   box-shadow: 0 25px 60px rgba(0, 0, 0, 0.85), 0 0 45px rgba(244, 63, 94, 0.25);
   z-index: 50;
-  animation: kawa-modal-pop 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  animation: kawa-ending-pop 0.35s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes kawa-ending-pop {
+  0% {
+    opacity: 0;
+    transform: scale(0.96) translateY(10px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
 }
 
 .kawa-ending-title {
