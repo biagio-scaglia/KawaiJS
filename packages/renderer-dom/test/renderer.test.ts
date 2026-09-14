@@ -509,6 +509,15 @@ label start:
 
     renderer.destroy();
   });
+
+  it('is safe to call destroy twice', () => {
+    const story = compileScript(sampleScript);
+    const vm = new StoryVM(story);
+    const renderer = new DOMRenderer(vm, { container, mainMenu: { enabled: false }, typewriterSpeed: 0 });
+    renderer.destroy();
+    expect(() => renderer.destroy()).not.toThrow();
+    expect(container.innerHTML).toBe('');
+  });
 });
 
 

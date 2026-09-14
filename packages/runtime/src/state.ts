@@ -88,6 +88,78 @@ export function createInitialState(startLabel = 'start'): StoryState {
   };
 }
 
+/**
+ * Normalize a partially-shaped / older save state into a full StoryState.
+ * Returns null when the payload is too corrupt to recover.
+ */
+export function normalizeStoryState(raw: unknown): StoryState | null {
+  if (!raw || typeof raw !== 'object') return null;
+  const s = raw as Record<string, unknown>;
+
+  if (typeof s['currentLabel'] !== 'string' || typeof s['instructionPointer'] !== 'number') {
+    return null;
+  }
+
+  const base = createInitialState(s['currentLabel']);
+  const visualRaw = (s['visual'] && typeof s['visual'] === 'object' ? s['visual'] : {}) as Record<string, unknown>;
+  const audioRaw = (s['audio'] && typeof s['audio'] === 'object' ? s['audio'] : {}) as Record<string, unknown>;
+  const dialogueRaw = s['dialogue'] && typeof s['dialogue'] === 'object' ? (s['dialogue'] as Record<string, unknown>) : null;
+
+  const callStack = Array.isArray(s['callStack'])
+    ? s['callStack']
+        .filter((f): f is Record<string, unknown> => !!f && typeof f === 'object')
+        .map(f => ({
+          returnLabel: typeof f['returnLabel'] === 'string' ? f['returnLabel'] : base.currentLabel,
+          returnPointer: typeof f['returnPointer'] === 'number' ? f['returnPointer'] : 0
+        }))
+    : [];
+
+  const charactersRaw =
+    visualRaw['characters'] && typeof visualRaw['characters'] === 'object'
+      ? (visualRaw['characters'] as Record<string, CharacterState>)
+      : {};
+
+  return {
+    currentLabel: s['currentLabel'] as string,
+    instructionPointer: s['instructionPointer'] as number,
+    callStack,
+    variables:
+      s['variables'] && typeof s['variables'] === 'object'
+        ? Object.assign(Object.create(null), s['variables'])
+        : Object.create(null),
+    visual: {
+      background: typeof visualRaw['background'] === 'string' ? visualRaw['background'] : null,
+      transition: typeof visualRaw['transition'] === 'string' ? visualRaw['transition'] : null,
+      characters: { ...charactersRaw },
+      vfx: (visualRaw['vfx'] as VfxState | null) ?? null,
+      activeCG: typeof visualRaw['activeCG'] === 'string' ? visualRaw['activeCG'] : null
+    },
+    audio: {
+      music: typeof audioRaw['music'] === 'string' ? audioRaw['music'] : null,
+      voice: typeof audioRaw['voice'] === 'string' ? audioRaw['voice'] : null
+    },
+    dialogue: dialogueRaw && typeof dialogueRaw['text'] === 'string'
+      ? {
+          speaker: typeof dialogueRaw['speaker'] === 'string' ? dialogueRaw['speaker'] : undefined,
+          speakerDisplayName:
+            typeof dialogueRaw['speakerDisplayName'] === 'string'
+              ? dialogueRaw['speakerDisplayName']
+              : undefined,
+          speakerColor: typeof dialogueRaw['speakerColor'] === 'string' ? dialogueRaw['speakerColor'] : undefined,
+          text: dialogueRaw['text'] as string
+        }
+      : null,
+    choices: Array.isArray(s['choices']) ? (s['choices'] as ChoiceOption[]) : null,
+    unlockedCGs:
+      s['unlockedCGs'] && typeof s['unlockedCGs'] === 'object'
+        ? Object.assign(Object.create(null), s['unlockedCGs'])
+        : Object.create(null),
+    pendingPauseMs: typeof s['pendingPauseMs'] === 'number' ? s['pendingPauseMs'] : null,
+    isWaitingForInput: Boolean(s['isWaitingForInput']),
+    isFinished: Boolean(s['isFinished'])
+  };
+}
+
 export function cloneState(state: StoryState): StoryState {
   return {
     currentLabel: state.currentLabel,
@@ -107,7 +179,7 @@ export function cloneState(state: StoryState): StoryState {
     dialogue: state.dialogue ? { ...state.dialogue } : null,
     choices: state.choices ? state.choices.map(c => ({ ...c })) : null,
     unlockedCGs: Object.assign(Object.create(null), state.unlockedCGs),
-    pendingPauseMs: state.pendingPauseMs,
+    pendingPauseMs: state.pendingPauseMs ?? null,
     isWaitingForInput: state.isWaitingForInput,
     isFinished: state.isFinished
   };

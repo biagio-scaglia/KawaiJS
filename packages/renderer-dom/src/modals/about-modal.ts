@@ -1,9 +1,10 @@
 import { SVG_ICONS } from '../icons.js';
 import type { MainMenuOptions } from '../types.js';
 import { escapeHtml } from '../utils/rich-text.js';
+import { trapFocus } from '../utils/focus-trap.js';
 
 export function showAboutModal(rootEl: HTMLElement, options?: MainMenuOptions): void {
-  const existing = rootEl.querySelector('.kawa-modal-overlay');
+  const existing = rootEl.querySelector('.kawa-modal-overlay:not(.kawa-confirm-overlay)');
   if (existing) existing.remove();
 
   const overlay = document.createElement('div');
@@ -22,11 +23,17 @@ export function showAboutModal(rootEl: HTMLElement, options?: MainMenuOptions): 
   title.className = 'kawa-modal-title';
   title.innerHTML = `${SVG_ICONS.info} <span>About</span>`;
 
+  const releaseFocus = trapFocus(card);
+  const close = (): void => {
+    releaseFocus();
+    overlay.remove();
+  };
+
   const closeBtn = document.createElement('button');
   closeBtn.className = 'kawa-btn';
   closeBtn.innerHTML = `${SVG_ICONS.close} <span>Close</span>`;
   closeBtn.setAttribute('aria-label', 'Close about modal');
-  closeBtn.addEventListener('click', () => overlay.remove());
+  closeBtn.addEventListener('click', close);
 
   header.appendChild(title);
   header.appendChild(closeBtn);

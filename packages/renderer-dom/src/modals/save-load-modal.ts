@@ -1,6 +1,7 @@
 import type { StoryVM, SaveSlot } from '@kawaijs/runtime';
 import { SVG_ICONS } from '../icons.js';
 import { showConfirmModal } from './confirm-modal.js';
+import { trapFocus } from '../utils/focus-trap.js';
 
 function cleanPreviewText(text: string): string {
   return text
@@ -15,7 +16,7 @@ export async function showSaveLoadModal(
   mode: 'save' | 'load',
   onLoaded?: () => void
 ): Promise<void> {
-  const existing = rootEl.querySelector('.kawa-modal-overlay');
+  const existing = rootEl.querySelector('.kawa-modal-overlay:not(.kawa-confirm-overlay)');
   if (existing) existing.remove();
 
   const overlay = document.createElement('div');
@@ -34,11 +35,17 @@ export async function showSaveLoadModal(
   title.className = 'kawa-modal-title';
   title.innerHTML = `${mode === 'save' ? SVG_ICONS.save : SVG_ICONS.load} <span>${mode === 'save' ? 'Save Game' : 'Load Game'}</span>`;
 
+  const releaseFocus = trapFocus(card);
+  const close = (): void => {
+    releaseFocus();
+    overlay.remove();
+  };
+
   const closeBtn = document.createElement('button');
   closeBtn.className = 'kawa-btn';
   closeBtn.innerHTML = `${SVG_ICONS.close} <span>Close</span>`;
   closeBtn.setAttribute('aria-label', 'Close modal');
-  closeBtn.addEventListener('click', () => overlay.remove());
+  closeBtn.addEventListener('click', close);
 
   header.appendChild(title);
   header.appendChild(closeBtn);
@@ -132,7 +139,7 @@ export async function showSaveLoadModal(
       saveActionBtn.setAttribute('aria-label', `${label} slot ${slotNum}`);
       saveActionBtn.addEventListener('click', async () => {
         await vm.save(slotNum);
-        overlay.remove();
+        close();
         void showSaveLoadModal(rootEl, vm, 'save', onLoaded);
       });
       actions.appendChild(saveActionBtn);
@@ -145,7 +152,7 @@ export async function showSaveLoadModal(
         loadActionBtn.addEventListener('click', async () => {
           const ok = await vm.load(slotNum);
           if (ok) {
-            overlay.remove();
+            close();
             onLoaded?.();
           }
         });
@@ -174,7 +181,7 @@ export async function showSaveLoadModal(
           cancelText: 'Cancel',
           onConfirm: async () => {
             await saveManager.deleteSlot(slotNum);
-            overlay.remove();
+            close();
             void showSaveLoadModal(rootEl, vm, mode, onLoaded);
           }
         });

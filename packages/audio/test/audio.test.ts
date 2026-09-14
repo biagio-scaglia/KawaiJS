@@ -25,7 +25,8 @@ label start:
     const detach = audio.attachToVM(vm);
     vm.start();
     expect(audioEvents.length).toBeGreaterThan(0);
-    expect(audioEvents[0]?.track).toBe('bgm_peaceful');
+    const playEvent = audioEvents.find((e) => e.action === 'play' && e.channel === 'music');
+    expect(playEvent?.track).toBe('bgm_peaceful');
     detach();
   });
 });

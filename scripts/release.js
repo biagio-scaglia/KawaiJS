@@ -11,14 +11,18 @@ console.log('1️⃣ Running typecheck and test suite...');
 execSync('npx tsc -b', { stdio: 'inherit' });
 execSync('npm test', { stdio: 'inherit' });
 
-// 2. Discover all packages
+// 2. Discover all packages (prefer a known package for version source)
 const packagesDir = path.resolve(process.cwd(), 'packages');
 const packageDirs = fs.readdirSync(packagesDir, { withFileTypes: true })
   .filter(d => d.isDirectory())
   .map(d => path.join(packagesDir, d.name));
 
-// Read current version from first package
-const firstPkg = JSON.parse(fs.readFileSync(path.join(packageDirs[0], 'package.json'), 'utf-8'));
+const versionSource =
+  packageDirs.find(d => path.basename(d) === 'ast') ??
+  packageDirs.find(d => path.basename(d) === 'cli') ??
+  packageDirs[0];
+
+const firstPkg = JSON.parse(fs.readFileSync(path.join(versionSource, 'package.json'), 'utf-8'));
 const currentVersion = firstPkg.version;
 
 function bumpVersion(version, type) {
@@ -77,10 +81,18 @@ try {
 }
 execSync('git push origin main --tags', { stdio: 'inherit' });
 
-// 5. Publish to npm
-console.log('\n5️⃣ Publishing to npm...');
+// 5. Publish to npm (private packages such as vscode-kawa are skipped automatically)
+console.log('\n5️⃣ Publishing public workspaces to npm...');
 try {
-  execSync('npm publish --workspaces --access public', { stdio: 'inherit' });
+  const publishable = packageDirs.filter((dir) => {
+    const pkg = JSON.parse(fs.readFileSync(path.join(dir, 'package.json'), 'utf-8'));
+    return !pkg.private;
+  });
+  for (const dir of publishable) {
+    const pkg = JSON.parse(fs.readFileSync(path.join(dir, 'package.json'), 'utf-8'));
+    console.log(`   Publishing ${pkg.name}@${pkg.version}...`);
+    execSync(`npm publish -w ${pkg.name} --access public`, { stdio: 'inherit' });
+  }
   console.log(`\n🎉 \x1b[32mSuccessfully released and published Kawaijs v${nextVersion} to npm and GitHub!\x1b[0m\n`);
 } catch (err) {
   console.error('\n⚠️ Note: Could not publish automatically to npm (login required). Run `npm publish --workspaces --access public` once logged in.');

@@ -93,6 +93,7 @@ export class DOMRenderer {
   private pauseTimer: number | null = null;
   private errorToastTimer: number | null = null;
   private advanceLockUntil = 0;
+  private destroyed = false;
 
   private unsubscribeVMState?: () => void;
   private unsubscribeCamera?: () => void;
@@ -196,20 +197,27 @@ export class DOMRenderer {
   }
 
   public destroy(): void {
+    if (this.destroyed) return;
+    this.destroyed = true;
+
     if (this.unsubscribeVMState) {
       this.unsubscribeVMState();
+      this.unsubscribeVMState = undefined;
     }
     if (this.unsubscribeCamera) {
       this.unsubscribeCamera();
+      this.unsubscribeCamera = undefined;
     }
     if (this.unsubscribeAudio) {
       this.unsubscribeAudio();
+      this.unsubscribeAudio = undefined;
     }
     if (this.audioManager && typeof this.audioManager.destroy === 'function') {
       this.audioManager.destroy();
     }
     if (this.unsubscribeError) {
       this.unsubscribeError();
+      this.unsubscribeError = undefined;
     }
     if (this.dialogueBox) {
       this.dialogueBox.destroy();
@@ -219,6 +227,7 @@ export class DOMRenderer {
     }
     if (this.viewportAdapter) {
       this.viewportAdapter.destroy();
+      this.viewportAdapter = undefined;
     }
     if (this.autoTimer) {
       clearTimeout(this.autoTimer);
@@ -238,6 +247,7 @@ export class DOMRenderer {
     }
     if (this.boundKeyHandler && typeof window !== 'undefined') {
       window.removeEventListener('keydown', this.boundKeyHandler);
+      this.boundKeyHandler = undefined;
     }
     this.container.innerHTML = '';
   }

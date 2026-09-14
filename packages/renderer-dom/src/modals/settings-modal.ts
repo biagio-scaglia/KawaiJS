@@ -1,4 +1,5 @@
 import { SVG_ICONS } from '../icons.js';
+import { trapFocus } from '../utils/focus-trap.js';
 
 export interface SettingsModalOptions {
   typewriterSpeed: number;
@@ -14,7 +15,7 @@ export interface SettingsModalOptions {
 }
 
 export function showSettingsModal(rootEl: HTMLElement, options: SettingsModalOptions): void {
-  const existing = rootEl.querySelector('.kawa-modal-overlay');
+  const existing = rootEl.querySelector('.kawa-modal-overlay:not(.kawa-confirm-overlay)');
   if (existing) existing.remove();
 
   let currentSpeed = options.typewriterSpeed;
@@ -38,11 +39,17 @@ export function showSettingsModal(rootEl: HTMLElement, options: SettingsModalOpt
   title.className = 'kawa-modal-title';
   title.innerHTML = `${SVG_ICONS.settings} <span>Preferences</span>`;
 
+  const releaseFocus = trapFocus(card);
+  const close = (): void => {
+    releaseFocus();
+    overlay.remove();
+  };
+
   const closeBtn = document.createElement('button');
   closeBtn.className = 'kawa-btn';
   closeBtn.innerHTML = `${SVG_ICONS.close} <span>Close</span>`;
   closeBtn.setAttribute('aria-label', 'Close settings');
-  closeBtn.addEventListener('click', () => overlay.remove());
+  closeBtn.addEventListener('click', close);
 
   header.appendChild(title);
   header.appendChild(closeBtn);

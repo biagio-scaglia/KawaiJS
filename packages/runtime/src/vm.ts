@@ -174,11 +174,13 @@ export class StoryVM {
       throw new Error(`Cannot start story: Start label '${startLabel}' not found in story package.`);
     }
 
+    const prevMusic = this.state.audio.music;
     this.recordTrace(`START ${startLabel}`);
     this.state = createInitialState(startLabel);
     this.snapshotStack = [];
     this.virtualTimeMs = 0;
     this.historyManager.clear();
+    this.resyncAudio(prevMusic);
     this.executeUntilWaiting();
   }
 
@@ -271,6 +273,8 @@ export class StoryVM {
       return false;
     }
 
+    const prevMusic = this.state.audio.music;
+
     // Pop current snapshot
     this.snapshotStack.pop();
     // Restore previous snapshot
@@ -278,6 +282,7 @@ export class StoryVM {
     if (prev) {
       this.state = cloneState(prev.state);
       this.recordTrace(`ROLLBACK`);
+      this.resyncAudio(prevMusic);
       this.notifyStateChanged();
       return true;
     }
@@ -307,11 +312,38 @@ export class StoryVM {
       return res;
     }
 
+    const prevMusic = this.state.audio.music;
     this.state = cloneState(res.slot.snapshot.state);
     this.snapshotStack = [res.slot.snapshot];
     this.recordTrace(`LOAD slot_${slotId}`);
+    this.resyncAudio(prevMusic);
     this.notifyStateChanged();
     return res;
+  }
+
+  /**
+   * Emit stop/play audio events so the presentation layer matches restored state
+   * after load or rollback (snapshots store track ids but not live Audio elements).
+   */
+  private resyncAudio(previousMusic: string | null): void {
+    this.emitAudioEvent({ action: 'stop', channel: 'voice' });
+    this.emitAudioEvent({ action: 'stop', channel: 'sound' });
+
+    const nextMusic = this.state.audio.music;
+    if (previousMusic === nextMusic) {
+      return;
+    }
+
+    if (nextMusic) {
+      this.emitAudioEvent({
+        action: 'play',
+        channel: 'music',
+        track: nextMusic,
+        loop: true
+      });
+    } else {
+      this.emitAudioEvent({ action: 'stop', channel: 'music' });
+    }
   }
 
   private executeUntilWaiting(): void {

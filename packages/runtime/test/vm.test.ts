@@ -463,4 +463,84 @@ label start:
     expect(vm.getState().dialogue?.text).toBe('Continued');
     expect(errors.some((e) => e.message.includes('zero available options'))).toBe(true);
   });
+
+  it('resyncs music audio events on rollback and load', async () => {
+    const code = `label start:
+    play music theme loop
+    "With music"
+    stop music
+    "Silent"
+`;
+    const story = compileScript(code);
+    const storage = new MemoryStorageAdapter();
+    const saveManager = new SaveManager(storage);
+    const vm = new StoryVM(story, saveManager);
+    const events: Array<{ action: string; channel: string; track?: string }> = [];
+    vm.onAudioEvent((e) => events.push({ action: e.action, channel: e.channel, track: e.track }));
+
+    vm.start();
+    expect(vm.getState().audio.music).toBe('theme');
+    await vm.save('1');
+
+    vm.next(); // stop music -> Silent
+    expect(vm.getState().audio.music).toBeNull();
+
+    events.length = 0;
+    vm.rollback();
+    expect(vm.getState().audio.music).toBe('theme');
+    expect(events.some((e) => e.action === 'play' && e.channel === 'music' && e.track === 'theme')).toBe(true);
+
+    vm.next();
+    events.length = 0;
+    const loaded = await vm.load('1');
+    expect(loaded).toBe(true);
+    expect(vm.getState().dialogue?.text).toBe('With music');
+    expect(events.some((e) => e.action === 'play' && e.track === 'theme')).toBe(true);
+  });
+
+  it('rejects saves without storyHash when validation is required and migrates old shape', async () => {
+    const { migrateSaveSlot } = await import('../src/save.js');
+    const migrated = migrateSaveSlot({
+      id: '1',
+      name: 'Slot 1',
+      timestamp: 1,
+      snapshot: {
+        id: 'snap',
+        timestamp: 1,
+        state: {
+          currentLabel: 'start',
+          instructionPointer: 0,
+          // missing pendingPauseMs / unlockedCGs on purpose
+          callStack: [],
+          variables: { a: 1 },
+          visual: { background: 'bg classroom', transition: null, characters: {} },
+          audio: { music: null },
+          dialogue: { text: 'Hi' },
+          choices: null,
+          isWaitingForInput: true,
+          isFinished: false
+        }
+      }
+    });
+    expect(migrated).not.toBeNull();
+    expect(migrated?.snapshot.state.pendingPauseMs).toBeNull();
+    expect(migrated?.snapshot.state.unlockedCGs).toBeDefined();
+    expect(migrated?.snapshot.state.variables['a']).toBe(1);
+
+    const storage = new MemoryStorageAdapter();
+    await storage.setItem(
+      'kawaijs_save_9',
+      JSON.stringify({
+        id: '9',
+        name: 'Old',
+        timestamp: 1,
+        snapshot: migrated!.snapshot
+        // no storyHash
+      })
+    );
+    const sm = new SaveManager(storage);
+    const res = await sm.loadSlot('9', 'expectedhash');
+    expect(res.success).toBe(false);
+    expect(res.reason).toBe('incompatible_story');
+  });
 });

@@ -1,5 +1,5 @@
 import type { StoryPackage } from '@kawaijs/ast';
-import type { Snapshot } from './state.js';
+import { normalizeStoryState, type Snapshot, type StoryState } from './state.js';
 
 export const CURRENT_SAVE_SCHEMA_VERSION = 1;
 
@@ -44,6 +44,42 @@ export function computeStoryHash(story: StoryPackage): string {
     }
   }
   return fnv1a(parts.join('\n'));
+}
+
+/**
+ * Migrate / normalize a parsed save slot to the current schema.
+ * Returns null if the slot cannot be recovered.
+ */
+export function migrateSaveSlot(raw: unknown): SaveSlot | null {
+  if (!raw || typeof raw !== 'object') return null;
+  const slot = raw as Record<string, unknown>;
+
+  const snapshotRaw = slot['snapshot'];
+  if (!snapshotRaw || typeof snapshotRaw !== 'object') return null;
+  const snap = snapshotRaw as Record<string, unknown>;
+
+  const normalizedState = normalizeStoryState(snap['state']);
+  if (!normalizedState) return null;
+
+  const id = typeof slot['id'] === 'string' ? slot['id'] : 'unknown';
+  const timestamp = typeof slot['timestamp'] === 'number' ? slot['timestamp'] : Date.now();
+
+  const migrated: SaveSlot = {
+    schemaVersion: CURRENT_SAVE_SCHEMA_VERSION,
+    storyHash: typeof slot['storyHash'] === 'string' ? slot['storyHash'] : undefined,
+    id,
+    name: typeof slot['name'] === 'string' ? slot['name'] : `Slot ${id}`,
+    timestamp,
+    snapshot: {
+      id: typeof snap['id'] === 'string' ? snap['id'] : `snap_${timestamp}`,
+      timestamp: typeof snap['timestamp'] === 'number' ? snap['timestamp'] : timestamp,
+      state: normalizedState
+    },
+    previewText: typeof slot['previewText'] === 'string' ? slot['previewText'] : undefined,
+    screenshotUrl: typeof slot['screenshotUrl'] === 'string' ? slot['screenshotUrl'] : undefined
+  };
+
+  return migrated;
 }
 
 export interface StorageAdapter {
@@ -121,16 +157,24 @@ export class SaveManager {
     if (!raw) return { success: false, reason: 'not_found' };
 
     try {
-      const slot = JSON.parse(raw) as SaveSlot;
-      if (!slot || typeof slot !== 'object' || !slot.snapshot) {
+      const parsed: unknown = JSON.parse(raw);
+      const slot = migrateSaveSlot(parsed);
+      if (!slot) {
         return { success: false, reason: 'corrupt' };
       }
-      if (slot.schemaVersion !== undefined && slot.schemaVersion > CURRENT_SAVE_SCHEMA_VERSION) {
+
+      const rawObj = parsed as Record<string, unknown>;
+      if (typeof rawObj['schemaVersion'] === 'number' && rawObj['schemaVersion'] > CURRENT_SAVE_SCHEMA_VERSION) {
         return { success: false, reason: 'incompatible_schema', slot };
       }
-      if (expectedStoryHash && slot.storyHash && slot.storyHash !== expectedStoryHash) {
-        return { success: false, reason: 'incompatible_story', slot };
+
+      // When a story hash is expected, require a matching hash (reject missing hashes).
+      if (expectedStoryHash) {
+        if (!slot.storyHash || slot.storyHash !== expectedStoryHash) {
+          return { success: false, reason: 'incompatible_story', slot };
+        }
       }
+
       return { success: true, slot };
     } catch {
       return { success: false, reason: 'corrupt' };
@@ -151,3 +195,6 @@ export class SaveManager {
     return slots;
   }
 }
+
+/** @internal helper for tests */
+export type { StoryState };
