@@ -109,6 +109,14 @@ label courtyard_scene:
     yumia "Look at the sunset! Story branches and characters are already outlined."
     kaori "The bundle is light. The Web Audio controller is ready."
 
+    yumia "Try a web-native {b}theme{/b}, a {b}style{/b} skin, and clickable {b}hotspots{/b}."
+    theme "sakura"
+    style dialogue glass
+    window hide
+    hotspot door 8 35 22 40 jump ending_master
+    hotspot poster 72 20 20 28 jump evaluate_ending
+    window show
+
     camera hpunch
     yumia "Let's bring all our talents together, [player_name]!"
     jump evaluate_ending

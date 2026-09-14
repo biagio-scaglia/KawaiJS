@@ -174,4 +174,9 @@ export interface DOMRendererOptions {
   /** Optional factories to replace built-in dialogue / choice UI. */
   components?: RendererComponentFactories;
   features?: RendererFeatureOptions;
+  /**
+   * Keep `?at=` in the URL in sync with the current user-facing label.
+   * Default: false (enabled automatically by mountKawaApp when a deep-link is present).
+   */
+  syncUrlLabel?: boolean;
 }

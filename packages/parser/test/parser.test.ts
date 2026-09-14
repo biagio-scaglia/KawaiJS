@@ -102,6 +102,32 @@ label start:
     }
   });
 
+  it('parses theme, style, and hotspot directives', () => {
+    const code = `label start:
+    theme "noir"
+    style dialogue glass
+    hotspot door 40 50 18 12 jump next
+    "hi"
+
+label next:
+    "ok"
+`;
+    const parser = Parser.fromSource(code, 'script.kawa');
+    const ast = parser.parse();
+    const label = ast.statements.find((s) => s.type === 'LabelDecl');
+    expect(label?.type).toBe('LabelDecl');
+    if (label?.type === 'LabelDecl') {
+      expect(label.body.some((s) => s.type === 'ThemeStmt')).toBe(true);
+      expect(label.body.some((s) => s.type === 'StyleStmt')).toBe(true);
+      const hotspot = label.body.find((s) => s.type === 'HotspotStmt');
+      expect(hotspot?.type).toBe('HotspotStmt');
+      if (hotspot?.type === 'HotspotStmt') {
+        expect(hotspot.id).toBe('door');
+        expect(hotspot.targetLabel).toBe('next');
+      }
+    }
+  });
+
   it('parses vfx, camera, pause, and cg directives', () => {
     const code = `label start:
     vfx sakura

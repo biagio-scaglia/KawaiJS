@@ -125,6 +125,10 @@ label leave_early:
 | **Define alias** | `define <name...> = "<path>"` | `define bg classroom = "classroom.svg"` |
 | **Player input** | `input <var> ["prompt"]` | `input player_name "Your name?"` |
 | **Dialogue window** | `window show` \| `window hide` | `window hide` |
+| **Theme token** | `theme "<name>"` | `theme "noir"` |
+| **Style hook** | `style <target> <name>` | `style dialogue glass` |
+| **Hotspot** | `hotspot <id> <x> <y> <w> <h> jump <label>` | `hotspot door 40 50 18 12 jump courtyard` |
+| **Deep link** | URL `?at=<label>` or `?label=` | `/?at=courtyard_scene` |
 | **Dialogue** | `<char> "<text>"` | `yumia "Hello world!"` |
 | **Narration** | `"<text>"` | `"Silence filled the room."` |
 | **Variables** | `set <var> = <val>` / `+=` / `-=` | `set karma += 5` |
@@ -197,10 +201,18 @@ label dramatic_scene:
     # 6. Fullscreen CG illustration & unlock in Gallery
     cg "memories_under_rain.jpg" as "rain_cg"
     play music rain
+
+    # 7. Web-native skin + clickable regions (coords are % of the stage)
+    theme "noir"
+    style dialogue glass
+    window hide
+    hotspot door 12 30 20 45 jump next_chapter
+    hotspot window 70 18 22 30 jump next_chapter
 ```
 
 > **Tip:** A new `scene` clears characters and VFX. Re-apply `vfx sakura` (or fog/rain) after each scene change.  
 > **Tip:** `define` aliases are resolved at compile time for `scene`, `play`, and `cg`.  
+> **Tip:** Open a build with `?at=label_name` to deep-link past the main menu (labels starting with `__` are ignored).  
 > **Showcase:** see [`examples/hello-world`](./examples/hello-world) — also the default `kawa create` template.
 ---
 

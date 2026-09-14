@@ -12,6 +12,16 @@ export interface ChoiceOption {
   readonly condition?: string;
 }
 
+export interface HotspotOption {
+  readonly id: string;
+  /** Normalized 0–1 rect relative to the stage. */
+  readonly x: number;
+  readonly y: number;
+  readonly w: number;
+  readonly h: number;
+  readonly targetLabel: string;
+}
+
 export type Instruction =
   | { readonly type: 'scene'; readonly background: string; readonly transition?: string; readonly loc?: SourceLocation }
   | { readonly type: 'show'; readonly character: string; readonly expression?: string; readonly position?: string; readonly transition?: string; readonly loc?: SourceLocation }
@@ -30,7 +40,10 @@ export type Instruction =
   | { readonly type: 'call'; readonly targetLabel: string; readonly loc?: SourceLocation }
   | { readonly type: 'return'; readonly loc?: SourceLocation }
   | { readonly type: 'input'; readonly variable: string; readonly prompt: string; readonly loc?: SourceLocation }
-  | { readonly type: 'window'; readonly action: 'show' | 'hide'; readonly loc?: SourceLocation };
+  | { readonly type: 'window'; readonly action: 'show' | 'hide'; readonly loc?: SourceLocation }
+  | { readonly type: 'theme'; readonly name: string; readonly loc?: SourceLocation }
+  | { readonly type: 'style'; readonly target: string; readonly name: string; readonly loc?: SourceLocation }
+  | { readonly type: 'hotspot'; readonly id: string; readonly x: number; readonly y: number; readonly w: number; readonly h: number; readonly targetLabel: string; readonly loc?: SourceLocation };
 
 export interface StoryMeta {
   readonly title?: string;

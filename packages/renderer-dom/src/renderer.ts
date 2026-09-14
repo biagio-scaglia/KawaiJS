@@ -17,6 +17,7 @@ import { DialogueBoxComponent } from './components/dialogue-box.js';
 import { ChoiceMenuComponent } from './components/choice-menu.js';
 import { QuickMenuComponent } from './components/quick-menu.js';
 import { MainMenuComponent } from './components/main-menu.js';
+import { HotspotLayerComponent } from './components/hotspot-layer.js';
 import { showSaveLoadModal } from './modals/save-load-modal.js';
 import { showSettingsModal } from './modals/settings-modal.js';
 import { showHistoryModal } from './modals/history-modal.js';
@@ -84,9 +85,11 @@ export class DOMRenderer {
   private stageLayer!: StageLayerComponent;
   private dialogueBox!: DialogueBoxLike;
   private choiceMenu!: ChoiceMenuLike;
+  private hotspotLayer!: HotspotLayerComponent;
   private quickMenu!: QuickMenuComponent;
   private mainMenu!: MainMenuComponent;
   private viewportAdapter?: ViewportAdapter;
+  private appliedStyleTargets = new Set<string>();
 
   private isAutoMode = false;
   private isSkipMode = false;
@@ -152,6 +155,7 @@ export class DOMRenderer {
 
     this.unsubscribeVMState = this.vm.onStateChange((state) => {
       this.render(state);
+      this.syncUrlLabel(state);
     });
 
     this.unsubscribeCamera = this.vm.onCameraEvent((e) => {
@@ -223,6 +227,9 @@ export class DOMRenderer {
     }
     if (this.dialogueBox) {
       this.dialogueBox.destroy();
+    }
+    if (this.hotspotLayer) {
+      this.hotspotLayer.destroy();
     }
     if (this.stageLayer) {
       this.stageLayer.destroy();
@@ -332,7 +339,12 @@ export class DOMRenderer {
             return;
           }
           const state = this.vm.getState();
-          if (state.isFinished || (state.choices && state.choices.length > 0)) {
+          if (
+            state.isFinished ||
+            (state.choices && state.choices.length > 0) ||
+            (state.hotspots && state.hotspots.length > 0) ||
+            state.pendingInput
+          ) {
             this.toggleSkipMode(false);
             return;
           }
@@ -455,7 +467,12 @@ export class DOMRenderer {
     if (!this.isAutoMode) return;
 
     const state = this.vm.getState();
-    if (state.isFinished || (state.choices && state.choices.length > 0)) {
+    if (
+      state.isFinished ||
+      (state.choices && state.choices.length > 0) ||
+      (state.hotspots && state.hotspots.length > 0) ||
+      state.pendingInput
+    ) {
       return;
     }
 
@@ -463,7 +480,12 @@ export class DOMRenderer {
     this.autoTimer = window.setTimeout(() => {
       if (this.isAutoMode) {
         const cur = this.vm.getState();
-        if (!cur.isFinished && (!cur.choices || cur.choices.length === 0)) {
+        if (
+          !cur.isFinished &&
+          (!cur.choices || cur.choices.length === 0) &&
+          (!cur.hotspots || cur.hotspots.length === 0) &&
+          !cur.pendingInput
+        ) {
           this.vm.next();
         }
       }
@@ -493,6 +515,10 @@ export class DOMRenderer {
           }
         });
 
+    this.hotspotLayer = new HotspotLayerComponent((id) => {
+      this.vm.selectHotspot(id);
+    });
+
     this.dialogueBox = this.options.components?.createDialogueBox
       ? this.options.components.createDialogueBox(this.typewriterSpeed)
       : new DialogueBoxComponent(this.typewriterSpeed);
@@ -521,6 +547,7 @@ export class DOMRenderer {
     uiLayerEl.appendChild(this.quickMenu.el);
 
     this.stageLayer.stageEl.appendChild(uiLayerEl);
+    this.stageLayer.stageEl.appendChild(this.hotspotLayer.el);
 
     this.mainMenu = new MainMenuComponent(
       this.rootEl,
@@ -574,6 +601,7 @@ export class DOMRenderer {
         target.closest('button') ||
         target.closest('.kawa-quick-menu') ||
         target.closest('.kawa-choice-container') ||
+        target.closest('.kawa-hotspot-layer') ||
         target.closest('.kawa-modal-overlay') ||
         target.closest('.kawa-ending-card')
       ) {
@@ -675,12 +703,64 @@ export class DOMRenderer {
     if (state.choices && state.choices.length > 0) {
       return;
     }
+    if (state.hotspots && state.hotspots.length > 0) {
+      return;
+    }
 
     this.vm.next();
   }
 
+  private syncUrlLabel(state: StoryState): void {
+    if (!this.options.syncUrlLabel || typeof window === 'undefined' || typeof history === 'undefined') {
+      return;
+    }
+    const label = state.currentLabel;
+    if (!label || label.startsWith('__')) return;
+
+    try {
+      const url = new URL(window.location.href);
+      if (url.searchParams.get('at') === label) return;
+      url.searchParams.delete('label');
+      url.searchParams.set('at', label);
+      history.replaceState(null, '', `${url.pathname}${url.search}${url.hash}`);
+    } catch {
+      // ignore malformed URL environments
+    }
+  }
+
+  private applyThemeAndStyles(state: StoryState): void {
+    if (state.theme) {
+      this.rootEl.dataset.kawaTheme = state.theme;
+    } else {
+      delete this.rootEl.dataset.kawaTheme;
+    }
+
+    const nextTargets = new Set(Object.keys(state.styleClasses ?? {}));
+    for (const target of this.appliedStyleTargets) {
+      if (!nextTargets.has(target)) {
+        this.rootEl.classList.forEach((cls) => {
+          if (cls.startsWith(`kawa-style-${target}-`)) {
+            this.rootEl.classList.remove(cls);
+          }
+        });
+      }
+    }
+
+    for (const [target, name] of Object.entries(state.styleClasses ?? {})) {
+      const prefix = `kawa-style-${target}-`;
+      this.rootEl.classList.forEach((cls) => {
+        if (cls.startsWith(prefix) && cls !== `${prefix}${name}`) {
+          this.rootEl.classList.remove(cls);
+        }
+      });
+      this.rootEl.classList.add(`${prefix}${name}`);
+    }
+    this.appliedStyleTargets = nextTargets;
+  }
+
   private render(state: StoryState): void {
     this.quickMenu.setBackDisabled(!this.vm.canRollback());
+    this.applyThemeAndStyles(state);
 
     // Timed pause: auto-advance after pendingPauseMs (click still skips via handleUserAdvance)
     if (this.pauseTimer) {
@@ -714,6 +794,9 @@ export class DOMRenderer {
     // 5. Branching Choice Menu
     this.choiceMenu.render(state.choices);
 
+    // 5b. CG / stage hotspots
+    this.hotspotLayer.render(state.hotspots);
+
     // 6. Dialogue Box (respect `window hide` / `window show`)
     if (state.windowVisible === false) {
       this.dialogueBox.render(null);
@@ -723,6 +806,7 @@ export class DOMRenderer {
           this.isAutoMode &&
           !state.isFinished &&
           (!state.choices || state.choices.length === 0) &&
+          (!state.hotspots || state.hotspots.length === 0) &&
           !state.pendingInput
         ) {
           this.scheduleAutoAdvance();

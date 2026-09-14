@@ -370,6 +370,43 @@ export class Compiler {
           });
           break;
 
+        case 'ThemeStmt':
+          instructions.push({
+            type: 'theme',
+            name: stmt.name,
+            loc: stmt.loc
+          });
+          break;
+
+        case 'StyleStmt':
+          instructions.push({
+            type: 'style',
+            target: stmt.target,
+            name: stmt.name,
+            loc: stmt.loc
+          });
+          break;
+
+        case 'HotspotStmt': {
+          // Writer-friendly percent (0–100) or fraction (0–1) → normalize to 0–1
+          const norm = (n: number): number => {
+            if (!Number.isFinite(n)) return 0;
+            const v = n > 1 ? n / 100 : n;
+            return Math.min(1, Math.max(0, v));
+          };
+          instructions.push({
+            type: 'hotspot',
+            id: stmt.id,
+            x: norm(stmt.x),
+            y: norm(stmt.y),
+            w: Math.max(0.01, norm(stmt.w)),
+            h: Math.max(0.01, norm(stmt.h)),
+            targetLabel: stmt.targetLabel,
+            loc: stmt.loc
+          });
+          break;
+        }
+
         case 'CharacterDecl':
         case 'DefineDecl':
         case 'LabelDecl':
@@ -387,7 +424,10 @@ export class Compiler {
 
     for (const [labelName, instructions] of Object.entries(labels)) {
       for (const inst of instructions) {
-        if ((inst.type === 'jump' || inst.type === 'call') && !knownLabels.has(inst.targetLabel)) {
+        if (
+          (inst.type === 'jump' || inst.type === 'call' || inst.type === 'hotspot') &&
+          !knownLabels.has(inst.targetLabel)
+        ) {
           let closestLabel: string | undefined;
           let minDistance = Infinity;
 

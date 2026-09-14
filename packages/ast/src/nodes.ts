@@ -25,7 +25,10 @@ export type ASTNodeType =
   | 'PauseStmt'
   | 'CgStmt'
   | 'InputStmt'
-  | 'WindowStmt';
+  | 'WindowStmt'
+  | 'ThemeStmt'
+  | 'StyleStmt'
+  | 'HotspotStmt';
 
 export interface BaseNode {
   readonly type: ASTNodeType;
@@ -58,7 +61,10 @@ export type StatementNode =
   | PauseStmtNode
   | CgStmtNode
   | InputStmtNode
-  | WindowStmtNode;
+  | WindowStmtNode
+  | ThemeStmtNode
+  | StyleStmtNode
+  | HotspotStmtNode;
 
 export interface CharacterDeclNode extends BaseNode {
   readonly type: 'CharacterDecl';
@@ -209,5 +215,29 @@ export interface InputStmtNode extends BaseNode {
 export interface WindowStmtNode extends BaseNode {
   readonly type: 'WindowStmt';
   readonly action: 'show' | 'hide';
+}
+
+/** Apply a CSS theme token on the player root (`data-kawa-theme`). */
+export interface ThemeStmtNode extends BaseNode {
+  readonly type: 'ThemeStmt';
+  readonly name: string;
+}
+
+/** Attach a named style token to a UI target (dialogue, stage, root, choices). */
+export interface StyleStmtNode extends BaseNode {
+  readonly type: 'StyleStmt';
+  readonly target: string;
+  readonly name: string;
+}
+
+/** Clickable region on the stage/CG, normalized later to 0–1. */
+export interface HotspotStmtNode extends BaseNode {
+  readonly type: 'HotspotStmt';
+  readonly id: string;
+  readonly x: number;
+  readonly y: number;
+  readonly w: number;
+  readonly h: number;
+  readonly targetLabel: string;
 }
 

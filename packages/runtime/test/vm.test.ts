@@ -620,4 +620,46 @@ label start:
     expect(res.success).toBe(false);
     expect(res.reason).toBe('incompatible_story');
   });
+
+  it('applies theme/style and waits on hotspots until selected', () => {
+    const code = `label start:
+    theme "noir"
+    style dialogue glass
+    hotspot door 10 20 30 40 jump room
+    hotspot window 60 10 20 25 jump room
+    "should not reach"
+
+label room:
+    "inside"
+`;
+    const story = compileScript(code);
+    const vm = new StoryVM(story);
+    vm.start();
+
+    expect(vm.getState().theme).toBe('noir');
+    expect(vm.getState().styleClasses['dialogue']).toBe('glass');
+    expect(vm.getState().hotspots?.length).toBe(2);
+    expect(vm.getState().isWaitingForInput).toBe(true);
+
+    vm.next();
+    expect(vm.getState().hotspots?.length).toBe(2);
+    expect(vm.getState().dialogue).toBeNull();
+
+    vm.selectHotspot('door');
+    expect(vm.getState().hotspots).toBeNull();
+    expect(vm.getState().dialogue?.text).toBe('inside');
+  });
+
+  it('can start at a deep-link label', () => {
+    const code = `label start:
+    "intro"
+
+label courtyard:
+    "direct"
+`;
+    const story = compileScript(code);
+    const vm = new StoryVM(story);
+    vm.start('courtyard');
+    expect(vm.getState().dialogue?.text).toBe('direct');
+  });
 });

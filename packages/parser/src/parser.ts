@@ -25,7 +25,10 @@ import type {
   CgStmtNode,
   DefineDeclNode,
   InputStmtNode,
-  WindowStmtNode
+  WindowStmtNode,
+  ThemeStmtNode,
+  StyleStmtNode,
+  HotspotStmtNode
 } from '@kawaijs/ast';
 import { createLocation } from '@kawaijs/ast';
 import { Token, TokenType } from './token.js';
@@ -116,6 +119,12 @@ export class Parser {
         return this.parseInputStmt();
       case 'WINDOW':
         return this.parseWindowStmt();
+      case 'THEME':
+        return this.parseThemeStmt();
+      case 'STYLE':
+        return this.parseStyleStmt();
+      case 'HOTSPOT':
+        return this.parseHotspotStmt();
       case 'STRING':
         // Narration without speaker identifier
         return this.parseDialogueStmt();
@@ -481,7 +490,7 @@ export class Parser {
       });
     }
 
-    if (!this.check('IDENTIFIER') && !this.check('STRING')) {
+    if (!this.check('IDENTIFIER') && !this.check('STRING') && !this.checkSoftIdentifier()) {
       throw new KawaError({
         code: 'E0104',
         message: 'Expected audio track name (identifier or string literal) after audio channel',
@@ -652,8 +661,7 @@ export class Parser {
   private parseDefineDecl(): DefineDeclNode {
     const startTok = this.consume('DEFINE', 'Expected "define" keyword');
     const nameParts: string[] = [];
-    while (this.check('IDENTIFIER') || this.check('MUSIC') || this.check('SOUND') || this.check('VOICE')) {
-      // Allow `define music ambient = "..."` (channel keywords as name parts)
+    while (this.checkSoftIdentifier()) {
       nameParts.push(this.advance().value);
       if (this.check('EQUALS') || this.check('STRING')) break;
     }
@@ -721,6 +729,90 @@ export class Parser {
     };
   }
 
+  private parseThemeStmt(): ThemeStmtNode {
+    const startTok = this.consume('THEME', 'Expected "theme" keyword');
+    let name: string;
+    if (this.check('STRING') || this.check('IDENTIFIER')) {
+      name = this.advance().value;
+    } else {
+      throw new KawaError({
+        code: 'E0112',
+        message: 'Expected theme name after "theme"',
+        severity: 'error',
+        loc: this.currentLocation()
+      });
+    }
+    this.consumeOptionalNewline();
+    return {
+      type: 'ThemeStmt',
+      name,
+      loc: createLocation(this.file, startTok.loc.start, this.previousLocation().end)
+    };
+  }
+
+  private parseStyleStmt(): StyleStmtNode {
+    const startTok = this.consume('STYLE', 'Expected "style" keyword');
+    const targetTok = this.consume('IDENTIFIER', 'Expected style target (dialogue, stage, root, choices)');
+    const nameTok = this.check('STRING') || this.check('IDENTIFIER')
+      ? this.advance()
+      : null;
+    if (!nameTok) {
+      throw new KawaError({
+        code: 'E0113',
+        message: 'Expected style name after target',
+        severity: 'error',
+        loc: this.currentLocation()
+      });
+    }
+    this.consumeOptionalNewline();
+    return {
+      type: 'StyleStmt',
+      target: targetTok.value.toLowerCase(),
+      name: nameTok.value,
+      loc: createLocation(this.file, startTok.loc.start, this.previousLocation().end)
+    };
+  }
+
+  private parseHotspotStmt(): HotspotStmtNode {
+    const startTok = this.consume('HOTSPOT', 'Expected "hotspot" keyword');
+    let id: string;
+    if (this.check('STRING') || this.checkSoftIdentifier()) {
+      id = this.advance().value;
+    } else {
+      throw new KawaError({
+        code: 'E0114',
+        message: 'Expected hotspot id after "hotspot"',
+        severity: 'error',
+        loc: this.currentLocation()
+      });
+    }
+
+    const readCoord = (label: string): number => {
+      const tok = this.consume('NUMBER', `Expected ${label} coordinate after hotspot id`);
+      return Number(tok.value);
+    };
+
+    const x = readCoord('x');
+    const y = readCoord('y');
+    const w = readCoord('w');
+    const h = readCoord('h');
+
+    this.consume('JUMP', 'Expected "jump" after hotspot rectangle');
+    const target = this.consume('IDENTIFIER', 'Expected target label after hotspot jump').value;
+
+    this.consumeOptionalNewline();
+    return {
+      type: 'HotspotStmt',
+      id,
+      x,
+      y,
+      w,
+      h,
+      targetLabel: target,
+      loc: createLocation(this.file, startTok.loc.start, this.previousLocation().end)
+    };
+  }
+
   private parseBlock(): StatementNode[] {
     this.consume('INDENT', 'Expected indented block');
     const statements: StatementNode[] = [];
@@ -762,6 +854,39 @@ export class Parser {
   private consumeOptionalNewline(): void {
     if (this.check('NEWLINE')) {
       this.advance();
+    }
+  }
+
+  private checkSoftIdentifier(): boolean {
+    if (this.isAtEnd()) return false;
+    const t = this.peek().type;
+    if (t === 'IDENTIFIER') return true;
+    // Keywords may appear as names (e.g. `define music theme`, `hotspot window`, `play music theme`)
+    switch (t) {
+      case 'NEWLINE':
+      case 'INDENT':
+      case 'DEDENT':
+      case 'EOF':
+      case 'COLON':
+      case 'EQUALS':
+      case 'PLUS_EQUALS':
+      case 'MINUS_EQUALS':
+      case 'DOUBLE_EQUALS':
+      case 'NOT_EQUALS':
+      case 'GREATER_EQUALS':
+      case 'LESS_EQUALS':
+      case 'GREATER':
+      case 'LESS':
+      case 'PLUS':
+      case 'MINUS':
+      case 'COMMA':
+      case 'STRING':
+      case 'NUMBER':
+      case 'BOOLEAN':
+      case 'COLOR':
+        return false;
+      default:
+        return true;
     }
   }
 

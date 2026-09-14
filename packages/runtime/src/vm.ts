@@ -164,12 +164,12 @@ export class StoryVM {
     }
   }
 
-  public start(): void {
+  public start(atLabel?: string): void {
     if (this.isExecuting) {
       throw new Error('Cannot call start() while the story VM is already executing instructions.');
     }
 
-    const startLabel = this.story.meta?.startLabel ?? 'start';
+    const startLabel = atLabel ?? this.story.meta?.startLabel ?? 'start';
     if (!this.story.labels[startLabel]) {
       throw new Error(`Cannot start story: Start label '${startLabel}' not found in story package.`);
     }
@@ -192,6 +192,11 @@ export class StoryVM {
 
     if (this.state.choices && this.state.choices.length > 0) {
       // Must make a choice; cannot advance automatically
+      return;
+    }
+
+    if (this.state.hotspots && this.state.hotspots.length > 0) {
+      // Must click a hotspot; stage click must not skip.
       return;
     }
 
@@ -252,6 +257,7 @@ export class StoryVM {
       this.state = {
         ...this.state,
         choices: null,
+        hotspots: null,
         pendingPauseMs: null,
         isFinished: true,
         isWaitingForInput: false
@@ -263,9 +269,53 @@ export class StoryVM {
     this.state = {
       ...this.state,
       choices: null,
+      hotspots: null,
       isWaitingForInput: false,
       pendingPauseMs: null,
       currentLabel: choice.targetLabel,
+      instructionPointer: 0
+    };
+
+    this.executeUntilWaiting();
+  }
+
+  /**
+   * Selects a clickable hotspot and jumps to its target label.
+   */
+  public selectHotspot(id: string): void {
+    if (this.isExecuting || !this.state.hotspots || this.state.hotspots.length === 0) {
+      return;
+    }
+
+    const hotspot = this.state.hotspots.find((h) => h.id === id);
+    if (!hotspot) return;
+
+    this.recordTrace(`HOTSPOT ${id} -> ${hotspot.targetLabel}`);
+
+    if (!this.story.labels[hotspot.targetLabel]) {
+      const err = new Error(
+        `Runtime Error: Hotspot target label '${hotspot.targetLabel}' is not defined in story.`
+      );
+      this.emitError(err);
+      this.state = {
+        ...this.state,
+        hotspots: null,
+        pendingPauseMs: null,
+        isFinished: true,
+        isWaitingForInput: false
+      };
+      this.notifyStateChanged();
+      return;
+    }
+
+    this.state = {
+      ...this.state,
+      hotspots: null,
+      choices: null,
+      isWaitingForInput: false,
+      pendingPauseMs: null,
+      windowVisible: true,
+      currentLabel: hotspot.targetLabel,
       instructionPointer: 0
     };
 
@@ -289,6 +339,7 @@ export class StoryVM {
       currentLabel: labelName,
       instructionPointer: 0,
       choices: null,
+      hotspots: null,
       pendingPauseMs: null,
       isWaitingForInput: false
     };
@@ -472,7 +523,8 @@ export class StoryVM {
             characters: {}, // Clear characters on new scene
             vfx: null,
             activeCG: null
-          }
+          },
+          hotspots: null
         };
         break;
       }
@@ -526,6 +578,7 @@ export class StoryVM {
             speakerColor: color,
             text: interpolatedText
           },
+          hotspots: null,
           pendingPauseMs: null,
           isWaitingForInput: true
         };
@@ -575,6 +628,7 @@ export class StoryVM {
         this.state = {
           ...this.state,
           choices: availableChoices,
+          hotspots: null,
           pendingPauseMs: null,
           isWaitingForInput: true
         };
@@ -807,6 +861,7 @@ export class StoryVM {
           ...this.state,
           pendingInput: { variable: inst.variable, prompt },
           choices: null,
+          hotspots: null,
           pendingPauseMs: null,
           isWaitingForInput: true
         };
@@ -818,6 +873,71 @@ export class StoryVM {
         this.state = {
           ...this.state,
           windowVisible: inst.action === 'show'
+        };
+        break;
+      }
+
+      case 'theme': {
+        const name = sanitizeCssToken(inst.name);
+        this.recordTrace(`THEME ${name}`);
+        this.state = {
+          ...this.state,
+          theme: name || null
+        };
+        break;
+      }
+
+      case 'style': {
+        const target = sanitizeCssToken(inst.target) || 'root';
+        const name = sanitizeCssToken(inst.name) || 'default';
+        this.recordTrace(`STYLE ${target}=${name}`);
+        this.state = {
+          ...this.state,
+          styleClasses: {
+            ...this.state.styleClasses,
+            [target]: name
+          }
+        };
+        break;
+      }
+
+      case 'hotspot': {
+        const collected = [
+          {
+            id: inst.id,
+            x: inst.x,
+            y: inst.y,
+            w: inst.w,
+            h: inst.h,
+            targetLabel: inst.targetLabel
+          }
+        ];
+
+        const labelInstructions = this.story.labels[this.state.currentLabel] ?? [];
+        while (this.state.instructionPointer < labelInstructions.length) {
+          const nextInst = labelInstructions[this.state.instructionPointer];
+          if (!nextInst || nextInst.type !== 'hotspot') break;
+          this.state = {
+            ...this.state,
+            instructionPointer: this.state.instructionPointer + 1
+          };
+          collected.push({
+            id: nextInst.id,
+            x: nextInst.x,
+            y: nextInst.y,
+            w: nextInst.w,
+            h: nextInst.h,
+            targetLabel: nextInst.targetLabel
+          });
+        }
+
+        this.recordTrace(`HOTSPOTS [${collected.map((h) => h.id).join(', ')}]`);
+        this.state = {
+          ...this.state,
+          hotspots: collected,
+          choices: null,
+          pendingPauseMs: null,
+          isWaitingForInput: true
         };
         break;
       }
@@ -874,4 +994,11 @@ export class StoryVM {
       listener(event);
     }
   }
+}
+
+function sanitizeCssToken(raw: string): string {
+  return String(raw ?? '')
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9_-]+/g, '');
 }

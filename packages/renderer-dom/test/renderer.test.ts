@@ -3,6 +3,7 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { compileScript } from '@kawaijs/parser';
 import { StoryVM } from '@kawaijs/runtime';
 import { DOMRenderer } from '../src/renderer.js';
+import { resolveDeepLinkLabel } from '../src/index.js';
 import { DialogueBoxComponent } from '../src/components/dialogue-box.js';
 import { ChoiceMenuComponent } from '../src/components/choice-menu.js';
 
@@ -525,6 +526,44 @@ label start:
     renderer.destroy();
     expect(() => renderer.destroy()).not.toThrow();
     expect(container.innerHTML).toBe('');
+  });
+
+  it('applies theme/style tokens and renders hotspot buttons', () => {
+    const story = compileScript(`label start:
+    theme "noir"
+    style dialogue glass
+    hotspot door 10 20 30 40 jump next
+    "blocked"
+
+label next:
+    "ok"
+`);
+    const vm = new StoryVM(story);
+    const renderer = new DOMRenderer(vm, { container, mainMenu: { enabled: false }, typewriterSpeed: 0 });
+    vm.start();
+
+    const root = container.querySelector('.kawa-root') as HTMLElement;
+    expect(root.dataset.kawaTheme).toBe('noir');
+    expect(root.classList.contains('kawa-style-dialogue-glass')).toBe(true);
+    const spots = container.querySelectorAll('.kawa-hotspot');
+    expect(spots.length).toBe(1);
+    (spots[0] as HTMLButtonElement).click();
+    expect(vm.getState().dialogue?.text).toBe('ok');
+    renderer.destroy();
+  });
+
+  it('resolves deep-link labels and ignores internal ones', () => {
+    const story = compileScript(`label start:
+    "a"
+label courtyard:
+    "b"
+label __secret:
+    "c"
+`);
+    expect(resolveDeepLinkLabel(story, { startLabel: 'courtyard' })).toBe('courtyard');
+    expect(resolveDeepLinkLabel(story, { search: '?at=courtyard' })).toBe('courtyard');
+    expect(resolveDeepLinkLabel(story, { search: '?label=__secret' })).toBeUndefined();
+    expect(resolveDeepLinkLabel(story, { search: '?at=missing' })).toBeUndefined();
   });
 });
 

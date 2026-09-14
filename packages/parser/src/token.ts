@@ -34,6 +34,9 @@ export type TokenType =
   | 'DEFINE'
   | 'INPUT'
   | 'WINDOW'
+  | 'THEME'
+  | 'STYLE'
+  | 'HOTSPOT'
   // Literals & Identifiers
   | 'IDENTIFIER'
   | 'STRING'
@@ -100,6 +103,9 @@ export const KEYWORDS_MAP = new Map<string, TokenType>([
   ['define', 'DEFINE'],
   ['input', 'INPUT'],
   ['window', 'WINDOW'],
+  ['theme', 'THEME'],
+  ['style', 'STYLE'],
+  ['hotspot', 'HOTSPOT'],
   ['true', 'BOOLEAN'],
   ['false', 'BOOLEAN']
 ]);

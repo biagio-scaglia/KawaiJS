@@ -120,6 +120,31 @@ label start:
     expect(mergeInsts[0]?.type).toBe('dialogue');
     expect((mergeInsts[0] as any).text).toBe('Story continues here');
   });
+
+  it('compiles theme, style, and normalized hotspots', () => {
+    const code = `label start:
+    theme "Noir"
+    style dialogue glass
+    hotspot door 40 50 18 12 jump next
+    "waiting"
+
+label next:
+    "arrived"
+`;
+    const story = compileScript(code);
+    const start = story.labels['start']!;
+    expect(start.some((i) => i.type === 'theme' && i.name === 'Noir')).toBe(true);
+    expect(start.some((i) => i.type === 'style' && i.target === 'dialogue' && i.name === 'glass')).toBe(true);
+    const hotspot = start.find((i) => i.type === 'hotspot');
+    expect(hotspot?.type).toBe('hotspot');
+    if (hotspot?.type === 'hotspot') {
+      expect(hotspot.x).toBeCloseTo(0.4);
+      expect(hotspot.y).toBeCloseTo(0.5);
+      expect(hotspot.w).toBeCloseTo(0.18);
+      expect(hotspot.h).toBeCloseTo(0.12);
+      expect(hotspot.targetLabel).toBe('next');
+    }
+  });
 });
 
 

@@ -1,4 +1,4 @@
-import type { ChoiceOption } from '@kawaijs/ast';
+import type { ChoiceOption, HotspotOption } from '@kawaijs/ast';
 
 export interface CharacterState {
   readonly expression?: string;
@@ -46,6 +46,12 @@ export interface StoryState {
   readonly audio: AudioState;
   readonly dialogue: DialogueState | null;
   readonly choices: readonly ChoiceOption[] | null;
+  /** Clickable stage/CG regions waiting for a player pick. */
+  readonly hotspots: readonly HotspotOption[] | null;
+  /** CSS theme token applied on the player root (`data-kawa-theme`). */
+  readonly theme: string | null;
+  /** Named style tokens keyed by UI target (dialogue, stage, root, choices). */
+  readonly styleClasses: Readonly<Record<string, string>>;
   readonly unlockedCGs: Record<string, boolean>;
   /**
    * When set, the presentation layer should auto-advance after this many ms.
@@ -87,6 +93,9 @@ export function createInitialState(startLabel = 'start'): StoryState {
     },
     dialogue: null,
     choices: null,
+    hotspots: null,
+    theme: null,
+    styleClasses: Object.create(null) as Record<string, string>,
     unlockedCGs: Object.create(null) as Record<string, boolean>,
     pendingPauseMs: null,
     pendingInput: null,
@@ -158,6 +167,12 @@ export function normalizeStoryState(raw: unknown): StoryState | null {
         }
       : null,
     choices: Array.isArray(s['choices']) ? (s['choices'] as ChoiceOption[]) : null,
+    hotspots: null, // never restore mid-hotspot from saves
+    theme: typeof s['theme'] === 'string' ? s['theme'] : null,
+    styleClasses:
+      s['styleClasses'] && typeof s['styleClasses'] === 'object'
+        ? Object.assign(Object.create(null), s['styleClasses'])
+        : Object.create(null),
     unlockedCGs:
       s['unlockedCGs'] && typeof s['unlockedCGs'] === 'object'
         ? Object.assign(Object.create(null), s['unlockedCGs'])
@@ -188,6 +203,9 @@ export function cloneState(state: StoryState): StoryState {
     audio: { ...state.audio },
     dialogue: state.dialogue ? { ...state.dialogue } : null,
     choices: state.choices ? state.choices.map(c => ({ ...c })) : null,
+    hotspots: state.hotspots ? state.hotspots.map(h => ({ ...h })) : null,
+    theme: state.theme,
+    styleClasses: Object.assign(Object.create(null), state.styleClasses),
     unlockedCGs: Object.assign(Object.create(null), state.unlockedCGs),
     pendingPauseMs: state.pendingPauseMs ?? null,
     pendingInput: state.pendingInput ? { ...state.pendingInput } : null,
