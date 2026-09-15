@@ -207,8 +207,11 @@ body {
 
 /* Stage max-width in theme.css uses 100vh — wrong inside a pane. */
 .pg-preview .kawa-stage {
+  width: var(--kawa-stage-width, 100%) !important;
+  height: var(--kawa-stage-height, 100%) !important;
   max-width: 100% !important;
   max-height: 100% !important;
+  aspect-ratio: auto !important;
   box-shadow: none;
 }
 

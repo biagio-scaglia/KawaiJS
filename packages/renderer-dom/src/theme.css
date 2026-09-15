@@ -1863,13 +1863,14 @@ body.kawa-fullscreen {
 }
 
 @media (max-width: 768px), (pointer: coarse) {
-  .kawa-root {
+  /* Full-page player only — never blow up embedded previews (playground / iframe). */
+  .kawa-root:not(.kawa-embed) {
     /* Use dynamic viewport so mobile browser chrome doesn't clip the stage */
     min-height: 100dvh;
     height: 100dvh;
   }
 
-  .kawa-stage {
+  .kawa-root:not(.kawa-embed) .kawa-stage {
     width: 100% !important;
     max-width: none;
     max-height: none;
@@ -1880,7 +1881,7 @@ body.kawa-fullscreen {
   }
 
   @media (orientation: portrait) {
-    .kawa-stage {
+    .kawa-root:not(.kawa-embed) .kawa-stage {
       height: 100% !important;
       aspect-ratio: auto;
     }
