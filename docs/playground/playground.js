@@ -30764,6 +30764,7 @@ function runPreview(source) {
       assetResolver,
       typewriterSpeed: 18,
       mainMenu: { enabled: false },
+      syncUrlLabel: false,
       virtualCanvas: { width: 1280, height: 720 }
     });
     showDiagnostics("Compiled successfully.", true);
@@ -30781,6 +30782,7 @@ var state = EditorState.create({
   extensions: [
     basicSetup,
     oneDark,
+    EditorView.lineWrapping,
     keymap.of([...defaultKeymap, indentWithTab]),
     EditorView.updateListener.of((update) => {
       if (update.docChanged) {
