@@ -43,10 +43,10 @@ export class ChoiceMenuComponent {
       this.el.appendChild(btn);
     });
 
-    // Auto-focus first choice for keyboard navigation
+    // Auto-focus first choice for keyboard navigation (don't scroll the page on mobile)
     const firstBtn = this.el.querySelector('button');
     if (firstBtn) {
-      firstBtn.focus();
+      firstBtn.focus({ preventScroll: true });
     }
   }
 

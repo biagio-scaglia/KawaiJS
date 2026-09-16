@@ -39,9 +39,35 @@ const previewHost = document.getElementById('preview')!;
 const diagnosticsEl = document.getElementById('diagnostics')!;
 const btnRun = document.getElementById('btn-run')!;
 const btnDownload = document.getElementById('btn-download')!;
+const layoutEl = document.querySelector('.pg-layout') as HTMLElement;
+const tabButtons = Array.from(document.querySelectorAll<HTMLButtonElement>('.pg-tab'));
 
 let debounceTimer: ReturnType<typeof setTimeout> | null = null;
 let mounted: { vm: { destroy?: () => void }; renderer: { destroy?: () => void } } | null = null;
+
+function isMobilePlayground(): boolean {
+  return typeof window !== 'undefined' && window.matchMedia('(max-width: 960px)').matches;
+}
+
+function setMobileTab(tab: 'code' | 'preview'): void {
+  if (!layoutEl) return;
+  layoutEl.dataset.mobileTab = tab;
+  for (const btn of tabButtons) {
+    const selected = btn.dataset.tab === tab;
+    btn.setAttribute('aria-selected', selected ? 'true' : 'false');
+  }
+  // Remeasure stage after the preview pane becomes visible.
+  if (tab === 'preview') {
+    requestAnimationFrame(() => window.dispatchEvent(new Event('resize')));
+  }
+}
+
+for (const btn of tabButtons) {
+  btn.addEventListener('click', () => {
+    const tab = btn.dataset.tab === 'preview' ? 'preview' : 'code';
+    setMobileTab(tab);
+  });
+}
 
 function assetResolver(path: string, type: AssetType): string {
   const resolved = defaultAssetResolver(path, type);
@@ -131,6 +157,7 @@ const view = new EditorView({
 
 btnRun.addEventListener('click', () => {
   runPreview(view.state.doc.toString());
+  if (isMobilePlayground()) setMobileTab('preview');
 });
 
 btnDownload.addEventListener('click', () => {
@@ -195,3 +222,4 @@ btnDownload.addEventListener('click', () => {
 });
 
 runPreview(STARTER);
+setMobileTab('code');

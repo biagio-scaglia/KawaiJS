@@ -1858,13 +1858,41 @@ body.kawa-fullscreen {
   box-shadow: none;
 }
 
-/* Embed / iframe compact chrome (`?embed=1`) */
-.kawa-root.kawa-embed .kawa-quick-menu {
-  display: none !important;
+.kawa-root.kawa-embed .kawa-ui-layer {
+  padding: clamp(8px, 2.2vh, 16px) clamp(10px, 2.5vw, 18px);
 }
 
 .kawa-root.kawa-embed .kawa-dialogue-box {
+  min-height: 0;
   max-width: min(920px, 94%);
+  padding: clamp(10px, 1.8vh, 16px) clamp(12px, 2.5vw, 20px);
+}
+
+.kawa-root.kawa-embed .kawa-dialogue-text {
+  font-size: clamp(0.88rem, 2.6vw, 1.05rem);
+  line-height: 1.45;
+}
+
+.kawa-root.kawa-embed .kawa-choice-container {
+  width: min(92%, 440px);
+  gap: 8px;
+  top: 48%;
+}
+
+.kawa-root.kawa-embed .kawa-choice-btn {
+  font-size: clamp(0.82rem, 2.4vw, 1rem);
+  padding: 0.65rem 0.9rem;
+  min-height: 42px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4);
+}
+
+.kawa-root.kawa-embed .kawa-choice-btn:hover,
+.kawa-root.kawa-embed .kawa-choice-btn:focus-visible {
+  transform: none;
+}
+
+.kawa-root.kawa-embed .kawa-quick-menu {
+  display: none !important;
 }
 
 .kawa-continue-link-btn {
@@ -5818,7 +5846,7 @@ var KawaiJS = (() => {
       });
       const firstBtn = this.el.querySelector("button");
       if (firstBtn) {
-        firstBtn.focus();
+        firstBtn.focus({ preventScroll: true });
       }
     }
     hide() {
@@ -9677,7 +9705,7 @@ var KawaiJS = (() => {
       this.stageLayer.updateCG(state.visual.activeCG);
       this.choiceMenu.render(state.choices);
       this.hotspotLayer.render(state.hotspots);
-      if (state.windowVisible === false) {
+      if (state.windowVisible === false || state.choices && state.choices.length > 0) {
         this.dialogueBox.render(null);
       } else {
         this.dialogueBox.render(state.dialogue, () => {

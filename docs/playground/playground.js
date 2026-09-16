@@ -25937,7 +25937,7 @@ var ChoiceMenuComponent = class {
     });
     const firstBtn = this.el.querySelector("button");
     if (firstBtn) {
-      firstBtn.focus();
+      firstBtn.focus({ preventScroll: true });
     }
   }
   hide() {
@@ -29841,7 +29841,7 @@ var DOMRenderer = class {
     this.stageLayer.updateCG(state2.visual.activeCG);
     this.choiceMenu.render(state2.choices);
     this.hotspotLayer.render(state2.hotspots);
-    if (state2.windowVisible === false) {
+    if (state2.windowVisible === false || state2.choices && state2.choices.length > 0) {
       this.dialogueBox.render(null);
     } else {
       this.dialogueBox.render(state2.dialogue, () => {
@@ -30726,8 +30726,30 @@ var previewHost = document.getElementById("preview");
 var diagnosticsEl = document.getElementById("diagnostics");
 var btnRun = document.getElementById("btn-run");
 var btnDownload = document.getElementById("btn-download");
+var layoutEl = document.querySelector(".pg-layout");
+var tabButtons = Array.from(document.querySelectorAll(".pg-tab"));
 var debounceTimer = null;
 var mounted = null;
+function isMobilePlayground() {
+  return typeof window !== "undefined" && window.matchMedia("(max-width: 960px)").matches;
+}
+function setMobileTab(tab) {
+  if (!layoutEl) return;
+  layoutEl.dataset.mobileTab = tab;
+  for (const btn of tabButtons) {
+    const selected = btn.dataset.tab === tab;
+    btn.setAttribute("aria-selected", selected ? "true" : "false");
+  }
+  if (tab === "preview") {
+    requestAnimationFrame(() => window.dispatchEvent(new Event("resize")));
+  }
+}
+for (const btn of tabButtons) {
+  btn.addEventListener("click", () => {
+    const tab = btn.dataset.tab === "preview" ? "preview" : "code";
+    setMobileTab(tab);
+  });
+}
 function assetResolver(path, type) {
   const resolved = defaultAssetResolver(path, type);
   if (resolved.startsWith("assets/")) return `./${resolved}`;
@@ -30800,6 +30822,7 @@ var view = new EditorView({
 });
 btnRun.addEventListener("click", () => {
   runPreview(view.state.doc.toString());
+  if (isMobilePlayground()) setMobileTab("preview");
 });
 btnDownload.addEventListener("click", () => {
   const source = view.state.doc.toString();
@@ -30868,4 +30891,5 @@ npx kawa dev
   });
 });
 runPreview(STARTER);
+setMobileTab("code");
 //# sourceMappingURL=playground.js.map

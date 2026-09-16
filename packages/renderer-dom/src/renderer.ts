@@ -867,7 +867,8 @@ export class DOMRenderer {
     this.hotspotLayer.render(state.hotspots);
 
     // 6. Dialogue Box (respect `window hide` / `window show`)
-    if (state.windowVisible === false) {
+    // Hide dialogue while a menu is open — avoids overlap on small/embed stages.
+    if (state.windowVisible === false || (state.choices && state.choices.length > 0)) {
       this.dialogueBox.render(null);
     } else {
       this.dialogueBox.render(state.dialogue, () => {

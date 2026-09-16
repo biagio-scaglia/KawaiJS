@@ -8,7 +8,7 @@
   <meta name="theme-color" content="#f43f5e" />
   <link rel="canonical" href="https://biagio-scaglia.github.io/KawaiJS/playground/" />
   <link rel="icon" href="../favicon.svg" type="image/svg+xml" />
-  <link rel="stylesheet" href="./playground.css?v=20260916" />
+  <link rel="stylesheet" href="./playground.css?v=20260916b" />
 </head>
 <body>
   <header class="pg-top">
@@ -21,18 +21,27 @@
     </div>
   </header>
 
-  <main class="pg-layout">
-    <section class="pg-editor-pane" aria-label="Kawa Script editor">
+  <div class="pg-tabs" role="tablist" aria-label="Playground panels">
+    <button type="button" class="pg-tab" role="tab" id="tab-code" data-tab="code" aria-selected="true" aria-controls="pane-code">
+      Code
+    </button>
+    <button type="button" class="pg-tab" role="tab" id="tab-preview" data-tab="preview" aria-selected="false" aria-controls="pane-preview">
+      Preview
+    </button>
+  </div>
+
+  <main class="pg-layout" data-mobile-tab="code">
+    <section class="pg-editor-pane" id="pane-code" aria-label="Kawa Script editor" role="tabpanel" aria-labelledby="tab-code">
       <div class="pg-pane-label">game.kawa</div>
       <div id="editor" class="pg-editor"></div>
       <pre id="diagnostics" class="pg-diagnostics" hidden></pre>
     </section>
-    <section class="pg-preview-pane" aria-label="Live preview">
+    <section class="pg-preview-pane" id="pane-preview" aria-label="Live preview" role="tabpanel" aria-labelledby="tab-preview">
       <div class="pg-pane-label">Preview</div>
       <div id="preview" class="pg-preview"></div>
     </section>
   </main>
 
-  <script type="module" src="./playground.js?v=20260916"></script>
+  <script type="module" src="./playground.js?v=20260916b"></script>
 </body>
 </html>
