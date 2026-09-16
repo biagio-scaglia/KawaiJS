@@ -1810,6 +1810,20 @@ body.kawa-fullscreen {
   display: none !important;
 }
 
+/* Embed: always letterbox 16:9 — never inherit full-page mobile fill sizing. */
+.kawa-root.kawa-embed {
+  min-height: 0 !important;
+  height: 100% !important;
+  max-height: 100% !important;
+}
+
+.kawa-root.kawa-embed .kawa-stage {
+  max-width: 100% !important;
+  max-height: 100% !important;
+  border-radius: 0;
+  box-shadow: none;
+}
+
 /* Embed / iframe compact chrome (`?embed=1`) */
 .kawa-root.kawa-embed .kawa-quick-menu {
   display: none !important;
@@ -2302,21 +2316,27 @@ body {
 @media (max-width: 960px) {
   .pg-layout {
     grid-template-columns: minmax(0, 1fr);
-    grid-template-rows: minmax(0, 42%) minmax(0, 58%);
+    /* Preview first — authors need to see the stage; editor scrolls underneath */
+    grid-template-rows: minmax(0, 55%) minmax(0, 45%);
+  }
+
+  .pg-preview-pane {
+    order: -1;
   }
 
   .pg-editor-pane {
     border-right: none;
-    border-bottom: 1px solid var(--pg-border);
+    border-top: 1px solid var(--pg-border);
+    border-bottom: none;
   }
 
   .pg-top {
-    padding: 10px 12px;
-    gap: 8px;
+    padding: 8px 10px;
+    gap: 6px;
   }
 
   .pg-tagline {
-    display: none;
+    display: none !important;
   }
 
   .pg-actions {
@@ -2324,16 +2344,28 @@ body {
   }
 
   .pg-btn {
-    flex: 1 1 calc(33.33% - 8px);
+    flex: 1 1 calc(33.33% - 6px);
     justify-content: center;
-    min-height: 44px;
+    min-height: 40px;
     min-width: 0;
-    padding: 8px 10px;
-    font-size: 0.8rem;
+    padding: 8px 8px;
+    font-size: 0.75rem;
   }
 
   .pg-editor .cm-editor {
     font-size: 12.5px;
+  }
+
+  .pg-preview {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .pg-preview .kawa-stage {
+    /* Prefer adapter metrics; never exceed the pane */
+    max-width: 100% !important;
+    max-height: 100% !important;
   }
 }
 
@@ -2343,10 +2375,10 @@ body {
   }
 
   .pg-btn {
-    flex: 1 1 calc(50% - 8px);
+    flex: 1 1 calc(50% - 6px);
   }
 
   .pg-layout {
-    grid-template-rows: minmax(0, 38%) minmax(0, 62%);
+    grid-template-rows: minmax(0, 58%) minmax(0, 42%);
   }
 }

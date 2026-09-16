@@ -47,8 +47,11 @@ export class ViewportAdapter {
 
   public computeMetrics(): ViewportMetrics {
     const containerRect = this.container.getBoundingClientRect();
-    const containerWidth = Math.max(containerRect.width, 320);
-    const containerHeight = Math.max(containerRect.height, 180);
+    // Don't invent a wider stage than the host — a 320px floor caused horizontal clip in narrow panes.
+    const rawW = containerRect.width;
+    const rawH = containerRect.height;
+    const containerWidth = rawW > 1 ? rawW : 320;
+    const containerHeight = rawH > 1 ? rawH : 180;
 
     const { width: virtualWidth, height: virtualHeight, scaleMode } = this.config;
 
@@ -57,9 +60,14 @@ export class ViewportAdapter {
     let stageHeight = virtualHeight;
 
     // Portrait phones: letterboxed 16:9 shrinks the whole UI (menu included) to ~220px.
-    // Fill the viewport so Start / dialogue remain tappable.
+    // Fill the viewport so Start / dialogue remain tappable — but never inside embeds
+    // (playground / iframe): fill + background-size:cover crops the scene sideways.
+    const inEmbed =
+      typeof this.stageEl.closest === 'function' &&
+      Boolean(this.stageEl.closest('.kawa-embed'));
     const isPortrait = containerHeight > containerWidth * 1.05;
     const preferFill =
+      !inEmbed &&
       isPortrait &&
       typeof window !== 'undefined' &&
       typeof window.matchMedia === 'function' &&

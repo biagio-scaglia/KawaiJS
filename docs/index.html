@@ -1844,6 +1844,20 @@ body.kawa-fullscreen {
   display: none !important;
 }
 
+/* Embed: always letterbox 16:9 — never inherit full-page mobile fill sizing. */
+.kawa-root.kawa-embed {
+  min-height: 0 !important;
+  height: 100% !important;
+  max-height: 100% !important;
+}
+
+.kawa-root.kawa-embed .kawa-stage {
+  max-width: 100% !important;
+  max-height: 100% !important;
+  border-radius: 0;
+  box-shadow: none;
+}
+
 /* Embed / iframe compact chrome (`?embed=1`) */
 .kawa-root.kawa-embed .kawa-quick-menu {
   display: none !important;
@@ -1897,13 +1911,14 @@ body.kawa-fullscreen {
 }
 
 @media (max-width: 768px), (pointer: coarse) {
-  .kawa-root {
+  /* Full-page player only — never blow up embedded previews (playground / iframe). */
+  .kawa-root:not(.kawa-embed) {
     /* Use dynamic viewport so mobile browser chrome doesn't clip the stage */
     min-height: 100dvh;
     height: 100dvh;
   }
 
-  .kawa-stage {
+  .kawa-root:not(.kawa-embed) .kawa-stage {
     width: 100% !important;
     max-width: none;
     max-height: none;
@@ -1914,7 +1929,7 @@ body.kawa-fullscreen {
   }
 
   @media (orientation: portrait) {
-    .kawa-stage {
+    .kawa-root:not(.kawa-embed) .kawa-stage {
       height: 100% !important;
       aspect-ratio: auto;
     }
@@ -8718,14 +8733,17 @@ var KawaiJS = (() => {
     }
     computeMetrics() {
       const containerRect = this.container.getBoundingClientRect();
-      const containerWidth = Math.max(containerRect.width, 320);
-      const containerHeight = Math.max(containerRect.height, 180);
+      const rawW = containerRect.width;
+      const rawH = containerRect.height;
+      const containerWidth = rawW > 1 ? rawW : 320;
+      const containerHeight = rawH > 1 ? rawH : 180;
       const { width: virtualWidth, height: virtualHeight, scaleMode } = this.config;
       let scale = 1;
       let stageWidth = virtualWidth;
       let stageHeight = virtualHeight;
+      const inEmbed = typeof this.stageEl.closest === "function" && Boolean(this.stageEl.closest(".kawa-embed"));
       const isPortrait = containerHeight > containerWidth * 1.05;
-      const preferFill = isPortrait && typeof window !== "undefined" && typeof window.matchMedia === "function" && (window.matchMedia("(max-width: 900px)").matches || window.matchMedia("(pointer: coarse)").matches);
+      const preferFill = !inEmbed && isPortrait && typeof window !== "undefined" && typeof window.matchMedia === "function" && (window.matchMedia("(max-width: 900px)").matches || window.matchMedia("(pointer: coarse)").matches);
       if (preferFill && scaleMode !== "stretch") {
         stageWidth = Math.round(containerWidth);
         stageHeight = Math.round(containerHeight);

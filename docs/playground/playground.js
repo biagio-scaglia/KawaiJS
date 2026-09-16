@@ -28856,14 +28856,17 @@ var ViewportAdapter = class {
   }
   computeMetrics() {
     const containerRect = this.container.getBoundingClientRect();
-    const containerWidth = Math.max(containerRect.width, 320);
-    const containerHeight = Math.max(containerRect.height, 180);
+    const rawW = containerRect.width;
+    const rawH = containerRect.height;
+    const containerWidth = rawW > 1 ? rawW : 320;
+    const containerHeight = rawH > 1 ? rawH : 180;
     const { width: virtualWidth, height: virtualHeight, scaleMode } = this.config;
     let scale = 1;
     let stageWidth = virtualWidth;
     let stageHeight = virtualHeight;
+    const inEmbed = typeof this.stageEl.closest === "function" && Boolean(this.stageEl.closest(".kawa-embed"));
     const isPortrait = containerHeight > containerWidth * 1.05;
-    const preferFill = isPortrait && typeof window !== "undefined" && typeof window.matchMedia === "function" && (window.matchMedia("(max-width: 900px)").matches || window.matchMedia("(pointer: coarse)").matches);
+    const preferFill = !inEmbed && isPortrait && typeof window !== "undefined" && typeof window.matchMedia === "function" && (window.matchMedia("(max-width: 900px)").matches || window.matchMedia("(pointer: coarse)").matches);
     if (preferFill && scaleMode !== "stretch") {
       stageWidth = Math.round(containerWidth);
       stageHeight = Math.round(containerHeight);
