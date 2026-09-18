@@ -23,7 +23,7 @@
   <meta name="twitter:image" content="./assets/backgrounds/classroom.svg">
   <link rel="icon" href="./favicon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="./favicon.svg">
-  <script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"SoftwareApplication","name":"Kawaijs Docs - Learn by Playing","description":"Official interactive docs for Kawaijs: an open-source, web-native visual novel engine inspired by Ren'Py. Write .kawa scripts, run in the browser, and ship a static site.","applicationCategory":"GameApplication","applicationSubCategory":"VisualNovelEngine","operatingSystem":"Any","browserRequirements":"Requires JavaScript","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"url":"https://biagio-scaglia.github.io/KawaiJS/","image":"./assets/backgrounds/classroom.svg","author":{"@id":"https://github.com/biagio-scaglia#person"},"creator":{"@id":"https://github.com/biagio-scaglia#person"}},{"@type":"Person","@id":"https://github.com/biagio-scaglia#person","name":"Biagio Scaglia","jobTitle":"Software Engineer","description":"Creator of Kawaijs, an open-source web-native visual novel engine inspired by Ren'Py. Based in Bari, Italy.","url":"https://github.com/biagio-scaglia","image":"https://github.com/biagio-scaglia.png","homeLocation":{"@type":"Place","name":"Bari, Italy","address":{"@type":"PostalAddress","addressLocality":"Bari","addressRegion":"Puglia","addressCountry":"IT"}},"knowsAbout":["TypeScript","visual novel engines","developer tooling","Kawaijs"],"sameAs":["https://github.com/biagio-scaglia","https://github.com/biagio-scaglia/KawaiJS","https://www.npmjs.com/package/kawaijs","https://biagio-scaglia.github.io/KawaiJS/"]},{"@type":"FAQPage","mainEntity":[{"@type":"Question","name":"What is Kawaijs?","acceptedAnswer":{"@type":"Answer","text":"Kawaijs is a web-native visual novel engine inspired by Ren'Py. It lets you write .kawa scripts and ship a static site that runs in any modern browser."}},{"@type":"Question","name":"Who created Kawaijs?","acceptedAnswer":{"@type":"Answer","text":"Kawaijs was created by Biagio Scaglia. It is open source under the MIT license on GitHub."}},{"@type":"Question","name":"How do I start a Kawaijs project?","acceptedAnswer":{"@type":"Answer","text":"Run npx kawa create my-novel, then npx kawa dev to preview with live reload, and npx kawa build to export a dist/ folder."}},{"@type":"Question","name":"Can I deploy a Kawaijs novel to GitHub Pages?","acceptedAnswer":{"@type":"Answer","text":"Yes. kawa build produces a static dist/ with index.html, assets, PWA files, robots.txt, sitemap.xml, and llms.txt - ready for GitHub Pages or any static host."}},{"@type":"Question","name":"Does Kawaijs support SEO?","acceptedAnswer":{"@type":"Answer","text":"Yes. kawa.config.json configures author, description, keywords, canonical URL, Open Graph, Twitter cards, JSON-LD (including FAQPage), favicon, sitemap, and llms.txt for search and answer engines."}},{"@type":"Question","name":"Is Kawaijs free?","acceptedAnswer":{"@type":"Answer","text":"Yes. Kawaijs is free and open source under the MIT license."}}]}]}</script>
+  <script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"SoftwareApplication","name":"Kawaijs Docs - Learn by Playing","description":"Official interactive docs for Kawaijs: an open-source, web-native visual novel engine inspired by Ren'Py. Write .kawa scripts, run in the browser, and ship a static site.","applicationCategory":"GameApplication","applicationSubCategory":"VisualNovelEngine","operatingSystem":"Any","browserRequirements":"Requires JavaScript","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"url":"https://biagio-scaglia.github.io/KawaiJS/","image":"./assets/backgrounds/classroom.svg","author":{"@id":"https://github.com/biagio-scaglia#person"},"creator":{"@id":"https://github.com/biagio-scaglia#person"}},{"@type":"Person","@id":"https://github.com/biagio-scaglia#person","name":"Biagio Scaglia","jobTitle":"Software Engineer","description":"Creator of Kawaijs, an open-source web-native visual novel engine inspired by Ren'Py. Based in Bari, Italy.","url":"https://github.com/biagio-scaglia","image":"https://github.com/biagio-scaglia.png","homeLocation":{"@type":"Place","name":"Bari, Italy","address":{"@type":"PostalAddress","addressLocality":"Bari","addressRegion":"Puglia","addressCountry":"IT"}},"knowsAbout":["TypeScript","visual novel engines","developer tooling","Kawaijs"],"sameAs":["https://github.com/biagio-scaglia","https://github.com/biagio-scaglia/KawaiJS","https://www.npmjs.com/package/kawaijs","https://biagio-scaglia.github.io/KawaiJS/"]},{"@type":"FAQPage","mainEntity":[{"@type":"Question","name":"What is Kawaijs?","acceptedAnswer":{"@type":"Answer","text":"Kawaijs is a web-native visual novel engine inspired by Ren'Py. It lets you write .kawa scripts and ship a static site that runs in any modern browser."}},{"@type":"Question","name":"Who created Kawaijs?","acceptedAnswer":{"@type":"Answer","text":"Kawaijs was created by Biagio Scaglia. It is open source under the MIT license on GitHub."}},{"@type":"Question","name":"How do I start a Kawaijs project?","acceptedAnswer":{"@type":"Answer","text":"Run npx kawa create my-novel, then npx kawa dev to preview with live reload, and npx kawa build to export a dist/ folder."}},{"@type":"Question","name":"Can I deploy a Kawaijs novel to GitHub Pages?","acceptedAnswer":{"@type":"Answer","text":"Yes. kawa build produces a static dist/ with index.html, assets, PWA files, robots.txt, sitemap.xml, and llms.txt - ready for GitHub Pages or any static host."}},{"@type":"Question","name":"Does Kawaijs support SEO?","acceptedAnswer":{"@type":"Answer","text":"Yes. kawa.config.json configures author, description, keywords, canonical URL, Open Graph, Twitter cards, JSON-LD (including FAQPage), favicon, sitemap, and llms.txt for search and answer engines."}},{"@type":"Question","name":"Is Kawaijs free?","acceptedAnswer":{"@type":"Answer","text":"Yes. Kawaijs is free and open source under the MIT license."}},{"@type":"Question","name":"How do I deep-link into a lesson or scene?","acceptedAnswer":{"@type":"Answer","text":"Use ?at=label (or ?label=) on the URL. Embed with ?embed=1. Restore shared progress with ?continue=token."}}]}]}</script>
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -2466,7 +2466,10 @@ body.kawa-fullscreen {
   border-color: var(--kawa-primary-accent, #f43f5e);
 }
 
-.kawa-sprite.kawa-speaking {
+.kawa-sprite.kawa-speaking img {
+  /* Animate the image, not the positioned wrapper — otherwise lip-sync
+     overwrites translateX(-50%) from .kawa-pos-* and recenters the sprite wrong.
+     Also replaces breathe while speaking to avoid competing transform animations. */
   animation: kawa-sprite-lip-sync 0.35s ease-in-out infinite alternate;
 }
 
@@ -2598,7 +2601,7 @@ body.kawa-fullscreen.has-kawa-product-bar .kawa-root,html.kawa-fullscreen.has-ka
   <main style="max-width:42rem;margin:2rem auto;padding:1.5rem;font-family:system-ui,sans-serif;line-height:1.55;color:#0f172a;background:#fff">
     <h1>Kawaijs Docs - Learn by Playing</h1>
     <p><strong>Author:</strong> Biagio Scaglia</p>
-    <p>Kawaijs is an open-source, web-native visual novel engine inspired by Ren'Py. Write indentation-based .kawa scripts, preview with kawa dev, try the browser playground, and build a static dist/ for GitHub Pages, Netlify, Vercel, or itch.io. Includes save/load, backlog, rollback, PWA, i18n, and built-in SEO (Open Graph, JSON-LD, sitemap, llms.txt). Created by Biagio Scaglia. MIT licensed.</p>
+    <p>Kawaijs is an open-source, web-native visual novel engine inspired by Ren'Py. Write indentation-based .kawa scripts, preview with kawa dev, try the browser playground, and build a static dist/ for GitHub Pages, Netlify, Vercel, or itch.io. Includes save/load, backlog, rollback, PWA, i18n, and built-in SEO (Open Graph, JSON-LD, sitemap, llms.txt). kawa build validates labels and hotspots; StoryVM.getState() returns a safe clone. Created by Biagio Scaglia. MIT licensed.</p>
     <p>Enable JavaScript to play this interactive visual-novel documentation. Static answers follow for search and answer engines.</p>
     <h2>Frequently asked questions</h2>
     <section>
@@ -2624,6 +2627,10 @@ body.kawa-fullscreen.has-kawa-product-bar .kawa-root,html.kawa-fullscreen.has-ka
     <section>
       <h3>Is Kawaijs free?</h3>
       <p>Yes. Kawaijs is free and open source under the MIT license.</p>
+    </section>
+    <section>
+      <h3>How do I deep-link into a lesson or scene?</h3>
+      <p>Use ?at=label (or ?label=) on the URL. Embed with ?embed=1. Restore shared progress with ?continue=token.</p>
     </section>
   </main>
 </noscript>
@@ -3379,7 +3386,7 @@ body.kawa-fullscreen.has-kawa-product-bar .kawa-root,html.kawa-fullscreen.has-ka
       {
         "type": "dialogue",
         "speaker": "kaori",
-        "text": "Validate anytime with {b}npx kawa validate{/b}. No backend. No canvas lock-in.",
+        "text": "Validate anytime with {b}npx kawa validate{/b}. {b}kawa build{/b} also validates labels and hotspots before shipping.",
         "loc": {
           "file": "script.kawa",
           "start": {
@@ -3389,8 +3396,26 @@ body.kawa-fullscreen.has-kawa-product-bar .kawa-root,html.kawa-fullscreen.has-ka
           },
           "end": {
             "line": 69,
-            "column": 91,
-            "offset": 2114
+            "column": 130,
+            "offset": 2153
+          }
+        }
+      },
+      {
+        "type": "dialogue",
+        "speaker": "kaori",
+        "text": "No backend. No canvas lock-in. Escape closes menus with focus restored — input prompts stay until you confirm.",
+        "loc": {
+          "file": "script.kawa",
+          "start": {
+            "line": 70,
+            "column": 5,
+            "offset": 2158
+          },
+          "end": {
+            "line": 70,
+            "column": 123,
+            "offset": 2276
           }
         }
       },
@@ -3403,14 +3428,14 @@ body.kawa-fullscreen.has-kawa-product-bar .kawa-root,html.kawa-fullscreen.has-ka
         "loc": {
           "file": "script.kawa",
           "start": {
-            "line": 71,
+            "line": 72,
             "column": 5,
-            "offset": 2120
+            "offset": 2282
           },
           "end": {
-            "line": 72,
+            "line": 73,
             "column": 1,
-            "offset": 2159
+            "offset": 2321
           }
         }
       },
@@ -3421,14 +3446,14 @@ body.kawa-fullscreen.has-kawa-product-bar .kawa-root,html.kawa-fullscreen.has-ka
         "loc": {
           "file": "script.kawa",
           "start": {
-            "line": 72,
+            "line": 73,
             "column": 5,
-            "offset": 2163
+            "offset": 2325
           },
           "end": {
-            "line": 72,
+            "line": 73,
             "column": 71,
-            "offset": 2229
+            "offset": 2391
           }
         }
       },
@@ -3441,14 +3466,14 @@ body.kawa-fullscreen.has-kawa-product-bar .kawa-root,html.kawa-fullscreen.has-ka
         "loc": {
           "file": "script.kawa",
           "start": {
-            "line": 73,
+            "line": 74,
             "column": 5,
-            "offset": 2234
+            "offset": 2396
           },
           "end": {
-            "line": 74,
+            "line": 75,
             "column": 1,
-            "offset": 2256
+            "offset": 2418
           }
         }
       },
@@ -3460,14 +3485,14 @@ body.kawa-fullscreen.has-kawa-product-bar .kawa-root,html.kawa-fullscreen.has-ka
         "loc": {
           "file": "script.kawa",
           "start": {
-            "line": 74,
+            "line": 75,
             "column": 5,
-            "offset": 2260
+            "offset": 2422
           },
           "end": {
-            "line": 75,
+            "line": 76,
             "column": 1,
-            "offset": 2325
+            "offset": 2487
           }
         }
       },
@@ -3477,14 +3502,14 @@ body.kawa-fullscreen.has-kawa-product-bar .kawa-root,html.kawa-fullscreen.has-ka
         "loc": {
           "file": "script.kawa",
           "start": {
-            "line": 75,
+            "line": 76,
             "column": 5,
-            "offset": 2329
+            "offset": 2491
           },
           "end": {
-            "line": 75,
+            "line": 76,
             "column": 13,
-            "offset": 2337
+            "offset": 2499
           }
         }
       }
@@ -3497,14 +3522,14 @@ body.kawa-fullscreen.has-kawa-product-bar .kawa-root,html.kawa-fullscreen.has-ka
         "loc": {
           "file": "script.kawa",
           "start": {
-            "line": 78,
+            "line": 79,
             "column": 5,
-            "offset": 2364
+            "offset": 2526
           },
           "end": {
-            "line": 79,
+            "line": 80,
             "column": 1,
-            "offset": 2393
+            "offset": 2555
           }
         }
       },
@@ -3514,14 +3539,14 @@ body.kawa-fullscreen.has-kawa-product-bar .kawa-root,html.kawa-fullscreen.has-ka
         "loc": {
           "file": "script.kawa",
           "start": {
-            "line": 79,
+            "line": 80,
             "column": 5,
-            "offset": 2397
+            "offset": 2559
           },
           "end": {
-            "line": 80,
+            "line": 81,
             "column": 1,
-            "offset": 2408
+            "offset": 2570
           }
         }
       },
@@ -3534,14 +3559,14 @@ body.kawa-fullscreen.has-kawa-product-bar .kawa-root,html.kawa-fullscreen.has-ka
         "loc": {
           "file": "script.kawa",
           "start": {
-            "line": 80,
+            "line": 81,
             "column": 5,
-            "offset": 2412
+            "offset": 2574
           },
           "end": {
-            "line": 81,
+            "line": 82,
             "column": 1,
-            "offset": 2451
+            "offset": 2613
           }
         }
       },
@@ -3552,14 +3577,14 @@ body.kawa-fullscreen.has-kawa-product-bar .kawa-root,html.kawa-fullscreen.has-ka
         "loc": {
           "file": "script.kawa",
           "start": {
-            "line": 82,
+            "line": 83,
             "column": 5,
-            "offset": 2456
+            "offset": 2618
           },
           "end": {
-            "line": 82,
+            "line": 83,
             "column": 84,
-            "offset": 2535
+            "offset": 2697
           }
         }
       },
@@ -3570,14 +3595,32 @@ body.kawa-fullscreen.has-kawa-product-bar .kawa-root,html.kawa-fullscreen.has-ka
         "loc": {
           "file": "script.kawa",
           "start": {
-            "line": 83,
+            "line": 84,
             "column": 5,
-            "offset": 2540
+            "offset": 2702
           },
           "end": {
-            "line": 83,
+            "line": 84,
             "column": 118,
-            "offset": 2653
+            "offset": 2815
+          }
+        }
+      },
+      {
+        "type": "dialogue",
+        "speaker": "yumia",
+        "text": "Put declarations at the top level — nested {b}label{/b} / {b}character{/b} inside a label is a compile error.",
+        "loc": {
+          "file": "script.kawa",
+          "start": {
+            "line": 85,
+            "column": 5,
+            "offset": 2820
+          },
+          "end": {
+            "line": 85,
+            "column": 122,
+            "offset": 2937
           }
         }
       },
@@ -3588,14 +3631,14 @@ body.kawa-fullscreen.has-kawa-product-bar .kawa-root,html.kawa-fullscreen.has-ka
         "loc": {
           "file": "script.kawa",
           "start": {
-            "line": 84,
+            "line": 86,
             "column": 5,
-            "offset": 2658
+            "offset": 2942
           },
           "end": {
-            "line": 84,
+            "line": 86,
             "column": 110,
-            "offset": 2763
+            "offset": 3047
           }
         }
       },
@@ -3608,14 +3651,14 @@ body.kawa-fullscreen.has-kawa-product-bar .kawa-root,html.kawa-fullscreen.has-ka
         "loc": {
           "file": "script.kawa",
           "start": {
-            "line": 86,
+            "line": 88,
             "column": 5,
-            "offset": 2769
+            "offset": 3053
           },
           "end": {
-            "line": 87,
+            "line": 89,
             "column": 1,
-            "offset": 2810
+            "offset": 3094
           }
         }
       },
@@ -3626,14 +3669,14 @@ body.kawa-fullscreen.has-kawa-product-bar .kawa-root,html.kawa-fullscreen.has-ka
         "loc": {
           "file": "script.kawa",
           "start": {
-            "line": 87,
+            "line": 89,
             "column": 5,
-            "offset": 2814
+            "offset": 3098
           },
           "end": {
-            "line": 87,
+            "line": 89,
             "column": 131,
-            "offset": 2940
+            "offset": 3224
           }
         }
       },
@@ -3646,14 +3689,14 @@ body.kawa-fullscreen.has-kawa-product-bar .kawa-root,html.kawa-fullscreen.has-ka
         "loc": {
           "file": "script.kawa",
           "start": {
-            "line": 88,
+            "line": 90,
             "column": 5,
-            "offset": 2945
+            "offset": 3229
           },
           "end": {
-            "line": 89,
+            "line": 91,
             "column": 1,
-            "offset": 2967
+            "offset": 3251
           }
         }
       },
@@ -3663,14 +3706,14 @@ body.kawa-fullscreen.has-kawa-product-bar .kawa-root,html.kawa-fullscreen.has-ka
         "loc": {
           "file": "script.kawa",
           "start": {
-            "line": 89,
+            "line": 91,
             "column": 5,
-            "offset": 2971
+            "offset": 3255
           },
           "end": {
-            "line": 89,
+            "line": 91,
             "column": 13,
-            "offset": 2979
+            "offset": 3263
           }
         }
       }
@@ -3683,14 +3726,14 @@ body.kawa-fullscreen.has-kawa-product-bar .kawa-root,html.kawa-fullscreen.has-ka
         "loc": {
           "file": "script.kawa",
           "start": {
-            "line": 92,
+            "line": 94,
             "column": 5,
-            "offset": 3005
+            "offset": 3289
           },
           "end": {
-            "line": 93,
+            "line": 95,
             "column": 1,
-            "offset": 3038
+            "offset": 3322
           }
         }
       },
@@ -3701,14 +3744,14 @@ body.kawa-fullscreen.has-kawa-product-bar .kawa-root,html.kawa-fullscreen.has-ka
         "loc": {
           "file": "script.kawa",
           "start": {
-            "line": 93,
+            "line": 95,
             "column": 5,
-            "offset": 3042
+            "offset": 3326
           },
           "end": {
-            "line": 94,
+            "line": 96,
             "column": 1,
-            "offset": 3056
+            "offset": 3340
           }
         }
       },
@@ -3721,14 +3764,14 @@ body.kawa-fullscreen.has-kawa-product-bar .kawa-root,html.kawa-fullscreen.has-ka
         "loc": {
           "file": "script.kawa",
           "start": {
-            "line": 94,
+            "line": 96,
             "column": 5,
-            "offset": 3060
+            "offset": 3344
           },
           "end": {
-            "line": 95,
+            "line": 97,
             "column": 1,
-            "offset": 3099
+            "offset": 3383
           }
         }
       },
@@ -3741,14 +3784,14 @@ body.kawa-fullscreen.has-kawa-product-bar .kawa-root,html.kawa-fullscreen.has-ka
         "loc": {
           "file": "script.kawa",
           "start": {
-            "line": 95,
+            "line": 97,
             "column": 5,
-            "offset": 3103
+            "offset": 3387
           },
           "end": {
-            "line": 96,
+            "line": 98,
             "column": 1,
-            "offset": 3138
+            "offset": 3422
           }
         }
       },
@@ -3759,14 +3802,14 @@ body.kawa-fullscreen.has-kawa-product-bar .kawa-root,html.kawa-fullscreen.has-ka
         "loc": {
           "file": "script.kawa",
           "start": {
-            "line": 97,
+            "line": 99,
             "column": 5,
-            "offset": 3143
+            "offset": 3427
           },
           "end": {
-            "line": 97,
+            "line": 99,
             "column": 70,
-            "offset": 3208
+            "offset": 3492
           }
         }
       },
@@ -3777,14 +3820,14 @@ body.kawa-fullscreen.has-kawa-product-bar .kawa-root,html.kawa-fullscreen.has-ka
         "loc": {
           "file": "script.kawa",
           "start": {
-            "line": 98,
+            "line": 100,
             "column": 5,
-            "offset": 3213
+            "offset": 3497
           },
           "end": {
-            "line": 98,
+            "line": 100,
             "column": 103,
-            "offset": 3311
+            "offset": 3595
           }
         }
       },
@@ -3795,14 +3838,14 @@ body.kawa-fullscreen.has-kawa-product-bar .kawa-root,html.kawa-fullscreen.has-ka
         "loc": {
           "file": "script.kawa",
           "start": {
-            "line": 99,
+            "line": 101,
             "column": 5,
-            "offset": 3316
+            "offset": 3600
           },
           "end": {
-            "line": 99,
+            "line": 101,
             "column": 117,
-            "offset": 3428
+            "offset": 3712
           }
         }
       },
@@ -3813,14 +3856,14 @@ body.kawa-fullscreen.has-kawa-product-bar .kawa-root,html.kawa-fullscreen.has-ka
         "loc": {
           "file": "script.kawa",
           "start": {
-            "line": 100,
+            "line": 102,
             "column": 5,
-            "offset": 3433
+            "offset": 3717
           },
           "end": {
-            "line": 100,
+            "line": 102,
             "column": 96,
-            "offset": 3524
+            "offset": 3808
           }
         }
       },
@@ -3831,14 +3874,14 @@ body.kawa-fullscreen.has-kawa-product-bar .kawa-root,html.kawa-fullscreen.has-ka
         "loc": {
           "file": "script.kawa",
           "start": {
-            "line": 101,
+            "line": 103,
             "column": 5,
-            "offset": 3529
+            "offset": 3813
           },
           "end": {
-            "line": 101,
+            "line": 103,
             "column": 90,
-            "offset": 3614
+            "offset": 3898
           }
         }
       },
@@ -3851,14 +3894,14 @@ body.kawa-fullscreen.has-kawa-product-bar .kawa-root,html.kawa-fullscreen.has-ka
         "loc": {
           "file": "script.kawa",
           "start": {
-            "line": 102,
+            "line": 104,
             "column": 5,
-            "offset": 3619
+            "offset": 3903
           },
           "end": {
-            "line": 103,
+            "line": 105,
             "column": 1,
-            "offset": 3641
+            "offset": 3925
           }
         }
       },
@@ -3868,14 +3911,14 @@ body.kawa-fullscreen.has-kawa-product-bar .kawa-root,html.kawa-fullscreen.has-ka
         "loc": {
           "file": "script.kawa",
           "start": {
-            "line": 103,
+            "line": 105,
             "column": 5,
-            "offset": 3645
+            "offset": 3929
           },
           "end": {
-            "line": 103,
+            "line": 105,
             "column": 13,
-            "offset": 3653
+            "offset": 3937
           }
         }
       }
@@ -3890,14 +3933,14 @@ body.kawa-fullscreen.has-kawa-product-bar .kawa-root,html.kawa-fullscreen.has-ka
         "loc": {
           "file": "script.kawa",
           "start": {
-            "line": 116,
+            "line": 118,
             "column": 13,
-            "offset": 4173
+            "offset": 4457
           },
           "end": {
-            "line": 117,
+            "line": 119,
             "column": 1,
-            "offset": 4195
+            "offset": 4479
           }
         }
       },
@@ -3907,14 +3950,14 @@ body.kawa-fullscreen.has-kawa-product-bar .kawa-root,html.kawa-fullscreen.has-ka
         "loc": {
           "file": "script.kawa",
           "start": {
-            "line": 117,
+            "line": 119,
             "column": 13,
-            "offset": 4207
+            "offset": 4491
           },
           "end": {
-            "line": 117,
+            "line": 119,
             "column": 21,
-            "offset": 4215
+            "offset": 4499
           }
         }
       }
@@ -3926,14 +3969,14 @@ body.kawa-fullscreen.has-kawa-product-bar .kawa-root,html.kawa-fullscreen.has-ka
         "loc": {
           "file": "script.kawa",
           "start": {
-            "line": 119,
+            "line": 121,
             "column": 13,
-            "offset": 4266
+            "offset": 4550
           },
           "end": {
-            "line": 119,
+            "line": 121,
             "column": 29,
-            "offset": 4282
+            "offset": 4566
           }
         }
       }
@@ -3951,14 +3994,14 @@ body.kawa-fullscreen.has-kawa-product-bar .kawa-root,html.kawa-fullscreen.has-ka
         "loc": {
           "file": "script.kawa",
           "start": {
-            "line": 106,
+            "line": 108,
             "column": 5,
-            "offset": 3680
+            "offset": 3964
           },
           "end": {
-            "line": 107,
+            "line": 109,
             "column": 1,
-            "offset": 3709
+            "offset": 3993
           }
         }
       },
@@ -3971,14 +4014,14 @@ body.kawa-fullscreen.has-kawa-product-bar .kawa-root,html.kawa-fullscreen.has-ka
         "loc": {
           "file": "script.kawa",
           "start": {
-            "line": 107,
+            "line": 109,
             "column": 5,
-            "offset": 3713
+            "offset": 3997
           },
           "end": {
-            "line": 108,
+            "line": 110,
             "column": 1,
-            "offset": 3757
+            "offset": 4041
           }
         }
       },
@@ -3989,14 +4032,14 @@ body.kawa-fullscreen.has-kawa-product-bar .kawa-root,html.kawa-fullscreen.has-ka
         "loc": {
           "file": "script.kawa",
           "start": {
-            "line": 109,
+            "line": 111,
             "column": 5,
-            "offset": 3762
+            "offset": 4046
           },
           "end": {
-            "line": 109,
+            "line": 111,
             "column": 84,
-            "offset": 3841
+            "offset": 4125
           }
         }
       },
@@ -4007,14 +4050,14 @@ body.kawa-fullscreen.has-kawa-product-bar .kawa-root,html.kawa-fullscreen.has-ka
         "loc": {
           "file": "script.kawa",
           "start": {
-            "line": 110,
+            "line": 112,
             "column": 5,
-            "offset": 3846
+            "offset": 4130
           },
           "end": {
-            "line": 110,
+            "line": 112,
             "column": 99,
-            "offset": 3940
+            "offset": 4224
           }
         }
       },
@@ -4025,14 +4068,14 @@ body.kawa-fullscreen.has-kawa-product-bar .kawa-root,html.kawa-fullscreen.has-ka
         "loc": {
           "file": "script.kawa",
           "start": {
-            "line": 111,
+            "line": 113,
             "column": 5,
-            "offset": 3945
+            "offset": 4229
           },
           "end": {
-            "line": 111,
+            "line": 113,
             "column": 97,
-            "offset": 4037
+            "offset": 4321
           }
         }
       },
@@ -4043,14 +4086,14 @@ body.kawa-fullscreen.has-kawa-product-bar .kawa-root,html.kawa-fullscreen.has-ka
         "loc": {
           "file": "script.kawa",
           "start": {
-            "line": 112,
+            "line": 114,
             "column": 5,
-            "offset": 4042
+            "offset": 4326
           },
           "end": {
-            "line": 112,
+            "line": 114,
             "column": 76,
-            "offset": 4113
+            "offset": 4397
           }
         }
       },
@@ -4070,14 +4113,14 @@ body.kawa-fullscreen.has-kawa-product-bar .kawa-root,html.kawa-fullscreen.has-ka
         "loc": {
           "file": "script.kawa",
           "start": {
-            "line": 114,
+            "line": 116,
             "column": 5,
-            "offset": 4119
+            "offset": 4403
           },
           "end": {
-            "line": 121,
+            "line": 123,
             "column": 1,
-            "offset": 4284
+            "offset": 4568
           }
         }
       }
@@ -4092,14 +4135,14 @@ body.kawa-fullscreen.has-kawa-product-bar .kawa-root,html.kawa-fullscreen.has-ka
         "loc": {
           "file": "script.kawa",
           "start": {
-            "line": 122,
+            "line": 124,
             "column": 5,
-            "offset": 4307
+            "offset": 4591
           },
           "end": {
-            "line": 123,
+            "line": 125,
             "column": 1,
-            "offset": 4344
+            "offset": 4628
           }
         }
       },
@@ -4110,14 +4153,14 @@ body.kawa-fullscreen.has-kawa-product-bar .kawa-root,html.kawa-fullscreen.has-ka
         "loc": {
           "file": "script.kawa",
           "start": {
-            "line": 123,
+            "line": 125,
             "column": 5,
-            "offset": 4348
+            "offset": 4632
           },
           "end": {
-            "line": 123,
+            "line": 125,
             "column": 65,
-            "offset": 4408
+            "offset": 4692
           }
         }
       },
@@ -4130,14 +4173,14 @@ body.kawa-fullscreen.has-kawa-product-bar .kawa-root,html.kawa-fullscreen.has-ka
         "loc": {
           "file": "script.kawa",
           "start": {
-            "line": 124,
+            "line": 126,
             "column": 5,
-            "offset": 4413
+            "offset": 4697
           },
           "end": {
-            "line": 125,
+            "line": 127,
             "column": 1,
-            "offset": 4435
+            "offset": 4719
           }
         }
       },
@@ -4147,14 +4190,14 @@ body.kawa-fullscreen.has-kawa-product-bar .kawa-root,html.kawa-fullscreen.has-ka
         "loc": {
           "file": "script.kawa",
           "start": {
-            "line": 125,
+            "line": 127,
             "column": 5,
-            "offset": 4439
+            "offset": 4723
           },
           "end": {
-            "line": 125,
+            "line": 127,
             "column": 13,
-            "offset": 4447
+            "offset": 4731
           }
         }
       }
@@ -4167,14 +4210,14 @@ body.kawa-fullscreen.has-kawa-product-bar .kawa-root,html.kawa-fullscreen.has-ka
         "loc": {
           "file": "script.kawa",
           "start": {
-            "line": 128,
+            "line": 130,
             "column": 5,
-            "offset": 4474
+            "offset": 4758
           },
           "end": {
-            "line": 129,
+            "line": 131,
             "column": 1,
-            "offset": 4505
+            "offset": 4789
           }
         }
       },
@@ -4184,14 +4227,14 @@ body.kawa-fullscreen.has-kawa-product-bar .kawa-root,html.kawa-fullscreen.has-ka
         "loc": {
           "file": "script.kawa",
           "start": {
-            "line": 129,
+            "line": 131,
             "column": 5,
-            "offset": 4509
+            "offset": 4793
           },
           "end": {
-            "line": 130,
+            "line": 132,
             "column": 1,
-            "offset": 4517
+            "offset": 4801
           }
         }
       },
@@ -4204,14 +4247,14 @@ body.kawa-fullscreen.has-kawa-product-bar .kawa-root,html.kawa-fullscreen.has-ka
         "loc": {
           "file": "script.kawa",
           "start": {
-            "line": 130,
+            "line": 132,
             "column": 5,
-            "offset": 4521
+            "offset": 4805
           },
           "end": {
-            "line": 131,
+            "line": 133,
             "column": 1,
-            "offset": 4559
+            "offset": 4843
           }
         }
       },
@@ -4223,14 +4266,14 @@ body.kawa-fullscreen.has-kawa-product-bar .kawa-root,html.kawa-fullscreen.has-ka
         "loc": {
           "file": "script.kawa",
           "start": {
-            "line": 131,
+            "line": 133,
             "column": 5,
-            "offset": 4563
+            "offset": 4847
           },
           "end": {
-            "line": 132,
+            "line": 134,
             "column": 1,
-            "offset": 4590
+            "offset": 4874
           }
         }
       },
@@ -4241,14 +4284,14 @@ body.kawa-fullscreen.has-kawa-product-bar .kawa-root,html.kawa-fullscreen.has-ka
         "loc": {
           "file": "script.kawa",
           "start": {
-            "line": 133,
+            "line": 135,
             "column": 5,
-            "offset": 4595
+            "offset": 4879
           },
           "end": {
-            "line": 133,
+            "line": 135,
             "column": 30,
-            "offset": 4620
+            "offset": 4904
           }
         }
       },
@@ -4259,14 +4302,14 @@ body.kawa-fullscreen.has-kawa-product-bar .kawa-root,html.kawa-fullscreen.has-ka
         "loc": {
           "file": "script.kawa",
           "start": {
-            "line": 134,
+            "line": 136,
             "column": 5,
-            "offset": 4625
+            "offset": 4909
           },
           "end": {
-            "line": 134,
+            "line": 136,
             "column": 73,
-            "offset": 4693
+            "offset": 4977
           }
         }
       },
@@ -4277,14 +4320,14 @@ body.kawa-fullscreen.has-kawa-product-bar .kawa-root,html.kawa-fullscreen.has-ka
         "loc": {
           "file": "script.kawa",
           "start": {
-            "line": 135,
+            "line": 137,
             "column": 5,
-            "offset": 4698
+            "offset": 4982
           },
           "end": {
-            "line": 135,
+            "line": 137,
             "column": 110,
-            "offset": 4803
+            "offset": 5087
           }
         }
       },
@@ -4295,14 +4338,14 @@ body.kawa-fullscreen.has-kawa-product-bar .kawa-root,html.kawa-fullscreen.has-ka
         "loc": {
           "file": "script.kawa",
           "start": {
-            "line": 136,
+            "line": 138,
             "column": 5,
-            "offset": 4808
+            "offset": 5092
           },
           "end": {
-            "line": 136,
+            "line": 138,
             "column": 86,
-            "offset": 4889
+            "offset": 5173
           }
         }
       },
@@ -4313,14 +4356,14 @@ body.kawa-fullscreen.has-kawa-product-bar .kawa-root,html.kawa-fullscreen.has-ka
         "loc": {
           "file": "script.kawa",
           "start": {
-            "line": 137,
+            "line": 139,
             "column": 5,
-            "offset": 4894
+            "offset": 5178
           },
           "end": {
-            "line": 137,
+            "line": 139,
             "column": 79,
-            "offset": 4968
+            "offset": 5252
           }
         }
       },
@@ -4331,14 +4374,14 @@ body.kawa-fullscreen.has-kawa-product-bar .kawa-root,html.kawa-fullscreen.has-ka
         "loc": {
           "file": "script.kawa",
           "start": {
-            "line": 138,
+            "line": 140,
             "column": 5,
-            "offset": 4973
+            "offset": 5257
           },
           "end": {
-            "line": 138,
+            "line": 140,
             "column": 99,
-            "offset": 5067
+            "offset": 5351
           }
         }
       },
@@ -4349,14 +4392,14 @@ body.kawa-fullscreen.has-kawa-product-bar .kawa-root,html.kawa-fullscreen.has-ka
         "loc": {
           "file": "script.kawa",
           "start": {
-            "line": 140,
+            "line": 142,
             "column": 5,
-            "offset": 5073
+            "offset": 5357
           },
           "end": {
-            "line": 141,
+            "line": 143,
             "column": 1,
-            "offset": 5117
+            "offset": 5401
           }
         }
       },
@@ -4368,14 +4411,14 @@ body.kawa-fullscreen.has-kawa-product-bar .kawa-root,html.kawa-fullscreen.has-ka
         "loc": {
           "file": "script.kawa",
           "start": {
-            "line": 141,
+            "line": 143,
             "column": 5,
-            "offset": 5121
+            "offset": 5405
           },
           "end": {
-            "line": 142,
+            "line": 144,
             "column": 1,
-            "offset": 5194
+            "offset": 5478
           }
         }
       },
@@ -4388,14 +4431,14 @@ body.kawa-fullscreen.has-kawa-product-bar .kawa-root,html.kawa-fullscreen.has-ka
         "loc": {
           "file": "script.kawa",
           "start": {
-            "line": 142,
+            "line": 144,
             "column": 5,
-            "offset": 5198
+            "offset": 5482
           },
           "end": {
-            "line": 143,
+            "line": 145,
             "column": 1,
-            "offset": 5220
+            "offset": 5504
           }
         }
       },
@@ -4405,14 +4448,14 @@ body.kawa-fullscreen.has-kawa-product-bar .kawa-root,html.kawa-fullscreen.has-ka
         "loc": {
           "file": "script.kawa",
           "start": {
-            "line": 143,
+            "line": 145,
             "column": 5,
-            "offset": 5224
+            "offset": 5508
           },
           "end": {
-            "line": 143,
+            "line": 145,
             "column": 13,
-            "offset": 5232
+            "offset": 5516
           }
         }
       }
@@ -4425,14 +4468,14 @@ body.kawa-fullscreen.has-kawa-product-bar .kawa-root,html.kawa-fullscreen.has-ka
         "loc": {
           "file": "script.kawa",
           "start": {
-            "line": 146,
+            "line": 148,
             "column": 5,
-            "offset": 5256
+            "offset": 5540
           },
           "end": {
-            "line": 147,
+            "line": 149,
             "column": 1,
-            "offset": 5285
+            "offset": 5569
           }
         }
       },
@@ -4442,14 +4485,14 @@ body.kawa-fullscreen.has-kawa-product-bar .kawa-root,html.kawa-fullscreen.has-ka
         "loc": {
           "file": "script.kawa",
           "start": {
-            "line": 147,
+            "line": 149,
             "column": 5,
-            "offset": 5289
+            "offset": 5573
           },
           "end": {
-            "line": 148,
+            "line": 150,
             "column": 1,
-            "offset": 5303
+            "offset": 5587
           }
         }
       },
@@ -4460,14 +4503,14 @@ body.kawa-fullscreen.has-kawa-product-bar .kawa-root,html.kawa-fullscreen.has-ka
         "loc": {
           "file": "script.kawa",
           "start": {
-            "line": 148,
+            "line": 150,
             "column": 5,
-            "offset": 5307
+            "offset": 5591
           },
           "end": {
-            "line": 149,
+            "line": 151,
             "column": 1,
-            "offset": 5328
+            "offset": 5612
           }
         }
       },
@@ -4480,14 +4523,14 @@ body.kawa-fullscreen.has-kawa-product-bar .kawa-root,html.kawa-fullscreen.has-ka
         "loc": {
           "file": "script.kawa",
           "start": {
-            "line": 149,
+            "line": 151,
             "column": 5,
-            "offset": 5332
+            "offset": 5616
           },
           "end": {
-            "line": 150,
+            "line": 152,
             "column": 1,
-            "offset": 5376
+            "offset": 5660
           }
         }
       },
@@ -4498,14 +4541,14 @@ body.kawa-fullscreen.has-kawa-product-bar .kawa-root,html.kawa-fullscreen.has-ka
         "loc": {
           "file": "script.kawa",
           "start": {
-            "line": 151,
+            "line": 153,
             "column": 5,
-            "offset": 5381
+            "offset": 5665
           },
           "end": {
-            "line": 151,
+            "line": 153,
             "column": 66,
-            "offset": 5442
+            "offset": 5726
           }
         }
       },
@@ -4516,14 +4559,14 @@ body.kawa-fullscreen.has-kawa-product-bar .kawa-root,html.kawa-fullscreen.has-ka
         "loc": {
           "file": "script.kawa",
           "start": {
-            "line": 152,
+            "line": 154,
             "column": 5,
-            "offset": 5447
+            "offset": 5731
           },
           "end": {
-            "line": 152,
+            "line": 154,
             "column": 104,
-            "offset": 5546
+            "offset": 5830
           }
         }
       },
@@ -4534,14 +4577,14 @@ body.kawa-fullscreen.has-kawa-product-bar .kawa-root,html.kawa-fullscreen.has-ka
         "loc": {
           "file": "script.kawa",
           "start": {
-            "line": 153,
+            "line": 155,
             "column": 5,
-            "offset": 5551
+            "offset": 5835
           },
           "end": {
-            "line": 153,
+            "line": 155,
             "column": 70,
-            "offset": 5616
+            "offset": 5900
           }
         }
       },
@@ -4552,14 +4595,14 @@ body.kawa-fullscreen.has-kawa-product-bar .kawa-root,html.kawa-fullscreen.has-ka
         "loc": {
           "file": "script.kawa",
           "start": {
-            "line": 154,
+            "line": 156,
             "column": 5,
-            "offset": 5621
+            "offset": 5905
           },
           "end": {
-            "line": 154,
+            "line": 156,
             "column": 98,
-            "offset": 5714
+            "offset": 5998
           }
         }
       },
@@ -4570,14 +4613,14 @@ body.kawa-fullscreen.has-kawa-product-bar .kawa-root,html.kawa-fullscreen.has-ka
         "loc": {
           "file": "script.kawa",
           "start": {
-            "line": 155,
+            "line": 157,
             "column": 5,
-            "offset": 5719
+            "offset": 6003
           },
           "end": {
-            "line": 155,
+            "line": 157,
             "column": 110,
-            "offset": 5824
+            "offset": 6108
           }
         }
       },
@@ -4588,14 +4631,14 @@ body.kawa-fullscreen.has-kawa-product-bar .kawa-root,html.kawa-fullscreen.has-ka
         "loc": {
           "file": "script.kawa",
           "start": {
-            "line": 156,
+            "line": 158,
             "column": 5,
-            "offset": 5829
+            "offset": 6113
           },
           "end": {
-            "line": 156,
+            "line": 158,
             "column": 97,
-            "offset": 5921
+            "offset": 6205
           }
         }
       },
@@ -4608,14 +4651,14 @@ body.kawa-fullscreen.has-kawa-product-bar .kawa-root,html.kawa-fullscreen.has-ka
         "loc": {
           "file": "script.kawa",
           "start": {
-            "line": 158,
+            "line": 160,
             "column": 5,
-            "offset": 5927
+            "offset": 6211
           },
           "end": {
-            "line": 159,
+            "line": 161,
             "column": 1,
-            "offset": 5964
+            "offset": 6248
           }
         }
       },
@@ -4626,14 +4669,14 @@ body.kawa-fullscreen.has-kawa-product-bar .kawa-root,html.kawa-fullscreen.has-ka
         "loc": {
           "file": "script.kawa",
           "start": {
-            "line": 159,
+            "line": 161,
             "column": 5,
-            "offset": 5968
+            "offset": 6252
           },
           "end": {
-            "line": 159,
+            "line": 161,
             "column": 89,
-            "offset": 6052
+            "offset": 6336
           }
         }
       },
@@ -4646,14 +4689,14 @@ body.kawa-fullscreen.has-kawa-product-bar .kawa-root,html.kawa-fullscreen.has-ka
         "loc": {
           "file": "script.kawa",
           "start": {
-            "line": 160,
+            "line": 162,
             "column": 5,
-            "offset": 6057
+            "offset": 6341
           },
           "end": {
-            "line": 161,
+            "line": 163,
             "column": 1,
-            "offset": 6079
+            "offset": 6363
           }
         }
       },
@@ -4663,14 +4706,14 @@ body.kawa-fullscreen.has-kawa-product-bar .kawa-root,html.kawa-fullscreen.has-ka
         "loc": {
           "file": "script.kawa",
           "start": {
-            "line": 161,
+            "line": 163,
             "column": 5,
-            "offset": 6083
+            "offset": 6367
           },
           "end": {
-            "line": 162,
+            "line": 164,
             "column": 1,
-            "offset": 6098
+            "offset": 6382
           }
         }
       },
@@ -4680,14 +4723,14 @@ body.kawa-fullscreen.has-kawa-product-bar .kawa-root,html.kawa-fullscreen.has-ka
         "loc": {
           "file": "script.kawa",
           "start": {
-            "line": 162,
+            "line": 164,
             "column": 5,
-            "offset": 6102
+            "offset": 6386
           },
           "end": {
-            "line": 162,
+            "line": 164,
             "column": 13,
-            "offset": 6110
+            "offset": 6394
           }
         }
       }
@@ -4700,14 +4743,14 @@ body.kawa-fullscreen.has-kawa-product-bar .kawa-root,html.kawa-fullscreen.has-ka
         "loc": {
           "file": "script.kawa",
           "start": {
-            "line": 165,
+            "line": 167,
             "column": 5,
-            "offset": 6130
+            "offset": 6414
           },
           "end": {
-            "line": 166,
+            "line": 168,
             "column": 1,
-            "offset": 6163
+            "offset": 6447
           }
         }
       },
@@ -4717,14 +4760,14 @@ body.kawa-fullscreen.has-kawa-product-bar .kawa-root,html.kawa-fullscreen.has-ka
         "loc": {
           "file": "script.kawa",
           "start": {
-            "line": 166,
+            "line": 168,
             "column": 5,
-            "offset": 6167
+            "offset": 6451
           },
           "end": {
-            "line": 167,
+            "line": 169,
             "column": 1,
-            "offset": 6178
+            "offset": 6462
           }
         }
       },
@@ -4737,14 +4780,14 @@ body.kawa-fullscreen.has-kawa-product-bar .kawa-root,html.kawa-fullscreen.has-ka
         "loc": {
           "file": "script.kawa",
           "start": {
-            "line": 167,
+            "line": 169,
             "column": 5,
-            "offset": 6182
+            "offset": 6466
           },
           "end": {
-            "line": 168,
+            "line": 170,
             "column": 1,
-            "offset": 6221
+            "offset": 6505
           }
         }
       },
@@ -4757,14 +4800,14 @@ body.kawa-fullscreen.has-kawa-product-bar .kawa-root,html.kawa-fullscreen.has-ka
         "loc": {
           "file": "script.kawa",
           "start": {
-            "line": 168,
+            "line": 170,
             "column": 5,
-            "offset": 6225
+            "offset": 6509
           },
           "end": {
-            "line": 169,
+            "line": 171,
             "column": 1,
-            "offset": 6260
+            "offset": 6544
           }
         }
       },
@@ -4775,14 +4818,14 @@ body.kawa-fullscreen.has-kawa-product-bar .kawa-root,html.kawa-fullscreen.has-ka
         "loc": {
           "file": "script.kawa",
           "start": {
-            "line": 170,
+            "line": 172,
             "column": 5,
-            "offset": 6265
+            "offset": 6549
           },
           "end": {
-            "line": 170,
+            "line": 172,
             "column": 76,
-            "offset": 6336
+            "offset": 6620
           }
         }
       },
@@ -4793,14 +4836,14 @@ body.kawa-fullscreen.has-kawa-product-bar .kawa-root,html.kawa-fullscreen.has-ka
         "loc": {
           "file": "script.kawa",
           "start": {
-            "line": 171,
+            "line": 173,
             "column": 5,
-            "offset": 6341
+            "offset": 6625
           },
           "end": {
-            "line": 171,
+            "line": 173,
             "column": 80,
-            "offset": 6416
+            "offset": 6700
           }
         }
       },
@@ -4811,14 +4854,14 @@ body.kawa-fullscreen.has-kawa-product-bar .kawa-root,html.kawa-fullscreen.has-ka
         "loc": {
           "file": "script.kawa",
           "start": {
-            "line": 172,
+            "line": 174,
             "column": 5,
-            "offset": 6421
+            "offset": 6705
           },
           "end": {
-            "line": 172,
+            "line": 174,
             "column": 91,
-            "offset": 6507
+            "offset": 6791
           }
         }
       },
@@ -4830,14 +4873,14 @@ body.kawa-fullscreen.has-kawa-product-bar .kawa-root,html.kawa-fullscreen.has-ka
         "loc": {
           "file": "script.kawa",
           "start": {
-            "line": 174,
+            "line": 176,
             "column": 5,
-            "offset": 6513
+            "offset": 6797
           },
           "end": {
-            "line": 175,
+            "line": 177,
             "column": 1,
-            "offset": 6600
+            "offset": 6884
           }
         }
       },
@@ -4848,14 +4891,14 @@ body.kawa-fullscreen.has-kawa-product-bar .kawa-root,html.kawa-fullscreen.has-ka
         "loc": {
           "file": "script.kawa",
           "start": {
-            "line": 175,
+            "line": 177,
             "column": 5,
-            "offset": 6604
+            "offset": 6888
           },
           "end": {
-            "line": 176,
+            "line": 178,
             "column": 1,
-            "offset": 6650
+            "offset": 6934
           }
         }
       },
@@ -4866,14 +4909,14 @@ body.kawa-fullscreen.has-kawa-product-bar .kawa-root,html.kawa-fullscreen.has-ka
         "loc": {
           "file": "script.kawa",
           "start": {
-            "line": 177,
+            "line": 179,
             "column": 5,
-            "offset": 6655
+            "offset": 6939
           },
           "end": {
-            "line": 177,
+            "line": 179,
             "column": 96,
-            "offset": 6746
+            "offset": 7030
           }
         }
       },
@@ -4882,14 +4925,14 @@ body.kawa-fullscreen.has-kawa-product-bar .kawa-root,html.kawa-fullscreen.has-ka
         "loc": {
           "file": "script.kawa",
           "start": {
-            "line": 178,
+            "line": 180,
             "column": 5,
-            "offset": 6751
+            "offset": 7035
           },
           "end": {
-            "line": 178,
+            "line": 180,
             "column": 11,
-            "offset": 6757
+            "offset": 7041
           }
         }
       }
@@ -4920,7 +4963,7 @@ body.kawa-fullscreen.has-kawa-product-bar .kawa-root,html.kawa-fullscreen.has-ka
     }
   ]
 };
-    const projectConfig = {"title":"Kawaijs Docs - Learn by Playing","author":"Biagio Scaglia","version":"0.1.11","theme":{"primaryColor":"#f43f5e","fontFamily":"\"DM Sans\", \"Segoe UI\", system-ui, sans-serif","headingFont":"\"Fraunces\", Georgia, serif"},"window":{"width":1280,"height":720,"aspectRatio":"16/9"},"settings":{"textSpeed":22,"autoDelay":1800,"musicVolume":0.75,"soundVolume":1,"voiceVolume":1},"gallery":[{"id":"docs_sunset","title":"Docs Sunset","image":"cg_sunset_promise.svg","description":"Unlocked after finishing the Deploy chapter."}],"share":{"siteName":"Kawaijs","description":"Interactive documentation for Kawaijs — write .kawa, run in the browser, ship a static visual novel. Learn scripting, deploy to GitHub Pages, and use built-in SEO.","defaultImage":"backgrounds/classroom.svg","twitterCard":"summary_large_image","labels":{"hub":{"title":"Kawaijs Docs - Topic Hub","description":"Choose a lesson: install, scripting, scenes, choices, deploy, SEO."},"lesson_install":{"title":"Kawaijs - Quick Start","description":"Create a project with npx kawa create, run kawa dev, and build a static dist/."},"lesson_script":{"title":"Kawaijs - .kawa Script Basics","description":"Characters, labels, dialogue, rich text, and variables in Kawaijs."},"lesson_stage":{"title":"Kawaijs - Scenes & Sprites","description":"scene, show, hide, transitions, layers, and VFX."},"lesson_branch":{"title":"Kawaijs - Menus & Branching","description":"menu choices, if/elif, jump/call, and player input."},"lesson_deploy":{"title":"Kawaijs - Deploy to GitHub Pages","description":"Build a static visual novel and publish it on GitHub Pages."},"lesson_seo":{"title":"Kawaijs - SEO, AEO & GEO","description":"Favicon, Open Graph, JSON-LD, sitemap, llms.txt, and author metadata."}}},"pwa":{"enabled":true,"shortName":"Kawaijs Docs","description":"Interactive documentation for the Kawaijs visual novel engine.","themeColor":"#f43f5e","backgroundColor":"#0f172a"},"seo":{"robots":"index,follow","locale":"en_US","jsonLd":{"@context":"https://schema.org","@graph":[{"@type":"SoftwareApplication","name":"Kawaijs Docs - Learn by Playing","description":"Official interactive docs for Kawaijs: an open-source, web-native visual novel engine inspired by Ren'Py. Write .kawa scripts, run in the browser, and ship a static site.","applicationCategory":"GameApplication","applicationSubCategory":"VisualNovelEngine","operatingSystem":"Any","browserRequirements":"Requires JavaScript","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"url":"https://biagio-scaglia.github.io/KawaiJS/","image":"./assets/backgrounds/classroom.svg","author":{"@id":"https://github.com/biagio-scaglia#person"},"creator":{"@id":"https://github.com/biagio-scaglia#person"}},{"@type":"Person","@id":"https://github.com/biagio-scaglia#person","name":"Biagio Scaglia","jobTitle":"Software Engineer","description":"Creator of Kawaijs, an open-source web-native visual novel engine inspired by Ren'Py. Based in Bari, Italy.","url":"https://github.com/biagio-scaglia","image":"https://github.com/biagio-scaglia.png","homeLocation":{"@type":"Place","name":"Bari, Italy","address":{"@type":"PostalAddress","addressLocality":"Bari","addressRegion":"Puglia","addressCountry":"IT"}},"knowsAbout":["TypeScript","visual novel engines","developer tooling","Kawaijs"],"sameAs":["https://github.com/biagio-scaglia","https://github.com/biagio-scaglia/KawaiJS","https://www.npmjs.com/package/kawaijs","https://biagio-scaglia.github.io/KawaiJS/"]},{"@type":"FAQPage","mainEntity":[{"@type":"Question","name":"What is Kawaijs?","acceptedAnswer":{"@type":"Answer","text":"Kawaijs is a web-native visual novel engine inspired by Ren'Py. It lets you write .kawa scripts and ship a static site that runs in any modern browser."}},{"@type":"Question","name":"Who created Kawaijs?","acceptedAnswer":{"@type":"Answer","text":"Kawaijs was created by Biagio Scaglia. It is open source under the MIT license on GitHub."}},{"@type":"Question","name":"How do I start a Kawaijs project?","acceptedAnswer":{"@type":"Answer","text":"Run npx kawa create my-novel, then npx kawa dev to preview with live reload, and npx kawa build to export a dist/ folder."}},{"@type":"Question","name":"Can I deploy a Kawaijs novel to GitHub Pages?","acceptedAnswer":{"@type":"Answer","text":"Yes. kawa build produces a static dist/ with index.html, assets, PWA files, robots.txt, sitemap.xml, and llms.txt - ready for GitHub Pages or any static host."}},{"@type":"Question","name":"Does Kawaijs support SEO?","acceptedAnswer":{"@type":"Answer","text":"Yes. kawa.config.json configures author, description, keywords, canonical URL, Open Graph, Twitter cards, JSON-LD (including FAQPage), favicon, sitemap, and llms.txt for search and answer engines."}},{"@type":"Question","name":"Is Kawaijs free?","acceptedAnswer":{"@type":"Answer","text":"Yes. Kawaijs is free and open source under the MIT license."}}]}]},"description":"Official interactive docs for Kawaijs: an open-source, web-native visual novel engine inspired by Ren'Py. Write .kawa scripts, run in the browser, and ship a static site.","aiSummary":"Kawaijs is an open-source, web-native visual novel engine inspired by Ren'Py. Write indentation-based .kawa scripts, preview with kawa dev, try the browser playground, and build a static dist/ for GitHub Pages, Netlify, Vercel, or itch.io. Includes save/load, backlog, rollback, PWA, i18n, and built-in SEO (Open Graph, JSON-LD, sitemap, llms.txt). Created by Biagio Scaglia. MIT licensed.","keywords":["Kawaijs","visual novel engine","web visual novel","Ren'Py alternative","TypeScript game engine","GitHub Pages visual novel","kawa script","interactive documentation","SEO visual novel","Biagio Scaglia"],"canonicalUrl":"https://biagio-scaglia.github.io/KawaiJS/","favicon":"favicon.svg","themeColor":"#f43f5e","llmsTxt":true,"sameAs":["https://github.com/biagio-scaglia/KawaiJS","https://www.npmjs.com/package/kawaijs","https://github.com/biagio-scaglia","https://biagio-scaglia.github.io/KawaiJS/"],"sitemapPaths":["showcase/","playground/","llms.txt","?lang=it"],"faq":[{"question":"What is Kawaijs?","answer":"Kawaijs is a web-native visual novel engine inspired by Ren'Py. It lets you write .kawa scripts and ship a static site that runs in any modern browser."},{"question":"Who created Kawaijs?","answer":"Kawaijs was created by Biagio Scaglia. It is open source under the MIT license on GitHub."},{"question":"How do I start a Kawaijs project?","answer":"Run npx kawa create my-novel, then npx kawa dev to preview with live reload, and npx kawa build to export a dist/ folder."},{"question":"Can I deploy a Kawaijs novel to GitHub Pages?","answer":"Yes. kawa build produces a static dist/ with index.html, assets, PWA files, robots.txt, sitemap.xml, and llms.txt - ready for GitHub Pages or any static host."},{"question":"Does Kawaijs support SEO?","answer":"Yes. kawa.config.json configures author, description, keywords, canonical URL, Open Graph, Twitter cards, JSON-LD (including FAQPage), favicon, sitemap, and llms.txt for search and answer engines."},{"question":"Is Kawaijs free?","answer":"Yes. Kawaijs is free and open source under the MIT license."}]},"achievements":[{"id":"docs_graduate","title":"Club Graduate","description":"Finished the interactive Kawaijs documentation."},{"id":"docs_deploy","title":"Ship It","description":"Completed the GitHub Pages deploy lesson."}]};
+    const projectConfig = {"title":"Kawaijs Docs - Learn by Playing","author":"Biagio Scaglia","version":"0.1.11","theme":{"primaryColor":"#f43f5e","fontFamily":"\"DM Sans\", \"Segoe UI\", system-ui, sans-serif","headingFont":"\"Fraunces\", Georgia, serif"},"window":{"width":1280,"height":720,"aspectRatio":"16/9"},"settings":{"textSpeed":22,"autoDelay":1800,"musicVolume":0.75,"soundVolume":1,"voiceVolume":1},"gallery":[{"id":"docs_sunset","title":"Docs Sunset","image":"cg_sunset_promise.svg","description":"Unlocked after finishing the Deploy chapter."}],"share":{"siteName":"Kawaijs","description":"Interactive documentation for Kawaijs — write .kawa, run in the browser, ship a static visual novel. Learn scripting, deploy to GitHub Pages, and use built-in SEO.","defaultImage":"backgrounds/classroom.svg","twitterCard":"summary_large_image","labels":{"hub":{"title":"Kawaijs Docs - Topic Hub","description":"Choose a lesson: install, scripting, scenes, choices, deploy, SEO."},"lesson_install":{"title":"Kawaijs - Quick Start","description":"Create a project with npx kawa create, run kawa dev, and build a static dist/."},"lesson_script":{"title":"Kawaijs - .kawa Script Basics","description":"Characters, labels, dialogue, rich text, and variables in Kawaijs."},"lesson_stage":{"title":"Kawaijs - Scenes & Sprites","description":"scene, show, hide, transitions, layers, and VFX."},"lesson_branch":{"title":"Kawaijs - Menus & Branching","description":"menu choices, if/elif, jump/call, and player input."},"lesson_deploy":{"title":"Kawaijs - Deploy to GitHub Pages","description":"Build a static visual novel and publish it on GitHub Pages."},"lesson_seo":{"title":"Kawaijs - SEO, AEO & GEO","description":"Favicon, Open Graph, JSON-LD, sitemap, llms.txt, and author metadata."}}},"pwa":{"enabled":true,"shortName":"Kawaijs Docs","description":"Interactive documentation for the Kawaijs visual novel engine.","themeColor":"#f43f5e","backgroundColor":"#0f172a"},"seo":{"robots":"index,follow","locale":"en_US","jsonLd":{"@context":"https://schema.org","@graph":[{"@type":"SoftwareApplication","name":"Kawaijs Docs - Learn by Playing","description":"Official interactive docs for Kawaijs: an open-source, web-native visual novel engine inspired by Ren'Py. Write .kawa scripts, run in the browser, and ship a static site.","applicationCategory":"GameApplication","applicationSubCategory":"VisualNovelEngine","operatingSystem":"Any","browserRequirements":"Requires JavaScript","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"url":"https://biagio-scaglia.github.io/KawaiJS/","image":"./assets/backgrounds/classroom.svg","author":{"@id":"https://github.com/biagio-scaglia#person"},"creator":{"@id":"https://github.com/biagio-scaglia#person"}},{"@type":"Person","@id":"https://github.com/biagio-scaglia#person","name":"Biagio Scaglia","jobTitle":"Software Engineer","description":"Creator of Kawaijs, an open-source web-native visual novel engine inspired by Ren'Py. Based in Bari, Italy.","url":"https://github.com/biagio-scaglia","image":"https://github.com/biagio-scaglia.png","homeLocation":{"@type":"Place","name":"Bari, Italy","address":{"@type":"PostalAddress","addressLocality":"Bari","addressRegion":"Puglia","addressCountry":"IT"}},"knowsAbout":["TypeScript","visual novel engines","developer tooling","Kawaijs"],"sameAs":["https://github.com/biagio-scaglia","https://github.com/biagio-scaglia/KawaiJS","https://www.npmjs.com/package/kawaijs","https://biagio-scaglia.github.io/KawaiJS/"]},{"@type":"FAQPage","mainEntity":[{"@type":"Question","name":"What is Kawaijs?","acceptedAnswer":{"@type":"Answer","text":"Kawaijs is a web-native visual novel engine inspired by Ren'Py. It lets you write .kawa scripts and ship a static site that runs in any modern browser."}},{"@type":"Question","name":"Who created Kawaijs?","acceptedAnswer":{"@type":"Answer","text":"Kawaijs was created by Biagio Scaglia. It is open source under the MIT license on GitHub."}},{"@type":"Question","name":"How do I start a Kawaijs project?","acceptedAnswer":{"@type":"Answer","text":"Run npx kawa create my-novel, then npx kawa dev to preview with live reload, and npx kawa build to export a dist/ folder."}},{"@type":"Question","name":"Can I deploy a Kawaijs novel to GitHub Pages?","acceptedAnswer":{"@type":"Answer","text":"Yes. kawa build produces a static dist/ with index.html, assets, PWA files, robots.txt, sitemap.xml, and llms.txt - ready for GitHub Pages or any static host."}},{"@type":"Question","name":"Does Kawaijs support SEO?","acceptedAnswer":{"@type":"Answer","text":"Yes. kawa.config.json configures author, description, keywords, canonical URL, Open Graph, Twitter cards, JSON-LD (including FAQPage), favicon, sitemap, and llms.txt for search and answer engines."}},{"@type":"Question","name":"Is Kawaijs free?","acceptedAnswer":{"@type":"Answer","text":"Yes. Kawaijs is free and open source under the MIT license."}},{"@type":"Question","name":"How do I deep-link into a lesson or scene?","acceptedAnswer":{"@type":"Answer","text":"Use ?at=label (or ?label=) on the URL. Embed with ?embed=1. Restore shared progress with ?continue=token."}}]}]},"description":"Official interactive docs for Kawaijs: an open-source, web-native visual novel engine inspired by Ren'Py. Write .kawa scripts, run in the browser, and ship a static site.","aiSummary":"Kawaijs is an open-source, web-native visual novel engine inspired by Ren'Py. Write indentation-based .kawa scripts, preview with kawa dev, try the browser playground, and build a static dist/ for GitHub Pages, Netlify, Vercel, or itch.io. Includes save/load, backlog, rollback, PWA, i18n, and built-in SEO (Open Graph, JSON-LD, sitemap, llms.txt). kawa build validates labels and hotspots; StoryVM.getState() returns a safe clone. Created by Biagio Scaglia. MIT licensed.","keywords":["Kawaijs","visual novel engine","web visual novel","Ren'Py alternative","TypeScript game engine","GitHub Pages visual novel","kawa script","interactive documentation","SEO visual novel","Biagio Scaglia"],"canonicalUrl":"https://biagio-scaglia.github.io/KawaiJS/","favicon":"favicon.svg","themeColor":"#f43f5e","llmsTxt":true,"sameAs":["https://github.com/biagio-scaglia/KawaiJS","https://www.npmjs.com/package/kawaijs","https://github.com/biagio-scaglia","https://biagio-scaglia.github.io/KawaiJS/"],"sitemapPaths":["showcase/","playground/","llms.txt","?lang=it"],"faq":[{"question":"What is Kawaijs?","answer":"Kawaijs is a web-native visual novel engine inspired by Ren'Py. It lets you write .kawa scripts and ship a static site that runs in any modern browser."},{"question":"Who created Kawaijs?","answer":"Kawaijs was created by Biagio Scaglia. It is open source under the MIT license on GitHub."},{"question":"How do I start a Kawaijs project?","answer":"Run npx kawa create my-novel, then npx kawa dev to preview with live reload, and npx kawa build to export a dist/ folder."},{"question":"Can I deploy a Kawaijs novel to GitHub Pages?","answer":"Yes. kawa build produces a static dist/ with index.html, assets, PWA files, robots.txt, sitemap.xml, and llms.txt - ready for GitHub Pages or any static host."},{"question":"Does Kawaijs support SEO?","answer":"Yes. kawa.config.json configures author, description, keywords, canonical URL, Open Graph, Twitter cards, JSON-LD (including FAQPage), favicon, sitemap, and llms.txt for search and answer engines."},{"question":"Is Kawaijs free?","answer":"Yes. Kawaijs is free and open source under the MIT license."},{"question":"How do I deep-link into a lesson or scene?","answer":"Use ?at=label (or ?label=) on the URL. Embed with ?embed=1. Restore shared progress with ?continue=token."}]},"achievements":[{"id":"docs_graduate","title":"Club Graduate","description":"Finished the interactive Kawaijs documentation."},{"id":"docs_deploy","title":"Ship It","description":"Completed the GitHub Pages deploy lesson."}]};
     const cliStartLabel = undefined;
 
     // Inline runtime VM + DOM Renderer with Start Menu
@@ -4949,6 +4992,7 @@ var KawaiJS = (() => {
   // packages/renderer-dom/src/index.ts
   var index_exports = {};
   __export(index_exports, {
+    BG_TRANSITION_CLASSES: () => BG_TRANSITION_CLASSES,
     ChoiceMenuComponent: () => ChoiceMenuComponent,
     DOMRenderer: () => DOMRenderer,
     DialogueBoxComponent: () => DialogueBoxComponent,
@@ -4965,12 +5009,17 @@ var KawaiJS = (() => {
     bindSwipeControls: () => bindSwipeControls,
     buildSceneShareMeta: () => buildSceneShareMeta,
     characterAssetCandidates: () => characterAssetCandidates,
+    clearBgTransitionClasses: () => clearBgTransitionClasses,
+    cssUrl: () => cssUrl,
     defaultAssetResolver: () => defaultAssetResolver,
+    dismissExistingModals: () => dismissExistingModals,
+    dismissModalOverlay: () => dismissModalOverlay,
     escapeHtml: () => escapeHtml,
     extractGalleryItems: () => extractGalleryItems,
     formatRichText: () => formatRichText,
     mountKawaApp: () => mountKawaApp,
     preloadStoryAssets: () => preloadStoryAssets,
+    registerModalCloser: () => registerModalCloser,
     resolveDeepLinkLabel: () => resolveDeepLinkLabel,
     resolveEmbedMode: () => resolveEmbedMode,
     resolveLangCode: () => resolveLangCode,
@@ -5006,6 +5055,8 @@ var KawaiJS = (() => {
     musicFadeIntervals = /* @__PURE__ */ new Map();
     voiceStateListeners = /* @__PURE__ */ new Set();
     unlockHandler = null;
+    vmAudioUnsub = null;
+    vmAudioGeneration = 0;
     maxSoundPool = 4;
     preferLightPreload;
     constructor(options = {}) {
@@ -5077,6 +5128,7 @@ var KawaiJS = (() => {
     }
     setSoundVolume(val) {
       this.soundVolume = Math.max(0, Math.min(1, val));
+      this.updateActiveVolumes();
     }
     setVoiceVolume(val) {
       this.voiceVolume = Math.max(0, Math.min(1, val));
@@ -5090,6 +5142,7 @@ var KawaiJS = (() => {
       }
       if (!this.isUnlocked) {
         this.pendingMusic = { src, options };
+        return;
       }
       const fadein = options.fadein ?? 0;
       const loop = options.loop ?? true;
@@ -5242,6 +5295,11 @@ var KawaiJS = (() => {
     }
     destroy() {
       this.removeUnlockListeners();
+      this.vmAudioGeneration++;
+      if (this.vmAudioUnsub) {
+        this.vmAudioUnsub();
+        this.vmAudioUnsub = null;
+      }
       for (const [audio, interval] of this.musicFadeIntervals) {
         clearInterval(interval);
         try {
@@ -5257,9 +5315,16 @@ var KawaiJS = (() => {
     }
     /**
      * Attaches the AudioManager to a StoryVM instance to automatically play/stop tracks.
+     * Idempotent on this manager: a second call detaches the previous subscription first,
+     * so pairing with DOMRenderer (which also calls attachToVM) cannot double-play audio.
      */
     attachToVM(vm, assetResolver = (t) => t) {
-      return vm.onAudioEvent((event) => {
+      if (this.vmAudioUnsub) {
+        this.vmAudioUnsub();
+        this.vmAudioUnsub = null;
+      }
+      const generation = ++this.vmAudioGeneration;
+      this.vmAudioUnsub = vm.onAudioEvent((event) => {
         if (event.action === "play" && event.track) {
           const url = assetResolver(event.track, event.channel);
           if (event.channel === "music") {
@@ -5279,6 +5344,14 @@ var KawaiJS = (() => {
           }
         }
       });
+      return () => {
+        if (generation !== this.vmAudioGeneration)
+          return;
+        if (this.vmAudioUnsub) {
+          this.vmAudioUnsub();
+          this.vmAudioUnsub = null;
+        }
+      };
     }
     clearFade(audio) {
       const existing = this.musicFadeIntervals.get(audio);
@@ -5323,10 +5396,17 @@ var KawaiJS = (() => {
     }
     updateActiveVolumes() {
       if (this.currentMusicAudio) {
-        this.currentMusicAudio.volume = this.isMuted ? 0 : this.masterVolume * this.musicVolume;
+        const duckMul = this.isDucking && !this.isMuted ? this.duckRatio : 1;
+        this.currentMusicAudio.volume = this.isMuted ? 0 : this.masterVolume * this.musicVolume * duckMul;
       }
       if (this.currentVoiceAudio) {
         this.currentVoiceAudio.volume = this.isMuted ? 0 : this.masterVolume * this.voiceVolume;
+      }
+      for (const sfx of this.soundPool) {
+        try {
+          sfx.volume = this.isMuted ? 0 : this.masterVolume * this.soundVolume;
+        } catch {
+        }
       }
     }
   };
@@ -5806,6 +5886,31 @@ var KawaiJS = (() => {
     return formatted;
   }
 
+  // packages/renderer-dom/src/utils/css-url.ts
+  function cssUrl(url) {
+    const safe = String(url ?? "").replace(/\\/g, "\\\\").replace(/"/g, '\\"');
+    return `url("${safe}")`;
+  }
+  var BG_TRANSITION_CLASSES = [
+    "kawa-wipe-from-left",
+    "kawa-wipe-from-right",
+    "kawa-wipe-from-up",
+    "kawa-wipe-from-down",
+    "kawa-wipe-circle",
+    "kawa-push-from-left",
+    "kawa-push-from-right",
+    "kawa-push-from-up",
+    "kawa-push-from-down",
+    "kawa-zoom-in",
+    "kawa-blur-transition",
+    "kawa-glitch-transition"
+  ];
+  function clearBgTransitionClasses(...els) {
+    for (const el of els) {
+      el.classList.remove(...BG_TRANSITION_CLASSES);
+    }
+  }
+
   // packages/renderer-dom/src/components/stage-layer.ts
   var StageLayerComponent = class {
     stageEl;
@@ -5818,6 +5923,7 @@ var KawaiJS = (() => {
     bgLayerB;
     activeBgLayer = "A";
     currentBgUrl = "";
+    currentBgTransition = "";
     activeCharacters = /* @__PURE__ */ new Map();
     pendingRemovals = /* @__PURE__ */ new Map();
     flashTimer = null;
@@ -5865,10 +5971,12 @@ var KawaiJS = (() => {
     updateBackground(background, transition) {
       if (!background) {
         this.currentBgUrl = "";
+        this.currentBgTransition = "";
         this.bgLayerA.style.backgroundImage = "";
         this.bgLayerB.style.backgroundImage = "";
         this.bgLayerA.classList.remove("active");
         this.bgLayerB.classList.remove("active");
+        clearBgTransitionClasses(this.bgLayerA, this.bgLayerB);
         if (this.bgVideoEl) {
           this.bgVideoEl.pause();
           this.bgVideoEl.remove();
@@ -5881,85 +5989,77 @@ var KawaiJS = (() => {
       const cleanBg = background.replace(/^bg[\s_]+/i, "").replace(/^video:[\s_]*/i, "").trim();
       const isVideo = this.isVideoPath(background);
       const primaryUrl = this.assetResolver(cleanBg, "background");
-      if (primaryUrl !== this.currentBgUrl) {
-        this.currentBgUrl = primaryUrl;
-        if (isVideo) {
-          this.bgLayerA.classList.remove("active");
-          this.bgLayerB.classList.remove("active");
-          if (!this.bgVideoEl) {
-            this.bgVideoEl = document.createElement("video");
-            this.bgVideoEl.className = "kawa-bg-video";
-            this.bgVideoEl.autoplay = true;
-            this.bgVideoEl.loop = true;
-            this.bgVideoEl.muted = true;
-            this.bgVideoEl.playsInline = true;
-            this.bgVideoEl.setAttribute("aria-hidden", "true");
-            this.backgroundEl.appendChild(this.bgVideoEl);
-          }
-          this.bgVideoEl.src = primaryUrl;
-          this.bgVideoEl.play().catch(() => {
-          });
-        } else {
-          if (this.bgVideoEl) {
-            this.bgVideoEl.pause();
-            this.bgVideoEl.remove();
-            this.bgVideoEl = null;
-          }
-          const crossfade = transitionName === "fade" || transitionName === "dissolve" || transitionName === "wipeleft" || transitionName === "wiperight" || transitionName === "wipeup" || transitionName === "wipedown" || transitionName === "circlewipe" || transitionName === "iris" || transitionName === "pushleft" || transitionName === "pushright" || transitionName === "pushup" || transitionName === "pushdown" || transitionName === "zoom" || transitionName === "blur" || transitionName === "glitch" || transitionName === "corrupt";
-          if (crossfade) {
-            const nextLayer = this.activeBgLayer === "A" ? this.bgLayerB : this.bgLayerA;
-            const curLayer = this.activeBgLayer === "A" ? this.bgLayerA : this.bgLayerB;
-            nextLayer.style.backgroundImage = `url("${primaryUrl}")`;
-            const allTransClasses = [
-              "kawa-wipe-from-left",
-              "kawa-wipe-from-right",
-              "kawa-wipe-from-up",
-              "kawa-wipe-from-down",
-              "kawa-wipe-circle",
-              "kawa-push-from-left",
-              "kawa-push-from-right",
-              "kawa-push-from-up",
-              "kawa-push-from-down",
-              "kawa-zoom-in",
-              "kawa-blur-transition",
-              "kawa-glitch-transition"
-            ];
-            nextLayer.classList.remove(...allTransClasses);
-            curLayer.classList.remove(...allTransClasses);
-            if (transitionName === "wipeleft") {
-              nextLayer.classList.add("kawa-wipe-from-right");
-            } else if (transitionName === "wiperight") {
-              nextLayer.classList.add("kawa-wipe-from-left");
-            } else if (transitionName === "wipeup") {
-              nextLayer.classList.add("kawa-wipe-from-down");
-            } else if (transitionName === "wipedown") {
-              nextLayer.classList.add("kawa-wipe-from-up");
-            } else if (transitionName === "circlewipe" || transitionName === "iris") {
-              nextLayer.classList.add("kawa-wipe-circle");
-            } else if (transitionName === "pushleft") {
-              nextLayer.classList.add("kawa-push-from-right");
-            } else if (transitionName === "pushright") {
-              nextLayer.classList.add("kawa-push-from-left");
-            } else if (transitionName === "pushup") {
-              nextLayer.classList.add("kawa-push-from-down");
-            } else if (transitionName === "pushdown") {
-              nextLayer.classList.add("kawa-push-from-up");
-            } else if (transitionName === "zoom") {
-              nextLayer.classList.add("kawa-zoom-in");
-            } else if (transitionName === "blur") {
-              nextLayer.classList.add("kawa-blur-transition");
-            } else if (transitionName === "glitch" || transitionName === "corrupt") {
-              nextLayer.classList.add("kawa-glitch-transition");
-            }
-            nextLayer.classList.add("active");
-            curLayer.classList.remove("active");
-            this.activeBgLayer = this.activeBgLayer === "A" ? "B" : "A";
-          } else {
-            const curLayer = this.activeBgLayer === "A" ? this.bgLayerA : this.bgLayerB;
-            curLayer.style.backgroundImage = `url("${primaryUrl}")`;
-            curLayer.classList.add("active");
-          }
+      if (primaryUrl === this.currentBgUrl && transitionName === this.currentBgTransition) {
+        return;
+      }
+      this.currentBgUrl = primaryUrl;
+      this.currentBgTransition = transitionName;
+      if (isVideo) {
+        this.bgLayerA.classList.remove("active");
+        this.bgLayerB.classList.remove("active");
+        clearBgTransitionClasses(this.bgLayerA, this.bgLayerB);
+        if (!this.bgVideoEl) {
+          this.bgVideoEl = document.createElement("video");
+          this.bgVideoEl.className = "kawa-bg-video";
+          this.bgVideoEl.autoplay = true;
+          this.bgVideoEl.loop = true;
+          this.bgVideoEl.muted = true;
+          this.bgVideoEl.playsInline = true;
+          this.bgVideoEl.setAttribute("aria-hidden", "true");
+          this.backgroundEl.appendChild(this.bgVideoEl);
         }
+        this.bgVideoEl.src = primaryUrl;
+        this.bgVideoEl.play().catch(() => {
+        });
+        return;
+      }
+      if (this.bgVideoEl) {
+        this.bgVideoEl.pause();
+        this.bgVideoEl.remove();
+        this.bgVideoEl = null;
+      }
+      const crossfade = transitionName === "fade" || transitionName === "dissolve" || transitionName === "wipeleft" || transitionName === "wiperight" || transitionName === "wipeup" || transitionName === "wipedown" || transitionName === "circlewipe" || transitionName === "iris" || transitionName === "pushleft" || transitionName === "pushright" || transitionName === "pushup" || transitionName === "pushdown" || transitionName === "zoom" || transitionName === "blur" || transitionName === "glitch" || transitionName === "corrupt";
+      if (crossfade) {
+        const nextLayer = this.activeBgLayer === "A" ? this.bgLayerB : this.bgLayerA;
+        const curLayer = this.activeBgLayer === "A" ? this.bgLayerA : this.bgLayerB;
+        nextLayer.style.backgroundImage = cssUrl(primaryUrl);
+        clearBgTransitionClasses(nextLayer, curLayer);
+        void nextLayer.offsetWidth;
+        if (transitionName === "wipeleft") {
+          nextLayer.classList.add("kawa-wipe-from-right");
+        } else if (transitionName === "wiperight") {
+          nextLayer.classList.add("kawa-wipe-from-left");
+        } else if (transitionName === "wipeup") {
+          nextLayer.classList.add("kawa-wipe-from-down");
+        } else if (transitionName === "wipedown") {
+          nextLayer.classList.add("kawa-wipe-from-up");
+        } else if (transitionName === "circlewipe" || transitionName === "iris") {
+          nextLayer.classList.add("kawa-wipe-circle");
+        } else if (transitionName === "pushleft") {
+          nextLayer.classList.add("kawa-push-from-right");
+        } else if (transitionName === "pushright") {
+          nextLayer.classList.add("kawa-push-from-left");
+        } else if (transitionName === "pushup") {
+          nextLayer.classList.add("kawa-push-from-down");
+        } else if (transitionName === "pushdown") {
+          nextLayer.classList.add("kawa-push-from-up");
+        } else if (transitionName === "zoom") {
+          nextLayer.classList.add("kawa-zoom-in");
+        } else if (transitionName === "blur") {
+          nextLayer.classList.add("kawa-blur-transition");
+        } else if (transitionName === "glitch" || transitionName === "corrupt") {
+          nextLayer.classList.add("kawa-glitch-transition");
+        }
+        nextLayer.classList.add("active");
+        curLayer.classList.remove("active");
+        this.activeBgLayer = this.activeBgLayer === "A" ? "B" : "A";
+      } else {
+        const curLayer = this.activeBgLayer === "A" ? this.bgLayerA : this.bgLayerB;
+        const otherLayer = this.activeBgLayer === "A" ? this.bgLayerB : this.bgLayerA;
+        clearBgTransitionClasses(this.bgLayerA, this.bgLayerB);
+        curLayer.style.backgroundImage = cssUrl(primaryUrl);
+        curLayer.classList.add("active");
+        otherLayer.classList.remove("active");
       }
     }
     updateCharacters(characters) {
@@ -5967,7 +6067,7 @@ var KawaiJS = (() => {
       for (const [id, entry] of this.activeCharacters.entries()) {
         if (!presentChars.has(id)) {
           entry.div.style.opacity = "0";
-          entry.div.style.transform = `translateY(20px)`;
+          entry.div.style.transform = "translateX(-50%) translateY(20px)";
           const timer = setTimeout(() => {
             entry.div.remove();
             this.pendingRemovals.delete(id);
@@ -6095,7 +6195,7 @@ var KawaiJS = (() => {
             this.cgVideoEl.remove();
             this.cgVideoEl = null;
           }
-          this.cgEl.style.backgroundImage = `url("${url}")`;
+          this.cgEl.style.backgroundImage = cssUrl(url);
         }
         this.cgEl.style.display = "block";
       }
@@ -6139,6 +6239,16 @@ var KawaiJS = (() => {
       }
       this.pendingRemovals.clear();
       this.activeCharacters.clear();
+      if (this.bgVideoEl) {
+        this.bgVideoEl.pause();
+        this.bgVideoEl.remove();
+        this.bgVideoEl = null;
+      }
+      if (this.cgVideoEl) {
+        this.cgVideoEl.pause();
+        this.cgVideoEl.remove();
+        this.cgVideoEl = null;
+      }
     }
   };
 
@@ -6196,8 +6306,11 @@ var KawaiJS = (() => {
     }
     render(dialogue, onComplete) {
       if (!dialogue) {
+        this.stopTypewriter();
         this.el.style.display = "none";
         this.announceEl.textContent = "";
+        this.indicatorEl.style.opacity = "0";
+        this.el.setAttribute("aria-busy", "false");
         return;
       }
       this.el.style.display = "block";
@@ -6225,17 +6338,16 @@ var KawaiJS = (() => {
         this.isTypewriting = false;
         this.indicatorEl.style.opacity = "1";
         this.announceFinishedLine(dialogue);
-        this.onTypewriterComplete?.();
+        const complete = this.onTypewriterComplete;
+        this.onTypewriterComplete = void 0;
+        complete?.();
       } else {
         this.startTypewriter(this.fullCurrentText, dialogue);
       }
     }
     finishTypewriter() {
       if (!this.isTypewriting) return;
-      if (this.typewriterInterval) {
-        clearInterval(this.typewriterInterval);
-        this.typewriterInterval = null;
-      }
+      this.stopTypewriterIntervalOnly();
       this.isTypewriting = false;
       this.dialogueTextEl.innerHTML = formatRichText(this.fullCurrentText);
       this.indicatorEl.style.opacity = "1";
@@ -6244,7 +6356,9 @@ var KawaiJS = (() => {
         speakerDisplayName: speaker,
         text: this.fullCurrentText
       });
-      this.onTypewriterComplete?.();
+      const complete = this.onTypewriterComplete;
+      this.onTypewriterComplete = void 0;
+      complete?.();
     }
     announceFinishedLine(dialogue) {
       this.el.setAttribute("aria-busy", "false");
@@ -6276,11 +6390,20 @@ var KawaiJS = (() => {
       }, this.typewriterSpeed);
       void dialogue;
     }
-    destroy() {
+    /** Clear interval + completion callback without announcing (used when hiding the box). */
+    stopTypewriter() {
+      this.stopTypewriterIntervalOnly();
+      this.isTypewriting = false;
+      this.onTypewriterComplete = void 0;
+    }
+    stopTypewriterIntervalOnly() {
       if (this.typewriterInterval) {
         clearInterval(this.typewriterInterval);
         this.typewriterInterval = null;
       }
+    }
+    destroy() {
+      this.stopTypewriter();
     }
   };
 
@@ -6436,6 +6559,22 @@ var KawaiJS = (() => {
       returnPointer: typeof f["returnPointer"] === "number" ? f["returnPointer"] : 0
     })) : [];
     const charactersRaw = visualRaw["characters"] && typeof visualRaw["characters"] === "object" ? visualRaw["characters"] : {};
+    const pendingInputRaw = s["pendingInput"] && typeof s["pendingInput"] === "object" ? s["pendingInput"] : null;
+    const pendingInput = pendingInputRaw && typeof pendingInputRaw["variable"] === "string" && typeof pendingInputRaw["prompt"] === "string" ? {
+      variable: pendingInputRaw["variable"],
+      prompt: pendingInputRaw["prompt"]
+    } : null;
+    const hotspots = Array.isArray(s["hotspots"]) ? s["hotspots"].filter((h) => !!h && typeof h === "object" && typeof h.id === "string" && typeof h.targetLabel === "string" && typeof h.x === "number" && typeof h.y === "number" && typeof h.w === "number" && typeof h.h === "number") : null;
+    const choices = Array.isArray(s["choices"]) ? s["choices"] : null;
+    let isWaitingForInput = Boolean(s["isWaitingForInput"]);
+    if (isWaitingForInput && !pendingInput && !hotspots && (!choices || choices.length === 0)) {
+      if (!dialogueRaw || typeof dialogueRaw["text"] !== "string") {
+        isWaitingForInput = false;
+      }
+    }
+    if (pendingInput || hotspots && hotspots.length > 0 || choices && choices.length > 0) {
+      isWaitingForInput = true;
+    }
     return {
       currentLabel: s["currentLabel"],
       instructionPointer: s["instructionPointer"],
@@ -6459,19 +6598,17 @@ var KawaiJS = (() => {
         speakerColor: typeof dialogueRaw["speakerColor"] === "string" ? dialogueRaw["speakerColor"] : void 0,
         text: dialogueRaw["text"]
       } : null,
-      choices: Array.isArray(s["choices"]) ? s["choices"] : null,
-      hotspots: null,
-      // never restore mid-hotspot from saves
+      choices,
+      hotspots: hotspots && hotspots.length > 0 ? hotspots : null,
       theme: typeof s["theme"] === "string" ? s["theme"] : null,
       styleClasses: s["styleClasses"] && typeof s["styleClasses"] === "object" ? Object.assign(/* @__PURE__ */ Object.create(null), s["styleClasses"]) : /* @__PURE__ */ Object.create(null),
       unlockedCGs: s["unlockedCGs"] && typeof s["unlockedCGs"] === "object" ? Object.assign(/* @__PURE__ */ Object.create(null), s["unlockedCGs"]) : /* @__PURE__ */ Object.create(null),
       achievements: s["achievements"] && typeof s["achievements"] === "object" ? Object.assign(/* @__PURE__ */ Object.create(null), s["achievements"]) : /* @__PURE__ */ Object.create(null),
       lang: typeof s["lang"] === "string" ? s["lang"] : null,
       pendingPauseMs: typeof s["pendingPauseMs"] === "number" ? s["pendingPauseMs"] : null,
-      pendingInput: null,
-      // never restore mid-prompt from saves
+      pendingInput,
       windowVisible: s["windowVisible"] === false ? false : true,
-      isWaitingForInput: Boolean(s["isWaitingForInput"]),
+      isWaitingForInput,
       isFinished: Boolean(s["isFinished"])
     };
   }
@@ -6788,7 +6925,8 @@ var KawaiJS = (() => {
         id: slot.snapshot.id,
         timestamp: slot.snapshot.timestamp,
         state: slot.snapshot.state,
-        historyLength: typeof slot.snapshot.historyLength === "number" ? slot.snapshot.historyLength : history2.length
+        // historyLength must match the entries we actually keep in the payload
+        historyLength: history2.length
       },
       previewText: slot.previewText,
       historyEntries: history2
@@ -7275,7 +7413,7 @@ var KawaiJS = (() => {
       }
     }
     getState() {
-      return this.state;
+      return cloneState(this.state);
     }
     getStory() {
       return this.story;
@@ -7348,6 +7486,7 @@ var KawaiJS = (() => {
         throw new Error(`Cannot start story: Start label '${startLabel}' not found in story package.`);
       }
       const prevMusic = this.state.audio.music;
+      this.executionTrace = [];
       this.recordTrace(`START ${startLabel}`);
       this.state = createInitialState(startLabel);
       this.applyInitialVariables();
@@ -7488,8 +7627,10 @@ var KawaiJS = (() => {
         instructionPointer: 0,
         choices: null,
         hotspots: null,
+        pendingInput: null,
         pendingPauseMs: null,
-        isWaitingForInput: false
+        isWaitingForInput: false,
+        isFinished: false
       };
       this.executeUntilWaiting();
     }
@@ -7553,9 +7694,10 @@ var KawaiJS = (() => {
       this.historyManager.replaceAll(restoredHistory);
       const snap = {
         ...slot.snapshot,
-        historyLength: typeof slot.snapshot.historyLength === "number" ? slot.snapshot.historyLength : restoredHistory.length
+        historyLength: typeof slot.snapshot.historyLength === "number" ? Math.min(slot.snapshot.historyLength, restoredHistory.length) : restoredHistory.length
       };
       this.snapshotStack = [snap];
+      this.virtualTimeMs = 0;
       this.recordTrace(traceLabel);
       this.resyncAudio(prevMusic);
       this.notifyStateChanged();
@@ -7568,18 +7710,25 @@ var KawaiJS = (() => {
       this.emitAudioEvent({ action: "stop", channel: "voice" });
       this.emitAudioEvent({ action: "stop", channel: "sound" });
       const nextMusic = this.state.audio.music;
-      if (previousMusic === nextMusic) {
-        return;
+      if (previousMusic !== nextMusic) {
+        if (nextMusic) {
+          this.emitAudioEvent({
+            action: "play",
+            channel: "music",
+            track: nextMusic,
+            loop: true
+          });
+        } else {
+          this.emitAudioEvent({ action: "stop", channel: "music" });
+        }
       }
-      if (nextMusic) {
+      const nextVoice = this.state.audio.voice;
+      if (nextVoice) {
         this.emitAudioEvent({
           action: "play",
-          channel: "music",
-          track: nextMusic,
-          loop: true
+          channel: "voice",
+          track: nextVoice
         });
-      } else {
-        this.emitAudioEvent({ action: "stop", channel: "music" });
       }
     }
     executeUntilWaiting() {
@@ -7944,6 +8093,14 @@ var KawaiJS = (() => {
                 music: inst.track
               }
             };
+          } else if (inst.channel === "voice") {
+            this.state = {
+              ...this.state,
+              audio: {
+                ...this.state.audio,
+                voice: inst.track
+              }
+            };
           }
           break;
         }
@@ -7960,6 +8117,14 @@ var KawaiJS = (() => {
               audio: {
                 ...this.state.audio,
                 music: null
+              }
+            };
+          } else if (inst.channel === "voice") {
+            this.state = {
+              ...this.state,
+              audio: {
+                ...this.state.audio,
+                voice: null
               }
             };
           }
@@ -8152,10 +8317,14 @@ var KawaiJS = (() => {
       this.snapshotStack.push(snap);
       if (this.snapshotStack.length > this.maxSnapshots) {
         this.snapshotStack.shift();
+        const oldest = this.snapshotStack[0];
+        if (oldest && typeof oldest.historyLength === "number") {
+          this.historyManager.trimTo(oldest.historyLength);
+        }
       }
     }
     notifyStateChanged() {
-      const currentState = this.getState();
+      const currentState = cloneState(this.state);
       for (const listener of this.stateChangeListeners) {
         listener(currentState);
       }
@@ -8267,6 +8436,28 @@ var KawaiJS = (() => {
     };
   }
 
+  // packages/renderer-dom/src/utils/modal-lifecycle.ts
+  var overlayClosers = /* @__PURE__ */ new WeakMap();
+  function registerModalCloser(overlay, closer) {
+    overlayClosers.set(overlay, closer);
+  }
+  function dismissModalOverlay(overlay) {
+    if (!overlay || !overlay.isConnected) return false;
+    const closer = overlayClosers.get(overlay);
+    if (closer) {
+      closer();
+      return true;
+    }
+    overlay.remove();
+    return true;
+  }
+  function dismissExistingModals(rootEl, selector = ".kawa-modal-overlay:not(.kawa-confirm-overlay):not(.kawa-input-overlay)") {
+    const existing = rootEl.querySelectorAll(selector);
+    for (const el of existing) {
+      dismissModalOverlay(el);
+    }
+  }
+
   // packages/renderer-dom/src/modals/confirm-modal.ts
   function showConfirmModal(rootEl, options) {
     const overlay = document.createElement("div");
@@ -8293,6 +8484,7 @@ var KawaiJS = (() => {
       overlay.remove();
       if (cancelled) options.onCancel?.();
     };
+    registerModalCloser(overlay, () => close(true));
     closeBtn.addEventListener("click", (e) => {
       e.preventDefault();
       close(true);
@@ -8348,8 +8540,7 @@ var KawaiJS = (() => {
     return text.replace(/\{[a-zA-Z0-9#=_., -]+\}/g, "").replace(/\{(?:\/)[a-zA-Z0-9]+\}/g, "").trim();
   }
   async function showSaveLoadModal(rootEl, vm, mode, onLoaded) {
-    const existing = rootEl.querySelector(".kawa-modal-overlay:not(.kawa-confirm-overlay)");
-    if (existing) existing.remove();
+    dismissExistingModals(rootEl);
     const overlay = document.createElement("div");
     overlay.className = "kawa-modal-overlay";
     const card = document.createElement("div");
@@ -8367,6 +8558,7 @@ var KawaiJS = (() => {
       releaseFocus();
       overlay.remove();
     };
+    registerModalCloser(overlay, close);
     const closeBtn = document.createElement("button");
     closeBtn.type = "button";
     closeBtn.className = "kawa-btn";
@@ -8592,8 +8784,7 @@ var KawaiJS = (() => {
 
   // packages/renderer-dom/src/modals/settings-modal.ts
   function showSettingsModal(rootEl, options) {
-    const existing = rootEl.querySelector(".kawa-modal-overlay:not(.kawa-confirm-overlay)");
-    if (existing) existing.remove();
+    dismissExistingModals(rootEl);
     let currentSpeed = options.typewriterSpeed;
     let currentDelay = options.autoDelayMs;
     let currentMusic = options.musicVolume ?? 0.8;
@@ -8618,6 +8809,7 @@ var KawaiJS = (() => {
       releaseFocus();
       overlay.remove();
     };
+    registerModalCloser(overlay, close);
     const closeBtn = document.createElement("button");
     closeBtn.type = "button";
     closeBtn.className = "kawa-btn";
@@ -8735,9 +8927,11 @@ var KawaiJS = (() => {
     if (options.availableLangs && options.availableLangs.length > 1) {
       const langRow = document.createElement("div");
       langRow.className = "kawa-setting-row";
-      const langOptionsHtml = options.availableLangs.map(
-        (l) => `<option value="${l}" ${l === currentLang ? "selected" : ""}>${l.toUpperCase()}</option>`
-      ).join("");
+      const langOptionsHtml = options.availableLangs.map((l) => {
+        const safeValue = escapeHtml(l);
+        const safeLabel = escapeHtml(l.toUpperCase());
+        return `<option value="${safeValue}" ${l === currentLang ? "selected" : ""}>${safeLabel}</option>`;
+      }).join("");
       langRow.innerHTML = `
       <div class="kawa-setting-header">
         <span>\u{1F310} Language / Lingua</span>
@@ -8766,8 +8960,7 @@ var KawaiJS = (() => {
 
   // packages/renderer-dom/src/modals/about-modal.ts
   function showAboutModal(rootEl, options) {
-    const existing = rootEl.querySelector(".kawa-modal-overlay:not(.kawa-confirm-overlay)");
-    if (existing) existing.remove();
+    dismissExistingModals(rootEl);
     const overlay = document.createElement("div");
     overlay.className = "kawa-modal-overlay";
     const card = document.createElement("div");
@@ -8785,6 +8978,7 @@ var KawaiJS = (() => {
       releaseFocus();
       overlay.remove();
     };
+    registerModalCloser(overlay, close);
     const closeBtn = document.createElement("button");
     closeBtn.type = "button";
     closeBtn.className = "kawa-btn";
@@ -8821,12 +9015,19 @@ var KawaiJS = (() => {
   // packages/renderer-dom/src/modals/gallery-modal.ts
   function sanitizeUrl(url) {
     const trimmed = (url || "").trim();
-    if (/^(https?:|data:|\/|\.\/)/i.test(trimmed)) return trimmed;
+    if (/^(https?:|\/|\.\/)/i.test(trimmed)) {
+      return trimmed.replace(/["'<>\\]/g, "");
+    }
+    if (/^data:image\//i.test(trimmed)) {
+      return trimmed;
+    }
+    if (/^data:/i.test(trimmed)) {
+      return "";
+    }
     return trimmed.replace(/["'()<>\\]/g, "");
   }
   function showGalleryModal(rootEl, vm, galleryItems = [], assetResolver) {
-    const existing = rootEl.querySelector(".kawa-modal-overlay:not(.kawa-confirm-overlay)");
-    if (existing) existing.remove();
+    dismissExistingModals(rootEl);
     const overlay = document.createElement("div");
     overlay.className = "kawa-modal-overlay";
     const card = document.createElement("div");
@@ -8845,10 +9046,14 @@ var KawaiJS = (() => {
     closeBtn.innerHTML = `${SVG_ICONS.close} <span>Close</span>`;
     closeBtn.setAttribute("aria-label", "Close gallery modal");
     const releaseFocus = trapFocus(card);
-    closeBtn.addEventListener("click", (e) => {
-      e.preventDefault();
+    const close = () => {
       releaseFocus();
       overlay.remove();
+    };
+    registerModalCloser(overlay, close);
+    closeBtn.addEventListener("click", (e) => {
+      e.preventDefault();
+      close();
     });
     header.appendChild(title);
     header.appendChild(closeBtn);
@@ -8924,6 +9129,7 @@ var KawaiJS = (() => {
       releaseFocus();
       lightbox.remove();
     };
+    registerModalCloser(lightbox, close);
     lightbox.addEventListener("click", (e) => {
       const target = e.target;
       if (target.classList.contains("kawa-gallery-lightbox") || target.closest(".kawa-gallery-lightbox-close")) {
@@ -8941,8 +9147,7 @@ var KawaiJS = (() => {
 
   // packages/renderer-dom/src/modals/achievements-modal.ts
   function showAchievementsModal(rootEl, vm, catalog = []) {
-    const existing = rootEl.querySelector(".kawa-modal-overlay:not(.kawa-confirm-overlay)");
-    if (existing) existing.remove();
+    dismissExistingModals(rootEl);
     const unlocked = vm.getState().achievements;
     const byId = /* @__PURE__ */ new Map();
     for (const a of catalog) byId.set(a.id, a);
@@ -8968,6 +9173,7 @@ var KawaiJS = (() => {
       releaseFocus();
       overlay.remove();
     };
+    registerModalCloser(overlay, close);
     const closeBtn = document.createElement("button");
     closeBtn.type = "button";
     closeBtn.className = "kawa-btn";
@@ -9042,6 +9248,7 @@ var KawaiJS = (() => {
     callbacks;
     menuEl;
     isVisible = false;
+    refreshGeneration = 0;
     constructor(rootEl, vm, options, callbacks) {
       this.rootEl = rootEl;
       this.vm = vm;
@@ -9062,6 +9269,7 @@ var KawaiJS = (() => {
       }
       if (!this.menuEl) return;
       this.isVisible = true;
+      this.refreshGeneration++;
       this.refresh();
       this.menuEl.style.display = "flex";
       this.menuEl.classList.add("active");
@@ -9070,6 +9278,7 @@ var KawaiJS = (() => {
     hide() {
       if (!this.menuEl) return;
       this.isVisible = false;
+      this.refreshGeneration++;
       this.menuEl.classList.remove("active");
       this.menuEl.style.display = "none";
       this.options?.onClose?.();
@@ -9081,7 +9290,11 @@ var KawaiJS = (() => {
       if (!this.menuEl) return;
       const continueBtn = this.menuEl.querySelector('button[data-action="continue"]');
       if (continueBtn) {
+        const generation = this.refreshGeneration;
         void this.vm.getSaveManager().listSlots(6).then((slots) => {
+          if (!this.isVisible || generation !== this.refreshGeneration || !continueBtn.isConnected) {
+            return;
+          }
           const hasSaves = slots.some((s) => s !== null);
           if (!hasSaves) {
             continueBtn.classList.add("disabled");
@@ -9160,7 +9373,7 @@ var KawaiJS = (() => {
       this.menuEl.style.display = "none";
       if (this.options?.backgroundUrl) {
         const bgUrl = this.callbacks.assetResolver(this.options.backgroundUrl, "background");
-        this.menuEl.style.backgroundImage = `url("${bgUrl}")`;
+        this.menuEl.style.backgroundImage = cssUrl(bgUrl);
         this.menuEl.style.backgroundSize = "cover";
         this.menuEl.style.backgroundPosition = "center";
       }
@@ -9202,7 +9415,11 @@ var KawaiJS = (() => {
         if (item.id) btn.id = `kawa-menu-${item.id}`;
         btn.innerHTML = `${item.icon ? item.icon + " " : ""}<span>${escapeHtml(item.label)}</span>`;
         if (item.action === "continue") {
+          const generation = this.refreshGeneration;
           void this.vm.getSaveManager().listSlots(6).then((slots) => {
+            if (!this.isVisible || generation !== this.refreshGeneration || !btn.isConnected) {
+              return;
+            }
             const hasSaves = slots.some((s) => s !== null);
             if (!hasSaves) {
               btn.classList.add("disabled");
@@ -9320,8 +9537,7 @@ var KawaiJS = (() => {
 
   // packages/renderer-dom/src/modals/history-modal.ts
   function showHistoryModal(rootEl, vm) {
-    const existing = rootEl.querySelector(".kawa-modal-overlay:not(.kawa-confirm-overlay)");
-    if (existing) existing.remove();
+    dismissExistingModals(rootEl);
     const overlay = document.createElement("div");
     overlay.className = "kawa-modal-overlay";
     const card = document.createElement("div");
@@ -9339,6 +9555,7 @@ var KawaiJS = (() => {
       releaseFocus();
       overlay.remove();
     };
+    registerModalCloser(overlay, close);
     const closeBtn = document.createElement("button");
     closeBtn.type = "button";
     closeBtn.className = "kawa-btn";
@@ -9383,7 +9600,7 @@ var KawaiJS = (() => {
   // packages/renderer-dom/src/modals/input-modal.ts
   function showInputModal(rootEl, options) {
     const existing = rootEl.querySelector(".kawa-input-overlay");
-    if (existing) existing.remove();
+    if (existing) dismissModalOverlay(existing);
     const overlay = document.createElement("div");
     overlay.className = "kawa-modal-overlay kawa-input-overlay";
     overlay.style.zIndex = "10040";
@@ -9419,6 +9636,10 @@ var KawaiJS = (() => {
       overlay.remove();
       options.onSubmit(value);
     };
+    registerModalCloser(overlay, () => {
+      releaseFocus();
+      overlay.remove();
+    });
     confirmBtn.addEventListener("click", (e) => {
       e.preventDefault();
       submit();
@@ -9427,6 +9648,9 @@ var KawaiJS = (() => {
       if (e.key === "Enter") {
         e.preventDefault();
         submit();
+      } else if (e.key === "Escape") {
+        e.preventDefault();
+        e.stopPropagation();
       }
     });
     actions.appendChild(confirmBtn);
@@ -9921,27 +10145,36 @@ var KawaiJS = (() => {
           this.shakeScreen(e.action);
         }
       });
-      this.unsubscribeAudio = this.vm.onAudioEvent((event) => {
-        if (!this.audioManager) return;
-        if (event.action === "play" && event.track) {
-          const url = this.assetResolver(event.track, "audio");
-          if (event.channel === "music") {
-            this.audioManager.playMusic?.(url, { fadein: event.fade, loop: event.loop });
-          } else if (event.channel === "sound") {
-            this.audioManager.playSound?.(url);
-          } else if (event.channel === "voice") {
-            this.audioManager.playVoice?.(url);
-          }
-        } else if (event.action === "stop") {
-          if (event.channel === "music") {
-            this.audioManager.stopMusic?.({ fadeout: event.fade });
-          } else if (event.channel === "sound") {
-            this.audioManager.stopSound?.();
-          } else if (event.channel === "voice") {
-            this.audioManager.stopVoice?.();
-          }
+      this.unsubscribeAudio = void 0;
+      if (this.audioManager) {
+        if (typeof this.audioManager.attachToVM === "function") {
+          this.unsubscribeAudio = this.audioManager.attachToVM(
+            this.vm,
+            (track) => this.assetResolver(track, "audio")
+          );
+        } else {
+          this.unsubscribeAudio = this.vm.onAudioEvent((event) => {
+            if (event.action === "play" && event.track) {
+              const url = this.assetResolver(event.track, "audio");
+              if (event.channel === "music") {
+                this.audioManager?.playMusic?.(url, { fadein: event.fade, loop: event.loop });
+              } else if (event.channel === "sound") {
+                this.audioManager?.playSound?.(url);
+              } else if (event.channel === "voice") {
+                this.audioManager?.playVoice?.(url);
+              }
+            } else if (event.action === "stop") {
+              if (event.channel === "music") {
+                this.audioManager?.stopMusic?.({ fadeout: event.fade });
+              } else if (event.channel === "sound") {
+                this.audioManager?.stopSound?.();
+              } else if (event.channel === "voice") {
+                this.audioManager?.stopVoice?.();
+              }
+            }
+          });
         }
-      });
+      }
       this.unsubscribeError = this.vm.onError((err) => {
         this.showErrorToast(err.message);
         this.options.onError?.(err);
@@ -10332,7 +10565,7 @@ var KawaiJS = (() => {
         if (confirm) {
           if (e.key === "Escape") {
             e.preventDefault();
-            confirm.remove();
+            dismissModalOverlay(confirm);
           }
           return;
         }
@@ -10340,13 +10573,19 @@ var KawaiJS = (() => {
         if (lightbox) {
           if (e.key === "Escape") {
             e.preventDefault();
-            lightbox.remove();
+            dismissModalOverlay(lightbox);
           }
           return;
         }
         const modal = this.rootEl.querySelector(".kawa-modal-overlay");
         if (modal) {
-          if (e.key === "Escape") modal.remove();
+          if (e.key === "Escape") {
+            e.preventDefault();
+            if (modal.classList.contains("kawa-input-overlay")) {
+              return;
+            }
+            dismissModalOverlay(modal);
+          }
           return;
         }
         if (this.isMainMenuActive()) {
@@ -10412,12 +10651,14 @@ var KawaiJS = (() => {
           onRollback: () => {
             const confirm = this.rootEl.querySelector(".kawa-confirm-overlay");
             if (confirm) {
-              confirm.remove();
+              dismissModalOverlay(confirm);
               return;
             }
             const modal = this.rootEl.querySelector(".kawa-modal-overlay");
             if (modal) {
-              modal.remove();
+              if (!modal.classList.contains("kawa-input-overlay")) {
+                dismissModalOverlay(modal);
+              }
               return;
             }
             if (this.isMainMenuActive()) return;
@@ -10587,7 +10828,9 @@ var KawaiJS = (() => {
         this.stageLayer.setSpeakingCharacter(state.dialogue?.speaker ?? null);
         this.dialogueBox.render(state.dialogue, () => {
           this.stageLayer.setSpeakingCharacter(null);
-          if (this.isAutoMode && !state.isFinished && (!state.choices || state.choices.length === 0) && (!state.hotspots || state.hotspots.length === 0) && !state.pendingInput) {
+          if (this.destroyed || !this.isAutoMode) return;
+          const live = this.vm.getState();
+          if (!live.isFinished && (!live.choices || live.choices.length === 0) && (!live.hotspots || live.hotspots.length === 0) && !live.pendingInput) {
             this.scheduleAutoAdvance();
           }
         });
@@ -10603,7 +10846,7 @@ var KawaiJS = (() => {
           });
         }
       } else {
-        this.rootEl.querySelector(".kawa-input-overlay")?.remove();
+        this.rootEl.querySelectorAll(".kawa-input-overlay").forEach((el) => dismissModalOverlay(el));
       }
       if (state.isFinished) {
         this.renderEndingCard();

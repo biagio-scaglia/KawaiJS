@@ -5,7 +5,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![npm version](https://img.shields.io/npm/v/kawaijs.svg)](https://www.npmjs.com/package/kawaijs)
 [![TypeScript](https://img.shields.io/badge/TypeScript-Strict-blue?logo=typescript)](https://www.typescriptlang.org/)
-[![Tests](https://img.shields.io/badge/Tests-119%2B%20Passing-brightgreen)](https://github.com/biagio-scaglia/KawaiJS)
+[![Tests](https://img.shields.io/badge/Tests-140%2B%20Passing-brightgreen)](https://github.com/biagio-scaglia/KawaiJS)
 [![Docs](https://img.shields.io/badge/Docs-Playable%20VN-f43f5e)](https://biagio-scaglia.github.io/KawaiJS/)
 
 [Playable Docs](https://biagio-scaglia.github.io/KawaiJS/) · [Play Demo](https://biagio-scaglia.github.io/KawaiJS/showcase/) · [Playground](https://biagio-scaglia.github.io/KawaiJS/playground/) · [Quick Start](#-quick-start) · [Syntax Guide](#-kawa-script-syntax-guide) · [Start Menu](#-start-menu--ui-customization) · [Keyboard Shortcuts](#-keyboard-shortcuts) · [Architecture](#-architecture)
@@ -269,7 +269,7 @@ label dramatic_scene:
 
 > **Tip:** A new `scene` clears characters and VFX. Re-apply `vfx sakura` (or fog/rain) after each scene change.  
 > **Tip:** `define` aliases are resolved at compile time for `scene`, `play`, and `cg`.  
-> **Tip:** Multi-file stories: use `include "chapter1.kawa"` to split your VN across multiple `.kawa` files.  
+> **Tip:** Multi-file stories: use `include "chapter1.kawa"` to split your VN across multiple `.kawa` files. Path aliases (`ch.kawa` vs `./ch.kawa`) are treated as the same file for cycle detection. Nested `label` / `character` / `define` inside a label body are rejected at compile time.  
 > **Tip:** Export to Desktop: `kawa export --target=tauri` or `kawa export --target=electron` to build native PC/Mac executables.  
 > **Tip:** i18n extraction: `kawa extract-i18n --lang=it` automatically extracts dialogue keys into `game/lang/it.json`.  
 > **Tip:** Accessibility & Dyslexia font: built-in toggle for high-readability font and high contrast mode in Preferences.  
@@ -425,15 +425,23 @@ const renderer = new DOMRenderer(vm, {
 });
 ```
 
+**API notes (stability):**
+
+- `vm.getState()` returns a **cloned** snapshot — mutating it does not change the VM. Always read fresh state after `next()` / `choose()` / loads.
+- Prefer letting `DOMRenderer` own audio binding. If you also call `audioManager.attachToVM(vm)`, the manager is **idempotent** (re-attach replaces the previous subscription — no double BGM).
+- Modals restore focus on Escape / replacement (Save, History, Preferences, …). The `input` prompt cannot be dismissed with Escape (that would soft-lock the story).
+- Without `label start:`, the compiler picks the first **user** label — never a synthetic `__if_*` / `__menu_*` block.
+- `kawa build` runs semantic validation after compile (invalid hotspot/jump targets fail the build).
+
 ---
 
 ## 🛠️ CLI Reference
 
 ```bash
 kawa create <directory>                    # Scaffold a new visual novel template
-kawa validate [directory]                  # Lint script labels/syntax and report missing assets
+kawa validate [directory]                  # Lint labels, hotspots, syntax; report missing assets
 kawa dev [directory]                       # Start local dev server with hot reload
-kawa build [directory]                     # Export static standalone HTML5 distribution
+kawa build [directory]                     # Compile + semantic validate → static HTML5 dist/
 kawa export [dir] --target=tauri|electron  # Scaffold native desktop build (Tauri / Electron)
 kawa extract-i18n [dir] [--lang=code]      # Scan dialogue & choices and emit translation JSON
 kawa embed --src <url>                     # Generate responsive iframe snippet
@@ -443,7 +451,7 @@ kawa embed --src <url>                     # Generate responsive iframe snippet
 
 ## 🧪 Automated Testing & Headless Story Simulator
 
-You can test all branching story paths, endings, dead-ends, and unreachable labels programmatically without loading a browser:
+You can test all branching story paths (choices **and** hotspots), endings, dead-ends, and unreachable labels programmatically without loading a browser:
 
 ```typescript
 import { compileScript } from '@kawaijs/parser';

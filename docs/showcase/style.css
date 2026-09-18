@@ -2433,7 +2433,10 @@ body.kawa-fullscreen {
   border-color: var(--kawa-primary-accent, #f43f5e);
 }
 
-.kawa-sprite.kawa-speaking {
+.kawa-sprite.kawa-speaking img {
+  /* Animate the image, not the positioned wrapper — otherwise lip-sync
+     overwrites translateX(-50%) from .kawa-pos-* and recenters the sprite wrong.
+     Also replaces breathe while speaking to avoid competing transform animations. */
   animation: kawa-sprite-lip-sync 0.35s ease-in-out infinite alternate;
 }
 

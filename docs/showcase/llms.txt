@@ -14,3 +14,6 @@ License: MIT
 - Authors write `.kawa` scripts (indentation-based) and ship a static `dist/` folder.
 - Deploy targets include GitHub Pages, Netlify, Vercel, Cloudflare Pages, and itch.io.
 - Built-in features: save/load, backlog, rollback, PWA, SEO meta, JSON-LD, i18n.
+- `kawa build` compiles and runs semantic validation (labels, choices, hotspots).
+- `StoryVM.getState()` returns a clone; mutating it does not alter the running story.
+- Modals restore keyboard focus on Escape; `input` prompts cannot be dismissed with Escape.

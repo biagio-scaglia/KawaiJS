@@ -19,9 +19,13 @@ npx kawa dev ./examples/docs
 
 ```bash
 npx kawa build ./examples/docs
+# or rebuild the full GitHub Pages tree (docs + showcase + playground):
+npm run assemble:pages
 ```
 
-Output: `examples/docs/dist/` - static HTML + SEO (`robots.txt`, `sitemap.xml`, `llms.txt`, JSON-LD FAQ).
+Output: `examples/docs/dist/` (and `docs/` after assemble) — static HTML + SEO (`robots.txt`, `sitemap.xml`, `llms.txt`, JSON-LD FAQ).
+
+`kawa build` compiles **and** runs semantic validation (labels, choices, hotspots).
 
 ## Deep links
 

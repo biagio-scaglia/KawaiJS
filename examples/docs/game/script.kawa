@@ -66,7 +66,8 @@ label lesson_install:
     kaori "Scaffold a project:"
     kaori "{b}npx kawa create my-novel{/b}"
     kaori "Then {b}npx kawa dev{/b} for live reload at localhost, and {b}npx kawa build{/b} for a static {b}dist/{/b}."
-    kaori "Validate anytime with {b}npx kawa validate{/b}. No backend. No canvas lock-in."
+    kaori "Validate anytime with {b}npx kawa validate{/b}. {b}kawa build{/b} also validates labels and hotspots before shipping."
+    kaori "No backend. No canvas lock-in. Escape closes menus with focus restored — input prompts stay until you confirm."
 
     show yumia excited at left with bounce
     yumia "That's it, [reader_name]! Your novel is already a website."
@@ -81,6 +82,7 @@ label lesson_script:
 
     yumia "A {b}.kawa{/b} file is indentation-based - easy to read, easy to write."
     yumia "Declare speakers with {b}character{/b}, start at {b}label start:{/b}, speak with {b}yumia \"Hello!\"{/b}."
+    yumia "Put declarations at the top level — nested {b}label{/b} / {b}character{/b} inside a label is a compile error."
     yumia "Rich text supports bold, italic, and color tags. Variables interpolate like {b}[reader_name]{/b}."
 
     show kaori normal at right with dissolve

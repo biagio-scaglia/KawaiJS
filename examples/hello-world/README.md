@@ -16,7 +16,10 @@ Or:
 ```bash
 npx kawa dev ./examples/hello-world
 npx kawa validate ./examples/hello-world
+npx kawa build ./examples/hello-world
 ```
+
+`kawa build` also runs semantic validation (labels / hotspots) before writing `dist/`.
 
 ## What to look for in `game/script.kawa`
 

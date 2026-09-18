@@ -32,4 +32,5 @@ Deployed demo (when Pages is refreshed): `https://biagio-scaglia.github.io/Kawai
 - 3 backgrounds + CG
 - Music / SFX hooks
 - Branching choices → multiple endings
-- Full VN chrome (save, load, rollback, backlog)
+- Full VN chrome (save, load, rollback, backlog) with focus-safe modals
+- `kawa build` validates the script before shipping the static bundle

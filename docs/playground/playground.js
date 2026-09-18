@@ -24427,6 +24427,24 @@ var Parser2 = class _Parser {
 };
 
 // packages/parser/dist/compiler.js
+function normalizeIncludePath(targetPath, fromFile) {
+  const from = fromFile.replace(/\\/g, "/");
+  const target = targetPath.replace(/\\/g, "/").trim();
+  const fromDir = from.includes("/") ? from.slice(0, from.lastIndexOf("/") + 1) : "";
+  const absolute = target.startsWith("/") || /^[a-zA-Z]:/.test(target) || target.includes("://") ? target : `${fromDir}${target}`;
+  const parts = absolute.split("/");
+  const stack = [];
+  for (const part of parts) {
+    if (!part || part === ".")
+      continue;
+    if (part === "..") {
+      stack.pop();
+      continue;
+    }
+    stack.push(part);
+  }
+  return stack.join("/");
+}
 var Compiler = class {
   program;
   options;
@@ -24441,9 +24459,18 @@ var Compiler = class {
     const labels = {};
     this.defines = {};
     const rootFile = this.program.loc?.file ?? "<anonymous>";
-    const flattenedStatements = this.expandStatements(this.program.statements, rootFile, /* @__PURE__ */ new Set([rootFile]));
+    const rootKey = normalizeIncludePath(rootFile, rootFile);
+    const flattenedStatements = this.expandStatements(this.program.statements, rootFile, /* @__PURE__ */ new Set([rootKey]));
     for (const stmt of flattenedStatements) {
       if (stmt.type === "CharacterDecl") {
+        if (characters[stmt.id]) {
+          throw new KawaError({
+            code: "E0208",
+            message: `Duplicate character declaration '${stmt.id}'`,
+            severity: "error",
+            loc: stmt.loc
+          });
+        }
         characters[stmt.id] = {
           id: stmt.id,
           name: stmt.displayName,
@@ -24474,11 +24501,21 @@ var Compiler = class {
     if (this.options.validateLabels) {
       this.validateLabelReferences(labels);
     }
+    const userLabels = Object.keys(labels).filter((l) => !l.startsWith("__"));
+    if (userLabels.length === 0) {
+      throw new KawaError({
+        code: "E0203",
+        message: "Story has no labels to start from. Declare at least one `label`.",
+        severity: "error",
+        loc: this.program.loc
+      });
+    }
+    const startLabel = labels["start"] ? "start" : userLabels[0];
     return {
       meta: {
         title: "Kawaijs Visual Novel",
         version: "0.1.0",
-        startLabel: labels["start"] ? "start" : Object.keys(labels)[0]
+        startLabel
       },
       characters,
       defines: { ...this.defines },
@@ -24490,11 +24527,12 @@ var Compiler = class {
     for (const stmt of statements) {
       if (stmt.type === "IncludeStmt") {
         const targetPath = stmt.file;
+        const includeKey = normalizeIncludePath(targetPath, currentFile);
         let source;
         if (this.options.fileResolver) {
           source = this.options.fileResolver(targetPath, currentFile);
         }
-        if (source === void 0) {
+        if (source === void 0 || source === null) {
           throw new KawaError({
             code: "E0207",
             message: `Cannot resolve include file '${targetPath}' from '${currentFile}'. Ensure file exists or fileResolver is provided.`,
@@ -24502,7 +24540,7 @@ var Compiler = class {
             loc: stmt.loc
           });
         }
-        if (visited.has(targetPath)) {
+        if (visited.has(includeKey)) {
           throw new KawaError({
             code: "E0206",
             message: `Circular include detected: '${targetPath}'`,
@@ -24510,12 +24548,12 @@ var Compiler = class {
             loc: stmt.loc
           });
         }
+        visited.add(includeKey);
         const nextVisited = new Set(visited);
-        nextVisited.add(targetPath);
-        const lexer = new Lexer(source, targetPath);
-        const parser = new Parser2(lexer.tokenize(), targetPath);
+        const lexer = new Lexer(source, includeKey);
+        const parser = new Parser2(lexer.tokenize(), includeKey);
         const subProgram = parser.parse();
-        const expandedSub = this.expandStatements(subProgram.statements, targetPath, nextVisited);
+        const expandedSub = this.expandStatements(subProgram.statements, includeKey, nextVisited);
         result.push(...expandedSub);
       } else {
         result.push(stmt);
@@ -24848,8 +24886,15 @@ var Compiler = class {
           break;
         case "CharacterDecl":
         case "DefineDecl":
-        case "LabelDecl":
-          break;
+        case "LabelDecl": {
+          const kind = stmt.type === "CharacterDecl" ? "character" : stmt.type === "DefineDecl" ? "define" : "label";
+          throw new KawaError({
+            code: "E0209",
+            message: `Nested ${kind} declaration is not allowed inside a label body. Move it to the top level.`,
+            severity: "error",
+            loc: stmt.loc
+          });
+        }
       }
     }
     return instructions;
@@ -24857,22 +24902,39 @@ var Compiler = class {
   validateLabelReferences(labels) {
     const knownLabels = new Set(Object.keys(labels));
     const userLabels = Array.from(knownLabels).filter((l) => !l.startsWith("__"));
+    const assertKnown = (targetLabel, kind, labelName, loc) => {
+      if (knownLabels.has(targetLabel))
+        return;
+      const closestLabel = closestMatch(targetLabel, userLabels, 3);
+      let hint = `Available labels: ${userLabels.join(", ") || "(none)"}`;
+      if (closestLabel) {
+        hint = `Did you mean '${closestLabel}'?
+     Available labels: ${userLabels.join(", ")}`;
+      }
+      throw new KawaError({
+        code: "E0202",
+        message: `Unknown label '${targetLabel}' referenced by ${kind} in '${labelName.startsWith("__") ? "block" : labelName}'`,
+        severity: "error",
+        loc,
+        hint
+      });
+    };
     for (const [labelName, instructions] of Object.entries(labels)) {
       for (const inst of instructions) {
-        if ((inst.type === "jump" || inst.type === "call" || inst.type === "hotspot") && !knownLabels.has(inst.targetLabel)) {
-          const closestLabel = closestMatch(inst.targetLabel, userLabels, 3);
-          let hint = `Available labels: ${userLabels.join(", ") || "(none)"}`;
-          if (closestLabel) {
-            hint = `Did you mean '${closestLabel}'?
-     Available labels: ${userLabels.join(", ")}`;
+        if (inst.type === "jump" || inst.type === "call" || inst.type === "hotspot") {
+          assertKnown(inst.targetLabel, inst.type, labelName, inst.loc);
+        } else if (inst.type === "branch") {
+          assertKnown(inst.thenLabel, "branch", labelName, inst.loc);
+          if (inst.elseLabel) {
+            assertKnown(inst.elseLabel, "branch", labelName, inst.loc);
           }
-          throw new KawaError({
-            code: "E0202",
-            message: `Unknown label '${inst.targetLabel}' referenced by ${inst.type} in '${labelName.startsWith("__") ? "block" : labelName}'`,
-            severity: "error",
-            loc: inst.loc,
-            hint
-          });
+        } else if (inst.type === "choice") {
+          for (const choice of inst.choices) {
+            assertKnown(choice.targetLabel, "choice", labelName, inst.loc);
+          }
+          if (inst.fallbackLabel) {
+            assertKnown(inst.fallbackLabel, "choice", labelName, inst.loc);
+          }
         }
       }
     }
@@ -24908,6 +24970,8 @@ var AudioManager = class {
   musicFadeIntervals = /* @__PURE__ */ new Map();
   voiceStateListeners = /* @__PURE__ */ new Set();
   unlockHandler = null;
+  vmAudioUnsub = null;
+  vmAudioGeneration = 0;
   maxSoundPool = 4;
   preferLightPreload;
   constructor(options = {}) {
@@ -24979,6 +25043,7 @@ var AudioManager = class {
   }
   setSoundVolume(val) {
     this.soundVolume = Math.max(0, Math.min(1, val));
+    this.updateActiveVolumes();
   }
   setVoiceVolume(val) {
     this.voiceVolume = Math.max(0, Math.min(1, val));
@@ -24992,6 +25057,7 @@ var AudioManager = class {
     }
     if (!this.isUnlocked) {
       this.pendingMusic = { src, options };
+      return;
     }
     const fadein = options.fadein ?? 0;
     const loop = options.loop ?? true;
@@ -25144,6 +25210,11 @@ var AudioManager = class {
   }
   destroy() {
     this.removeUnlockListeners();
+    this.vmAudioGeneration++;
+    if (this.vmAudioUnsub) {
+      this.vmAudioUnsub();
+      this.vmAudioUnsub = null;
+    }
     for (const [audio, interval] of this.musicFadeIntervals) {
       clearInterval(interval);
       try {
@@ -25159,9 +25230,16 @@ var AudioManager = class {
   }
   /**
    * Attaches the AudioManager to a StoryVM instance to automatically play/stop tracks.
+   * Idempotent on this manager: a second call detaches the previous subscription first,
+   * so pairing with DOMRenderer (which also calls attachToVM) cannot double-play audio.
    */
   attachToVM(vm, assetResolver2 = (t2) => t2) {
-    return vm.onAudioEvent((event) => {
+    if (this.vmAudioUnsub) {
+      this.vmAudioUnsub();
+      this.vmAudioUnsub = null;
+    }
+    const generation = ++this.vmAudioGeneration;
+    this.vmAudioUnsub = vm.onAudioEvent((event) => {
       if (event.action === "play" && event.track) {
         const url = assetResolver2(event.track, event.channel);
         if (event.channel === "music") {
@@ -25181,6 +25259,14 @@ var AudioManager = class {
         }
       }
     });
+    return () => {
+      if (generation !== this.vmAudioGeneration)
+        return;
+      if (this.vmAudioUnsub) {
+        this.vmAudioUnsub();
+        this.vmAudioUnsub = null;
+      }
+    };
   }
   clearFade(audio) {
     const existing = this.musicFadeIntervals.get(audio);
@@ -25225,10 +25311,17 @@ var AudioManager = class {
   }
   updateActiveVolumes() {
     if (this.currentMusicAudio) {
-      this.currentMusicAudio.volume = this.isMuted ? 0 : this.masterVolume * this.musicVolume;
+      const duckMul = this.isDucking && !this.isMuted ? this.duckRatio : 1;
+      this.currentMusicAudio.volume = this.isMuted ? 0 : this.masterVolume * this.musicVolume * duckMul;
     }
     if (this.currentVoiceAudio) {
       this.currentVoiceAudio.volume = this.isMuted ? 0 : this.masterVolume * this.voiceVolume;
+    }
+    for (const sfx of this.soundPool) {
+      try {
+        sfx.volume = this.isMuted ? 0 : this.masterVolume * this.soundVolume;
+      } catch {
+      }
     }
   }
 };
@@ -25728,6 +25821,31 @@ function formatRichText(raw) {
   return formatted;
 }
 
+// packages/renderer-dom/dist/utils/css-url.js
+function cssUrl(url) {
+  const safe = String(url ?? "").replace(/\\/g, "\\\\").replace(/"/g, '\\"');
+  return `url("${safe}")`;
+}
+var BG_TRANSITION_CLASSES = [
+  "kawa-wipe-from-left",
+  "kawa-wipe-from-right",
+  "kawa-wipe-from-up",
+  "kawa-wipe-from-down",
+  "kawa-wipe-circle",
+  "kawa-push-from-left",
+  "kawa-push-from-right",
+  "kawa-push-from-up",
+  "kawa-push-from-down",
+  "kawa-zoom-in",
+  "kawa-blur-transition",
+  "kawa-glitch-transition"
+];
+function clearBgTransitionClasses(...els) {
+  for (const el of els) {
+    el.classList.remove(...BG_TRANSITION_CLASSES);
+  }
+}
+
 // packages/renderer-dom/dist/components/stage-layer.js
 var StageLayerComponent = class {
   stageEl;
@@ -25740,6 +25858,7 @@ var StageLayerComponent = class {
   bgLayerB;
   activeBgLayer = "A";
   currentBgUrl = "";
+  currentBgTransition = "";
   activeCharacters = /* @__PURE__ */ new Map();
   pendingRemovals = /* @__PURE__ */ new Map();
   flashTimer = null;
@@ -25787,10 +25906,12 @@ var StageLayerComponent = class {
   updateBackground(background2, transition) {
     if (!background2) {
       this.currentBgUrl = "";
+      this.currentBgTransition = "";
       this.bgLayerA.style.backgroundImage = "";
       this.bgLayerB.style.backgroundImage = "";
       this.bgLayerA.classList.remove("active");
       this.bgLayerB.classList.remove("active");
+      clearBgTransitionClasses(this.bgLayerA, this.bgLayerB);
       if (this.bgVideoEl) {
         this.bgVideoEl.pause();
         this.bgVideoEl.remove();
@@ -25803,85 +25924,77 @@ var StageLayerComponent = class {
     const cleanBg = background2.replace(/^bg[\s_]+/i, "").replace(/^video:[\s_]*/i, "").trim();
     const isVideo = this.isVideoPath(background2);
     const primaryUrl = this.assetResolver(cleanBg, "background");
-    if (primaryUrl !== this.currentBgUrl) {
-      this.currentBgUrl = primaryUrl;
-      if (isVideo) {
-        this.bgLayerA.classList.remove("active");
-        this.bgLayerB.classList.remove("active");
-        if (!this.bgVideoEl) {
-          this.bgVideoEl = document.createElement("video");
-          this.bgVideoEl.className = "kawa-bg-video";
-          this.bgVideoEl.autoplay = true;
-          this.bgVideoEl.loop = true;
-          this.bgVideoEl.muted = true;
-          this.bgVideoEl.playsInline = true;
-          this.bgVideoEl.setAttribute("aria-hidden", "true");
-          this.backgroundEl.appendChild(this.bgVideoEl);
-        }
-        this.bgVideoEl.src = primaryUrl;
-        this.bgVideoEl.play().catch(() => {
-        });
-      } else {
-        if (this.bgVideoEl) {
-          this.bgVideoEl.pause();
-          this.bgVideoEl.remove();
-          this.bgVideoEl = null;
-        }
-        const crossfade = transitionName === "fade" || transitionName === "dissolve" || transitionName === "wipeleft" || transitionName === "wiperight" || transitionName === "wipeup" || transitionName === "wipedown" || transitionName === "circlewipe" || transitionName === "iris" || transitionName === "pushleft" || transitionName === "pushright" || transitionName === "pushup" || transitionName === "pushdown" || transitionName === "zoom" || transitionName === "blur" || transitionName === "glitch" || transitionName === "corrupt";
-        if (crossfade) {
-          const nextLayer = this.activeBgLayer === "A" ? this.bgLayerB : this.bgLayerA;
-          const curLayer = this.activeBgLayer === "A" ? this.bgLayerA : this.bgLayerB;
-          nextLayer.style.backgroundImage = `url("${primaryUrl}")`;
-          const allTransClasses = [
-            "kawa-wipe-from-left",
-            "kawa-wipe-from-right",
-            "kawa-wipe-from-up",
-            "kawa-wipe-from-down",
-            "kawa-wipe-circle",
-            "kawa-push-from-left",
-            "kawa-push-from-right",
-            "kawa-push-from-up",
-            "kawa-push-from-down",
-            "kawa-zoom-in",
-            "kawa-blur-transition",
-            "kawa-glitch-transition"
-          ];
-          nextLayer.classList.remove(...allTransClasses);
-          curLayer.classList.remove(...allTransClasses);
-          if (transitionName === "wipeleft") {
-            nextLayer.classList.add("kawa-wipe-from-right");
-          } else if (transitionName === "wiperight") {
-            nextLayer.classList.add("kawa-wipe-from-left");
-          } else if (transitionName === "wipeup") {
-            nextLayer.classList.add("kawa-wipe-from-down");
-          } else if (transitionName === "wipedown") {
-            nextLayer.classList.add("kawa-wipe-from-up");
-          } else if (transitionName === "circlewipe" || transitionName === "iris") {
-            nextLayer.classList.add("kawa-wipe-circle");
-          } else if (transitionName === "pushleft") {
-            nextLayer.classList.add("kawa-push-from-right");
-          } else if (transitionName === "pushright") {
-            nextLayer.classList.add("kawa-push-from-left");
-          } else if (transitionName === "pushup") {
-            nextLayer.classList.add("kawa-push-from-down");
-          } else if (transitionName === "pushdown") {
-            nextLayer.classList.add("kawa-push-from-up");
-          } else if (transitionName === "zoom") {
-            nextLayer.classList.add("kawa-zoom-in");
-          } else if (transitionName === "blur") {
-            nextLayer.classList.add("kawa-blur-transition");
-          } else if (transitionName === "glitch" || transitionName === "corrupt") {
-            nextLayer.classList.add("kawa-glitch-transition");
-          }
-          nextLayer.classList.add("active");
-          curLayer.classList.remove("active");
-          this.activeBgLayer = this.activeBgLayer === "A" ? "B" : "A";
-        } else {
-          const curLayer = this.activeBgLayer === "A" ? this.bgLayerA : this.bgLayerB;
-          curLayer.style.backgroundImage = `url("${primaryUrl}")`;
-          curLayer.classList.add("active");
-        }
+    if (primaryUrl === this.currentBgUrl && transitionName === this.currentBgTransition) {
+      return;
+    }
+    this.currentBgUrl = primaryUrl;
+    this.currentBgTransition = transitionName;
+    if (isVideo) {
+      this.bgLayerA.classList.remove("active");
+      this.bgLayerB.classList.remove("active");
+      clearBgTransitionClasses(this.bgLayerA, this.bgLayerB);
+      if (!this.bgVideoEl) {
+        this.bgVideoEl = document.createElement("video");
+        this.bgVideoEl.className = "kawa-bg-video";
+        this.bgVideoEl.autoplay = true;
+        this.bgVideoEl.loop = true;
+        this.bgVideoEl.muted = true;
+        this.bgVideoEl.playsInline = true;
+        this.bgVideoEl.setAttribute("aria-hidden", "true");
+        this.backgroundEl.appendChild(this.bgVideoEl);
       }
+      this.bgVideoEl.src = primaryUrl;
+      this.bgVideoEl.play().catch(() => {
+      });
+      return;
+    }
+    if (this.bgVideoEl) {
+      this.bgVideoEl.pause();
+      this.bgVideoEl.remove();
+      this.bgVideoEl = null;
+    }
+    const crossfade = transitionName === "fade" || transitionName === "dissolve" || transitionName === "wipeleft" || transitionName === "wiperight" || transitionName === "wipeup" || transitionName === "wipedown" || transitionName === "circlewipe" || transitionName === "iris" || transitionName === "pushleft" || transitionName === "pushright" || transitionName === "pushup" || transitionName === "pushdown" || transitionName === "zoom" || transitionName === "blur" || transitionName === "glitch" || transitionName === "corrupt";
+    if (crossfade) {
+      const nextLayer = this.activeBgLayer === "A" ? this.bgLayerB : this.bgLayerA;
+      const curLayer = this.activeBgLayer === "A" ? this.bgLayerA : this.bgLayerB;
+      nextLayer.style.backgroundImage = cssUrl(primaryUrl);
+      clearBgTransitionClasses(nextLayer, curLayer);
+      void nextLayer.offsetWidth;
+      if (transitionName === "wipeleft") {
+        nextLayer.classList.add("kawa-wipe-from-right");
+      } else if (transitionName === "wiperight") {
+        nextLayer.classList.add("kawa-wipe-from-left");
+      } else if (transitionName === "wipeup") {
+        nextLayer.classList.add("kawa-wipe-from-down");
+      } else if (transitionName === "wipedown") {
+        nextLayer.classList.add("kawa-wipe-from-up");
+      } else if (transitionName === "circlewipe" || transitionName === "iris") {
+        nextLayer.classList.add("kawa-wipe-circle");
+      } else if (transitionName === "pushleft") {
+        nextLayer.classList.add("kawa-push-from-right");
+      } else if (transitionName === "pushright") {
+        nextLayer.classList.add("kawa-push-from-left");
+      } else if (transitionName === "pushup") {
+        nextLayer.classList.add("kawa-push-from-down");
+      } else if (transitionName === "pushdown") {
+        nextLayer.classList.add("kawa-push-from-up");
+      } else if (transitionName === "zoom") {
+        nextLayer.classList.add("kawa-zoom-in");
+      } else if (transitionName === "blur") {
+        nextLayer.classList.add("kawa-blur-transition");
+      } else if (transitionName === "glitch" || transitionName === "corrupt") {
+        nextLayer.classList.add("kawa-glitch-transition");
+      }
+      nextLayer.classList.add("active");
+      curLayer.classList.remove("active");
+      this.activeBgLayer = this.activeBgLayer === "A" ? "B" : "A";
+    } else {
+      const curLayer = this.activeBgLayer === "A" ? this.bgLayerA : this.bgLayerB;
+      const otherLayer = this.activeBgLayer === "A" ? this.bgLayerB : this.bgLayerA;
+      clearBgTransitionClasses(this.bgLayerA, this.bgLayerB);
+      curLayer.style.backgroundImage = cssUrl(primaryUrl);
+      curLayer.classList.add("active");
+      otherLayer.classList.remove("active");
     }
   }
   updateCharacters(characters) {
@@ -25889,7 +26002,7 @@ var StageLayerComponent = class {
     for (const [id, entry] of this.activeCharacters.entries()) {
       if (!presentChars.has(id)) {
         entry.div.style.opacity = "0";
-        entry.div.style.transform = `translateY(20px)`;
+        entry.div.style.transform = "translateX(-50%) translateY(20px)";
         const timer = setTimeout(() => {
           entry.div.remove();
           this.pendingRemovals.delete(id);
@@ -26021,7 +26134,7 @@ var StageLayerComponent = class {
           this.cgVideoEl.remove();
           this.cgVideoEl = null;
         }
-        this.cgEl.style.backgroundImage = `url("${url}")`;
+        this.cgEl.style.backgroundImage = cssUrl(url);
       }
       this.cgEl.style.display = "block";
     }
@@ -26066,6 +26179,16 @@ var StageLayerComponent = class {
     }
     this.pendingRemovals.clear();
     this.activeCharacters.clear();
+    if (this.bgVideoEl) {
+      this.bgVideoEl.pause();
+      this.bgVideoEl.remove();
+      this.bgVideoEl = null;
+    }
+    if (this.cgVideoEl) {
+      this.cgVideoEl.pause();
+      this.cgVideoEl.remove();
+      this.cgVideoEl = null;
+    }
   }
 };
 
@@ -26123,8 +26246,11 @@ var DialogueBoxComponent = class {
   }
   render(dialogue, onComplete) {
     if (!dialogue) {
+      this.stopTypewriter();
       this.el.style.display = "none";
       this.announceEl.textContent = "";
+      this.indicatorEl.style.opacity = "0";
+      this.el.setAttribute("aria-busy", "false");
       return;
     }
     this.el.style.display = "block";
@@ -26152,7 +26278,9 @@ var DialogueBoxComponent = class {
       this.isTypewriting = false;
       this.indicatorEl.style.opacity = "1";
       this.announceFinishedLine(dialogue);
-      this.onTypewriterComplete?.();
+      const complete = this.onTypewriterComplete;
+      this.onTypewriterComplete = void 0;
+      complete?.();
     } else {
       this.startTypewriter(this.fullCurrentText, dialogue);
     }
@@ -26160,10 +26288,7 @@ var DialogueBoxComponent = class {
   finishTypewriter() {
     if (!this.isTypewriting)
       return;
-    if (this.typewriterInterval) {
-      clearInterval(this.typewriterInterval);
-      this.typewriterInterval = null;
-    }
+    this.stopTypewriterIntervalOnly();
     this.isTypewriting = false;
     this.dialogueTextEl.innerHTML = formatRichText(this.fullCurrentText);
     this.indicatorEl.style.opacity = "1";
@@ -26172,7 +26297,9 @@ var DialogueBoxComponent = class {
       speakerDisplayName: speaker,
       text: this.fullCurrentText
     });
-    this.onTypewriterComplete?.();
+    const complete = this.onTypewriterComplete;
+    this.onTypewriterComplete = void 0;
+    complete?.();
   }
   announceFinishedLine(dialogue) {
     this.el.setAttribute("aria-busy", "false");
@@ -26204,11 +26331,20 @@ var DialogueBoxComponent = class {
     }, this.typewriterSpeed);
     void dialogue;
   }
-  destroy() {
+  /** Clear interval + completion callback without announcing (used when hiding the box). */
+  stopTypewriter() {
+    this.stopTypewriterIntervalOnly();
+    this.isTypewriting = false;
+    this.onTypewriterComplete = void 0;
+  }
+  stopTypewriterIntervalOnly() {
     if (this.typewriterInterval) {
       clearInterval(this.typewriterInterval);
       this.typewriterInterval = null;
     }
+  }
+  destroy() {
+    this.stopTypewriter();
   }
 };
 
@@ -26364,6 +26500,22 @@ function normalizeStoryState(raw) {
     returnPointer: typeof f["returnPointer"] === "number" ? f["returnPointer"] : 0
   })) : [];
   const charactersRaw = visualRaw["characters"] && typeof visualRaw["characters"] === "object" ? visualRaw["characters"] : {};
+  const pendingInputRaw = s["pendingInput"] && typeof s["pendingInput"] === "object" ? s["pendingInput"] : null;
+  const pendingInput = pendingInputRaw && typeof pendingInputRaw["variable"] === "string" && typeof pendingInputRaw["prompt"] === "string" ? {
+    variable: pendingInputRaw["variable"],
+    prompt: pendingInputRaw["prompt"]
+  } : null;
+  const hotspots = Array.isArray(s["hotspots"]) ? s["hotspots"].filter((h) => !!h && typeof h === "object" && typeof h.id === "string" && typeof h.targetLabel === "string" && typeof h.x === "number" && typeof h.y === "number" && typeof h.w === "number" && typeof h.h === "number") : null;
+  const choices = Array.isArray(s["choices"]) ? s["choices"] : null;
+  let isWaitingForInput = Boolean(s["isWaitingForInput"]);
+  if (isWaitingForInput && !pendingInput && !hotspots && (!choices || choices.length === 0)) {
+    if (!dialogueRaw || typeof dialogueRaw["text"] !== "string") {
+      isWaitingForInput = false;
+    }
+  }
+  if (pendingInput || hotspots && hotspots.length > 0 || choices && choices.length > 0) {
+    isWaitingForInput = true;
+  }
   return {
     currentLabel: s["currentLabel"],
     instructionPointer: s["instructionPointer"],
@@ -26387,19 +26539,17 @@ function normalizeStoryState(raw) {
       speakerColor: typeof dialogueRaw["speakerColor"] === "string" ? dialogueRaw["speakerColor"] : void 0,
       text: dialogueRaw["text"]
     } : null,
-    choices: Array.isArray(s["choices"]) ? s["choices"] : null,
-    hotspots: null,
-    // never restore mid-hotspot from saves
+    choices,
+    hotspots: hotspots && hotspots.length > 0 ? hotspots : null,
     theme: typeof s["theme"] === "string" ? s["theme"] : null,
     styleClasses: s["styleClasses"] && typeof s["styleClasses"] === "object" ? Object.assign(/* @__PURE__ */ Object.create(null), s["styleClasses"]) : /* @__PURE__ */ Object.create(null),
     unlockedCGs: s["unlockedCGs"] && typeof s["unlockedCGs"] === "object" ? Object.assign(/* @__PURE__ */ Object.create(null), s["unlockedCGs"]) : /* @__PURE__ */ Object.create(null),
     achievements: s["achievements"] && typeof s["achievements"] === "object" ? Object.assign(/* @__PURE__ */ Object.create(null), s["achievements"]) : /* @__PURE__ */ Object.create(null),
     lang: typeof s["lang"] === "string" ? s["lang"] : null,
     pendingPauseMs: typeof s["pendingPauseMs"] === "number" ? s["pendingPauseMs"] : null,
-    pendingInput: null,
-    // never restore mid-prompt from saves
+    pendingInput,
     windowVisible: s["windowVisible"] === false ? false : true,
-    isWaitingForInput: Boolean(s["isWaitingForInput"]),
+    isWaitingForInput,
     isFinished: Boolean(s["isFinished"])
   };
 }
@@ -26716,7 +26866,8 @@ function compactSaveForContinueLink(slot, includeHistory = true) {
       id: slot.snapshot.id,
       timestamp: slot.snapshot.timestamp,
       state: slot.snapshot.state,
-      historyLength: typeof slot.snapshot.historyLength === "number" ? slot.snapshot.historyLength : history3.length
+      // historyLength must match the entries we actually keep in the payload
+      historyLength: history3.length
     },
     previewText: slot.previewText,
     historyEntries: history3
@@ -27203,7 +27354,7 @@ var StoryVM = class {
     }
   }
   getState() {
-    return this.state;
+    return cloneState(this.state);
   }
   getStory() {
     return this.story;
@@ -27276,6 +27427,7 @@ var StoryVM = class {
       throw new Error(`Cannot start story: Start label '${startLabel}' not found in story package.`);
     }
     const prevMusic = this.state.audio.music;
+    this.executionTrace = [];
     this.recordTrace(`START ${startLabel}`);
     this.state = createInitialState(startLabel);
     this.applyInitialVariables();
@@ -27416,8 +27568,10 @@ var StoryVM = class {
       instructionPointer: 0,
       choices: null,
       hotspots: null,
+      pendingInput: null,
       pendingPauseMs: null,
-      isWaitingForInput: false
+      isWaitingForInput: false,
+      isFinished: false
     };
     this.executeUntilWaiting();
   }
@@ -27481,9 +27635,10 @@ var StoryVM = class {
     this.historyManager.replaceAll(restoredHistory);
     const snap = {
       ...slot.snapshot,
-      historyLength: typeof slot.snapshot.historyLength === "number" ? slot.snapshot.historyLength : restoredHistory.length
+      historyLength: typeof slot.snapshot.historyLength === "number" ? Math.min(slot.snapshot.historyLength, restoredHistory.length) : restoredHistory.length
     };
     this.snapshotStack = [snap];
+    this.virtualTimeMs = 0;
     this.recordTrace(traceLabel);
     this.resyncAudio(prevMusic);
     this.notifyStateChanged();
@@ -27496,18 +27651,25 @@ var StoryVM = class {
     this.emitAudioEvent({ action: "stop", channel: "voice" });
     this.emitAudioEvent({ action: "stop", channel: "sound" });
     const nextMusic = this.state.audio.music;
-    if (previousMusic === nextMusic) {
-      return;
+    if (previousMusic !== nextMusic) {
+      if (nextMusic) {
+        this.emitAudioEvent({
+          action: "play",
+          channel: "music",
+          track: nextMusic,
+          loop: true
+        });
+      } else {
+        this.emitAudioEvent({ action: "stop", channel: "music" });
+      }
     }
-    if (nextMusic) {
+    const nextVoice = this.state.audio.voice;
+    if (nextVoice) {
       this.emitAudioEvent({
         action: "play",
-        channel: "music",
-        track: nextMusic,
-        loop: true
+        channel: "voice",
+        track: nextVoice
       });
-    } else {
-      this.emitAudioEvent({ action: "stop", channel: "music" });
     }
   }
   executeUntilWaiting() {
@@ -27872,6 +28034,14 @@ var StoryVM = class {
               music: inst.track
             }
           };
+        } else if (inst.channel === "voice") {
+          this.state = {
+            ...this.state,
+            audio: {
+              ...this.state.audio,
+              voice: inst.track
+            }
+          };
         }
         break;
       }
@@ -27888,6 +28058,14 @@ var StoryVM = class {
             audio: {
               ...this.state.audio,
               music: null
+            }
+          };
+        } else if (inst.channel === "voice") {
+          this.state = {
+            ...this.state,
+            audio: {
+              ...this.state.audio,
+              voice: null
             }
           };
         }
@@ -28080,10 +28258,14 @@ var StoryVM = class {
     this.snapshotStack.push(snap);
     if (this.snapshotStack.length > this.maxSnapshots) {
       this.snapshotStack.shift();
+      const oldest = this.snapshotStack[0];
+      if (oldest && typeof oldest.historyLength === "number") {
+        this.historyManager.trimTo(oldest.historyLength);
+      }
     }
   }
   notifyStateChanged() {
-    const currentState = this.getState();
+    const currentState = cloneState(this.state);
     for (const listener of this.stateChangeListeners) {
       listener(currentState);
     }
@@ -28192,6 +28374,29 @@ function trapFocus(container) {
   };
 }
 
+// packages/renderer-dom/dist/utils/modal-lifecycle.js
+var overlayClosers = /* @__PURE__ */ new WeakMap();
+function registerModalCloser(overlay, closer) {
+  overlayClosers.set(overlay, closer);
+}
+function dismissModalOverlay(overlay) {
+  if (!overlay || !overlay.isConnected)
+    return false;
+  const closer = overlayClosers.get(overlay);
+  if (closer) {
+    closer();
+    return true;
+  }
+  overlay.remove();
+  return true;
+}
+function dismissExistingModals(rootEl, selector = ".kawa-modal-overlay:not(.kawa-confirm-overlay):not(.kawa-input-overlay)") {
+  const existing = rootEl.querySelectorAll(selector);
+  for (const el of existing) {
+    dismissModalOverlay(el);
+  }
+}
+
 // packages/renderer-dom/dist/modals/confirm-modal.js
 function showConfirmModal(rootEl, options) {
   const overlay = document.createElement("div");
@@ -28219,6 +28424,7 @@ function showConfirmModal(rootEl, options) {
     if (cancelled)
       options.onCancel?.();
   };
+  registerModalCloser(overlay, () => close(true));
   closeBtn.addEventListener("click", (e) => {
     e.preventDefault();
     close(true);
@@ -28274,9 +28480,7 @@ function cleanPreviewText(text) {
   return text.replace(/\{[a-zA-Z0-9#=_., -]+\}/g, "").replace(/\{(?:\/)[a-zA-Z0-9]+\}/g, "").trim();
 }
 async function showSaveLoadModal(rootEl, vm, mode, onLoaded) {
-  const existing = rootEl.querySelector(".kawa-modal-overlay:not(.kawa-confirm-overlay)");
-  if (existing)
-    existing.remove();
+  dismissExistingModals(rootEl);
   const overlay = document.createElement("div");
   overlay.className = "kawa-modal-overlay";
   const card = document.createElement("div");
@@ -28294,6 +28498,7 @@ async function showSaveLoadModal(rootEl, vm, mode, onLoaded) {
     releaseFocus();
     overlay.remove();
   };
+  registerModalCloser(overlay, close);
   const closeBtn = document.createElement("button");
   closeBtn.type = "button";
   closeBtn.className = "kawa-btn";
@@ -28519,9 +28724,7 @@ async function showSaveLoadModal(rootEl, vm, mode, onLoaded) {
 
 // packages/renderer-dom/dist/modals/settings-modal.js
 function showSettingsModal(rootEl, options) {
-  const existing = rootEl.querySelector(".kawa-modal-overlay:not(.kawa-confirm-overlay)");
-  if (existing)
-    existing.remove();
+  dismissExistingModals(rootEl);
   let currentSpeed = options.typewriterSpeed;
   let currentDelay = options.autoDelayMs;
   let currentMusic = options.musicVolume ?? 0.8;
@@ -28546,6 +28749,7 @@ function showSettingsModal(rootEl, options) {
     releaseFocus();
     overlay.remove();
   };
+  registerModalCloser(overlay, close);
   const closeBtn = document.createElement("button");
   closeBtn.type = "button";
   closeBtn.className = "kawa-btn";
@@ -28663,7 +28867,11 @@ function showSettingsModal(rootEl, options) {
   if (options.availableLangs && options.availableLangs.length > 1) {
     const langRow = document.createElement("div");
     langRow.className = "kawa-setting-row";
-    const langOptionsHtml = options.availableLangs.map((l) => `<option value="${l}" ${l === currentLang ? "selected" : ""}>${l.toUpperCase()}</option>`).join("");
+    const langOptionsHtml = options.availableLangs.map((l) => {
+      const safeValue = escapeHtml(l);
+      const safeLabel = escapeHtml(l.toUpperCase());
+      return `<option value="${safeValue}" ${l === currentLang ? "selected" : ""}>${safeLabel}</option>`;
+    }).join("");
     langRow.innerHTML = `
       <div class="kawa-setting-header">
         <span>\u{1F310} Language / Lingua</span>
@@ -28692,9 +28900,7 @@ function showSettingsModal(rootEl, options) {
 
 // packages/renderer-dom/dist/modals/about-modal.js
 function showAboutModal(rootEl, options) {
-  const existing = rootEl.querySelector(".kawa-modal-overlay:not(.kawa-confirm-overlay)");
-  if (existing)
-    existing.remove();
+  dismissExistingModals(rootEl);
   const overlay = document.createElement("div");
   overlay.className = "kawa-modal-overlay";
   const card = document.createElement("div");
@@ -28712,6 +28918,7 @@ function showAboutModal(rootEl, options) {
     releaseFocus();
     overlay.remove();
   };
+  registerModalCloser(overlay, close);
   const closeBtn = document.createElement("button");
   closeBtn.type = "button";
   closeBtn.className = "kawa-btn";
@@ -28748,14 +28955,19 @@ function showAboutModal(rootEl, options) {
 // packages/renderer-dom/dist/modals/gallery-modal.js
 function sanitizeUrl(url) {
   const trimmed = (url || "").trim();
-  if (/^(https?:|data:|\/|\.\/)/i.test(trimmed))
+  if (/^(https?:|\/|\.\/)/i.test(trimmed)) {
+    return trimmed.replace(/["'<>\\]/g, "");
+  }
+  if (/^data:image\//i.test(trimmed)) {
     return trimmed;
+  }
+  if (/^data:/i.test(trimmed)) {
+    return "";
+  }
   return trimmed.replace(/["'()<>\\]/g, "");
 }
 function showGalleryModal(rootEl, vm, galleryItems = [], assetResolver2) {
-  const existing = rootEl.querySelector(".kawa-modal-overlay:not(.kawa-confirm-overlay)");
-  if (existing)
-    existing.remove();
+  dismissExistingModals(rootEl);
   const overlay = document.createElement("div");
   overlay.className = "kawa-modal-overlay";
   const card = document.createElement("div");
@@ -28774,10 +28986,14 @@ function showGalleryModal(rootEl, vm, galleryItems = [], assetResolver2) {
   closeBtn.innerHTML = `${SVG_ICONS.close} <span>Close</span>`;
   closeBtn.setAttribute("aria-label", "Close gallery modal");
   const releaseFocus = trapFocus(card);
-  closeBtn.addEventListener("click", (e) => {
-    e.preventDefault();
+  const close = () => {
     releaseFocus();
     overlay.remove();
+  };
+  registerModalCloser(overlay, close);
+  closeBtn.addEventListener("click", (e) => {
+    e.preventDefault();
+    close();
   });
   header.appendChild(title);
   header.appendChild(closeBtn);
@@ -28853,6 +29069,7 @@ function showLightbox(rootEl, fullImageUrl, titleText) {
     releaseFocus();
     lightbox.remove();
   };
+  registerModalCloser(lightbox, close);
   lightbox.addEventListener("click", (e) => {
     const target = e.target;
     if (target.classList.contains("kawa-gallery-lightbox") || target.closest(".kawa-gallery-lightbox-close")) {
@@ -28870,9 +29087,7 @@ function showLightbox(rootEl, fullImageUrl, titleText) {
 
 // packages/renderer-dom/dist/modals/achievements-modal.js
 function showAchievementsModal(rootEl, vm, catalog = []) {
-  const existing = rootEl.querySelector(".kawa-modal-overlay:not(.kawa-confirm-overlay)");
-  if (existing)
-    existing.remove();
+  dismissExistingModals(rootEl);
   const unlocked = vm.getState().achievements;
   const byId = /* @__PURE__ */ new Map();
   for (const a of catalog)
@@ -28899,6 +29114,7 @@ function showAchievementsModal(rootEl, vm, catalog = []) {
     releaseFocus();
     overlay.remove();
   };
+  registerModalCloser(overlay, close);
   const closeBtn = document.createElement("button");
   closeBtn.type = "button";
   closeBtn.className = "kawa-btn";
@@ -28972,6 +29188,7 @@ var MainMenuComponent = class {
   callbacks;
   menuEl;
   isVisible = false;
+  refreshGeneration = 0;
   constructor(rootEl, vm, options, callbacks) {
     this.rootEl = rootEl;
     this.vm = vm;
@@ -28993,6 +29210,7 @@ var MainMenuComponent = class {
     if (!this.menuEl)
       return;
     this.isVisible = true;
+    this.refreshGeneration++;
     this.refresh();
     this.menuEl.style.display = "flex";
     this.menuEl.classList.add("active");
@@ -29002,6 +29220,7 @@ var MainMenuComponent = class {
     if (!this.menuEl)
       return;
     this.isVisible = false;
+    this.refreshGeneration++;
     this.menuEl.classList.remove("active");
     this.menuEl.style.display = "none";
     this.options?.onClose?.();
@@ -29014,7 +29233,11 @@ var MainMenuComponent = class {
       return;
     const continueBtn = this.menuEl.querySelector('button[data-action="continue"]');
     if (continueBtn) {
+      const generation = this.refreshGeneration;
       void this.vm.getSaveManager().listSlots(6).then((slots) => {
+        if (!this.isVisible || generation !== this.refreshGeneration || !continueBtn.isConnected) {
+          return;
+        }
         const hasSaves = slots.some((s) => s !== null);
         if (!hasSaves) {
           continueBtn.classList.add("disabled");
@@ -29089,7 +29312,7 @@ var MainMenuComponent = class {
     this.menuEl.style.display = "none";
     if (this.options?.backgroundUrl) {
       const bgUrl = this.callbacks.assetResolver(this.options.backgroundUrl, "background");
-      this.menuEl.style.backgroundImage = `url("${bgUrl}")`;
+      this.menuEl.style.backgroundImage = cssUrl(bgUrl);
       this.menuEl.style.backgroundSize = "cover";
       this.menuEl.style.backgroundPosition = "center";
     }
@@ -29133,7 +29356,11 @@ var MainMenuComponent = class {
         btn.id = `kawa-menu-${item.id}`;
       btn.innerHTML = `${item.icon ? item.icon + " " : ""}<span>${escapeHtml(item.label)}</span>`;
       if (item.action === "continue") {
+        const generation = this.refreshGeneration;
         void this.vm.getSaveManager().listSlots(6).then((slots) => {
+          if (!this.isVisible || generation !== this.refreshGeneration || !btn.isConnected) {
+            return;
+          }
           const hasSaves = slots.some((s) => s !== null);
           if (!hasSaves) {
             btn.classList.add("disabled");
@@ -29248,9 +29475,7 @@ var HotspotLayerComponent = class {
 
 // packages/renderer-dom/dist/modals/history-modal.js
 function showHistoryModal(rootEl, vm) {
-  const existing = rootEl.querySelector(".kawa-modal-overlay:not(.kawa-confirm-overlay)");
-  if (existing)
-    existing.remove();
+  dismissExistingModals(rootEl);
   const overlay = document.createElement("div");
   overlay.className = "kawa-modal-overlay";
   const card = document.createElement("div");
@@ -29268,6 +29493,7 @@ function showHistoryModal(rootEl, vm) {
     releaseFocus();
     overlay.remove();
   };
+  registerModalCloser(overlay, close);
   const closeBtn = document.createElement("button");
   closeBtn.type = "button";
   closeBtn.className = "kawa-btn";
@@ -29313,7 +29539,7 @@ function showHistoryModal(rootEl, vm) {
 function showInputModal(rootEl, options) {
   const existing = rootEl.querySelector(".kawa-input-overlay");
   if (existing)
-    existing.remove();
+    dismissModalOverlay(existing);
   const overlay = document.createElement("div");
   overlay.className = "kawa-modal-overlay kawa-input-overlay";
   overlay.style.zIndex = "10040";
@@ -29349,6 +29575,10 @@ function showInputModal(rootEl, options) {
     overlay.remove();
     options.onSubmit(value);
   };
+  registerModalCloser(overlay, () => {
+    releaseFocus();
+    overlay.remove();
+  });
   confirmBtn.addEventListener("click", (e) => {
     e.preventDefault();
     submit();
@@ -29357,6 +29587,9 @@ function showInputModal(rootEl, options) {
     if (e.key === "Enter") {
       e.preventDefault();
       submit();
+    } else if (e.key === "Escape") {
+      e.preventDefault();
+      e.stopPropagation();
     }
   });
   actions.appendChild(confirmBtn);
@@ -29880,28 +30113,33 @@ var DOMRenderer = class {
         this.shakeScreen(e.action);
       }
     });
-    this.unsubscribeAudio = this.vm.onAudioEvent((event) => {
-      if (!this.audioManager)
-        return;
-      if (event.action === "play" && event.track) {
-        const url = this.assetResolver(event.track, "audio");
-        if (event.channel === "music") {
-          this.audioManager.playMusic?.(url, { fadein: event.fade, loop: event.loop });
-        } else if (event.channel === "sound") {
-          this.audioManager.playSound?.(url);
-        } else if (event.channel === "voice") {
-          this.audioManager.playVoice?.(url);
-        }
-      } else if (event.action === "stop") {
-        if (event.channel === "music") {
-          this.audioManager.stopMusic?.({ fadeout: event.fade });
-        } else if (event.channel === "sound") {
-          this.audioManager.stopSound?.();
-        } else if (event.channel === "voice") {
-          this.audioManager.stopVoice?.();
-        }
+    this.unsubscribeAudio = void 0;
+    if (this.audioManager) {
+      if (typeof this.audioManager.attachToVM === "function") {
+        this.unsubscribeAudio = this.audioManager.attachToVM(this.vm, (track) => this.assetResolver(track, "audio"));
+      } else {
+        this.unsubscribeAudio = this.vm.onAudioEvent((event) => {
+          if (event.action === "play" && event.track) {
+            const url = this.assetResolver(event.track, "audio");
+            if (event.channel === "music") {
+              this.audioManager?.playMusic?.(url, { fadein: event.fade, loop: event.loop });
+            } else if (event.channel === "sound") {
+              this.audioManager?.playSound?.(url);
+            } else if (event.channel === "voice") {
+              this.audioManager?.playVoice?.(url);
+            }
+          } else if (event.action === "stop") {
+            if (event.channel === "music") {
+              this.audioManager?.stopMusic?.({ fadeout: event.fade });
+            } else if (event.channel === "sound") {
+              this.audioManager?.stopSound?.();
+            } else if (event.channel === "voice") {
+              this.audioManager?.stopVoice?.();
+            }
+          }
+        });
       }
-    });
+    }
     this.unsubscribeError = this.vm.onError((err2) => {
       this.showErrorToast(err2.message);
       this.options.onError?.(err2);
@@ -30293,7 +30531,7 @@ var DOMRenderer = class {
       if (confirm) {
         if (e.key === "Escape") {
           e.preventDefault();
-          confirm.remove();
+          dismissModalOverlay(confirm);
         }
         return;
       }
@@ -30301,14 +30539,19 @@ var DOMRenderer = class {
       if (lightbox) {
         if (e.key === "Escape") {
           e.preventDefault();
-          lightbox.remove();
+          dismissModalOverlay(lightbox);
         }
         return;
       }
       const modal = this.rootEl.querySelector(".kawa-modal-overlay");
       if (modal) {
-        if (e.key === "Escape")
-          modal.remove();
+        if (e.key === "Escape") {
+          e.preventDefault();
+          if (modal.classList.contains("kawa-input-overlay")) {
+            return;
+          }
+          dismissModalOverlay(modal);
+        }
         return;
       }
       if (this.isMainMenuActive()) {
@@ -30388,12 +30631,14 @@ var DOMRenderer = class {
         onRollback: () => {
           const confirm = this.rootEl.querySelector(".kawa-confirm-overlay");
           if (confirm) {
-            confirm.remove();
+            dismissModalOverlay(confirm);
             return;
           }
           const modal = this.rootEl.querySelector(".kawa-modal-overlay");
           if (modal) {
-            modal.remove();
+            if (!modal.classList.contains("kawa-input-overlay")) {
+              dismissModalOverlay(modal);
+            }
             return;
           }
           if (this.isMainMenuActive())
@@ -30575,7 +30820,10 @@ var DOMRenderer = class {
       this.stageLayer.setSpeakingCharacter(state2.dialogue?.speaker ?? null);
       this.dialogueBox.render(state2.dialogue, () => {
         this.stageLayer.setSpeakingCharacter(null);
-        if (this.isAutoMode && !state2.isFinished && (!state2.choices || state2.choices.length === 0) && (!state2.hotspots || state2.hotspots.length === 0) && !state2.pendingInput) {
+        if (this.destroyed || !this.isAutoMode)
+          return;
+        const live = this.vm.getState();
+        if (!live.isFinished && (!live.choices || live.choices.length === 0) && (!live.hotspots || live.hotspots.length === 0) && !live.pendingInput) {
           this.scheduleAutoAdvance();
         }
       });
@@ -30591,7 +30839,7 @@ var DOMRenderer = class {
         });
       }
     } else {
-      this.rootEl.querySelector(".kawa-input-overlay")?.remove();
+      this.rootEl.querySelectorAll(".kawa-input-overlay").forEach((el) => dismissModalOverlay(el));
     }
     if (state2.isFinished) {
       this.renderEndingCard();

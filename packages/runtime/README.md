@@ -33,11 +33,15 @@ vm.rollback(); // Rolls back to Welcome
 ```
 
 ## Features
-- **Deterministic Virtual Machine**: Headless execution loop (dialogue, choices, audio, VFX state, camera events).
-- **Time-Travel Rollback**: Deep state snapshots for backwards navigation (dialogue history trims with rollback).
-- **Save & Load**: Pluggable storage adapters (LocalStorage, Memory). Schema **v2** persists dialogue history and migrates older slots via `migrateSaveSlot` / `migrateSaveV1ToV2`.
+- **Deterministic Virtual Machine**: Headless execution loop (dialogue, choices, hotspots, input, audio, VFX state, camera events).
+- **Safe `getState()`**: Returns a **deep clone** — host/UI mutations cannot corrupt internal VM state.
+- **Time-Travel Rollback**: Deep state snapshots for backwards navigation (dialogue history trims with rollback and when the snapshot cap shifts).
+- **Save & Load**: Pluggable storage adapters (LocalStorage, Memory). Schema **v2** persists dialogue history and migrates older slots via `migrateSaveSlot` / `migrateSaveV1ToV2`. Mid-prompt `input` and hotspot waits are restored correctly.
 - **Dialogue History**: Built-in backlog with `trimTo` / `replaceAll` for rollback and load restore.
+- **Continue links**: Compact URL tokens (`encodeContinueToken` / `decodeContinueToken`) with history length aligned to kept entries.
+- **Headless simulator**: `simulateStory` explores choice **and** hotspot forks (and injects a deterministic value for `input` prompts).
 - **VFX state**: `sakura` / `rain` / `snow` / `fog` / `tint` — tint overlays keep the active weather effect.
+- **Voice tracking**: `play voice` / `stop voice` update `state.audio.voice` and resync on load/rollback.
 
 ## Save schema
 

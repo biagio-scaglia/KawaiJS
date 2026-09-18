@@ -87,10 +87,10 @@ kawa create <project-name>
 # Dev server (live reload) — optional deep-link + port
 kawa dev [path] [--port 3000] [--at label]
 
-# Static production bundle
+# Static production bundle (compile + semantic validate)
 kawa build [path] [--out dist] [--at label]
 
-# Validate syntax, jump labels, and asset links
+# Validate syntax, jump/hotspot labels, and asset links
 kawa validate [path]
 
 # Show version

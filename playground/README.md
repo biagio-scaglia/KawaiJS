@@ -19,3 +19,5 @@ Assembled into GitHub Pages at `/playground/` via:
 ```bash
 npm run assemble:pages
 ```
+
+The playground bundles the same parser/runtime/renderer packages as the rest of the monorepo (including recent lifecycle and validation hardening).

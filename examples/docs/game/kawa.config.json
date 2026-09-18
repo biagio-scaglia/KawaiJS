@@ -77,7 +77,7 @@
   },
   "seo": {
     "description": "Official interactive docs for Kawaijs: an open-source, web-native visual novel engine inspired by Ren'Py. Write .kawa scripts, run in the browser, and ship a static site.",
-    "aiSummary": "Kawaijs is an open-source, web-native visual novel engine inspired by Ren'Py. Write indentation-based .kawa scripts, preview with kawa dev, try the browser playground, and build a static dist/ for GitHub Pages, Netlify, Vercel, or itch.io. Includes save/load, backlog, rollback, PWA, i18n, and built-in SEO (Open Graph, JSON-LD, sitemap, llms.txt). Created by Biagio Scaglia. MIT licensed.",
+    "aiSummary": "Kawaijs is an open-source, web-native visual novel engine inspired by Ren'Py. Write indentation-based .kawa scripts, preview with kawa dev, try the browser playground, and build a static dist/ for GitHub Pages, Netlify, Vercel, or itch.io. Includes save/load, backlog, rollback, PWA, i18n, and built-in SEO (Open Graph, JSON-LD, sitemap, llms.txt). kawa build validates labels and hotspots; StoryVM.getState() returns a safe clone. Created by Biagio Scaglia. MIT licensed.",
     "keywords": [
       "Kawaijs",
       "visual novel engine",
@@ -194,6 +194,14 @@
                 "@type": "Answer",
                 "text": "Yes. Kawaijs is free and open source under the MIT license."
               }
+            },
+            {
+              "@type": "Question",
+              "name": "How do I deep-link into a lesson or scene?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Use ?at=label (or ?label=) on the URL. Embed with ?embed=1. Restore shared progress with ?continue=token."
+              }
             }
           ]
         }
@@ -235,6 +243,10 @@
       {
         "question": "Is Kawaijs free?",
         "answer": "Yes. Kawaijs is free and open source under the MIT license."
+      },
+      {
+        "question": "How do I deep-link into a lesson or scene?",
+        "answer": "Use ?at=label (or ?label=) on the URL. Embed with ?embed=1. Restore shared progress with ?continue=token."
       }
     ]
   },

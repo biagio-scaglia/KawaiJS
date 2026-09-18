@@ -1,6 +1,6 @@
 # Kawaijs Docs - Learn by Playing
 
-> Kawaijs is an open-source, web-native visual novel engine inspired by Ren'Py. Write indentation-based .kawa scripts, preview with kawa dev, try the browser playground, and build a static dist/ for GitHub Pages, Netlify, Vercel, or itch.io. Includes save/load, backlog, rollback, PWA, i18n, and built-in SEO (Open Graph, JSON-LD, sitemap, llms.txt). Created by Biagio Scaglia. MIT licensed.
+> Kawaijs is an open-source, web-native visual novel engine inspired by Ren'Py. Write indentation-based .kawa scripts, preview with kawa dev, try the browser playground, and build a static dist/ for GitHub Pages, Netlify, Vercel, or itch.io. Includes save/load, backlog, rollback, PWA, i18n, and built-in SEO (Open Graph, JSON-LD, sitemap, llms.txt). kawa build validates labels and hotspots; StoryVM.getState() returns a safe clone. Created by Biagio Scaglia. MIT licensed.
 
 Author: Biagio Scaglia
 Engine: Kawaijs — web-native visual novel engine (TypeScript, Ren'Py-inspired scripting).
@@ -14,6 +14,9 @@ License: MIT
 - Authors write `.kawa` scripts (indentation-based) and ship a static `dist/` folder.
 - Deploy targets include GitHub Pages, Netlify, Vercel, Cloudflare Pages, and itch.io.
 - Built-in features: save/load, backlog, rollback, PWA, SEO meta, JSON-LD, i18n.
+- `kawa build` compiles and runs semantic validation (labels, choices, hotspots).
+- `StoryVM.getState()` returns a clone; mutating it does not alter the running story.
+- Modals restore keyboard focus on Escape; `input` prompts cannot be dismissed with Escape.
 
 ## FAQ
 - Q: What is Kawaijs?
@@ -28,6 +31,8 @@ License: MIT
   A: Yes. kawa.config.json configures author, description, keywords, canonical URL, Open Graph, Twitter cards, JSON-LD (including FAQPage), favicon, sitemap, and llms.txt for search and answer engines.
 - Q: Is Kawaijs free?
   A: Yes. Kawaijs is free and open source under the MIT license.
+- Q: How do I deep-link into a lesson or scene?
+  A: Use ?at=label (or ?label=) on the URL. Embed with ?embed=1. Restore shared progress with ?continue=token.
 
 ## Links
 - https://github.com/biagio-scaglia/KawaiJS

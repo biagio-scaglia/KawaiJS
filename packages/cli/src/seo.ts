@@ -602,6 +602,9 @@ export function renderLlmsTxt(config: KawaProjectConfig): string {
   lines.push('- Authors write `.kawa` scripts (indentation-based) and ship a static `dist/` folder.');
   lines.push('- Deploy targets include GitHub Pages, Netlify, Vercel, Cloudflare Pages, and itch.io.');
   lines.push('- Built-in features: save/load, backlog, rollback, PWA, SEO meta, JSON-LD, i18n.');
+  lines.push('- `kawa build` compiles and runs semantic validation (labels, choices, hotspots).');
+  lines.push('- `StoryVM.getState()` returns a clone; mutating it does not alter the running story.');
+  lines.push('- Modals restore keyboard focus on Escape; `input` prompts cannot be dismissed with Escape.');
   lines.push('');
 
   if (config.seo?.faq && config.seo.faq.length > 0) {
