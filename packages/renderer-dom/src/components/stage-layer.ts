@@ -296,6 +296,14 @@ export class StageLayerComponent {
     }, 600);
   }
 
+  public setSpeakingCharacter(characterId: string | null): void {
+    const cleanId = characterId ? characterId.toLowerCase().trim() : null;
+    for (const [charKey, charObj] of this.activeCharacters.entries()) {
+      const matches = cleanId !== null && (charKey.toLowerCase() === cleanId || charKey.toLowerCase().startsWith(`${cleanId}/`));
+      charObj.div.classList.toggle('kawa-speaking', matches);
+    }
+  }
+
   public destroy(): void {
     this.vfxLayer.destroy();
     if (this.flashTimer) {

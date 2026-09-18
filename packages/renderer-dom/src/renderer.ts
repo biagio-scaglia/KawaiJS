@@ -892,8 +892,11 @@ export class DOMRenderer {
     // Hide dialogue while a menu is open — avoids overlap on small/embed stages.
     if (state.windowVisible === false || (state.choices && state.choices.length > 0)) {
       this.dialogueBox.render(null);
+      this.stageLayer.setSpeakingCharacter(null);
     } else {
+      this.stageLayer.setSpeakingCharacter(state.dialogue?.speaker ?? null);
       this.dialogueBox.render(state.dialogue, () => {
+        this.stageLayer.setSpeakingCharacter(null);
         if (
           this.isAutoMode &&
           !state.isFinished &&

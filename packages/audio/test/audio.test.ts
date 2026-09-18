@@ -29,4 +29,23 @@ label start:
     expect(playEvent?.track).toBe('bgm_peaceful');
     detach();
   });
+
+  it('handles voice state listeners and audio ducking options', () => {
+    const audio = new AudioManager({
+      ducking: true,
+      duckRatio: 0.25
+    });
+
+    const voiceEvents: boolean[] = [];
+    const unsubscribe = audio.onVoiceStateChange((isPlaying) => {
+      voiceEvents.push(isPlaying);
+    });
+
+    audio.playVoice('test_voice.mp3');
+    audio.stopVoice();
+
+    expect(voiceEvents.length).toBeGreaterThanOrEqual(1);
+    unsubscribe();
+    audio.destroy();
+  });
 });

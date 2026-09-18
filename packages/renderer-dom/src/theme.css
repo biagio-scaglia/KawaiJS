@@ -2218,3 +2218,13 @@ body.kawa-fullscreen {
   border-color: var(--kawa-primary-accent, #f43f5e);
 }
 
+.kawa-sprite.kawa-speaking {
+  animation: kawa-sprite-lip-sync 0.35s ease-in-out infinite alternate;
+}
+
+@keyframes kawa-sprite-lip-sync {
+  0% { transform: translateY(0) scale(1); }
+  100% { transform: translateY(-3px) scale(1.015); }
+}
+
+

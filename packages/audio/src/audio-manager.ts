@@ -5,6 +5,8 @@ export interface AudioOptions {
   musicVolume?: number;
   soundVolume?: number;
   voiceVolume?: number;
+  ducking?: boolean;
+  duckRatio?: number;
 }
 
 export interface PlayMusicOptions {
@@ -23,6 +25,9 @@ export class AudioManager {
   private soundVolume: number;
   private voiceVolume: number;
   private isMuted = false;
+  private duckingEnabled = true;
+  private duckRatio = 0.35;
+  private isDucking = false;
 
   private currentMusicAudio: HTMLAudioElement | null = null;
   private currentMusicTrack: string | null = null;
@@ -31,6 +36,7 @@ export class AudioManager {
   private isUnlocked = false;
   private pendingMusic: { src: string; options: PlayMusicOptions } | null = null;
   private musicFadeIntervals = new Map<HTMLAudioElement, ReturnType<typeof setInterval>>();
+  private voiceStateListeners = new Set<(isPlaying: boolean, track?: string) => void>();
   private unlockHandler: (() => void) | null = null;
   private readonly maxSoundPool = 4;
   private readonly preferLightPreload: boolean;
@@ -40,6 +46,8 @@ export class AudioManager {
     this.musicVolume = options.musicVolume ?? 0.8;
     this.soundVolume = options.soundVolume ?? 1.0;
     this.voiceVolume = options.voiceVolume ?? 1.0;
+    this.duckingEnabled = options.ducking ?? true;
+    this.duckRatio = options.duckRatio ?? 0.35;
     this.preferLightPreload =
       typeof navigator !== 'undefined' &&
       (Boolean((navigator as Navigator & { connection?: { saveData?: boolean } }).connection?.saveData) ||
@@ -242,6 +250,19 @@ export class AudioManager {
     this.soundPool = [];
   }
 
+  public onVoiceStateChange(listener: (isPlaying: boolean, track?: string) => void): () => void {
+    this.voiceStateListeners.add(listener);
+    return () => this.voiceStateListeners.delete(listener);
+  }
+
+  private notifyVoiceState(isPlaying: boolean, track?: string): void {
+    for (const listener of this.voiceStateListeners) {
+      try {
+        listener(isPlaying, track);
+      } catch {}
+    }
+  }
+
   public playVoice(src: string, volume = 1): void {
     if (typeof Audio === 'undefined') return;
 
@@ -252,8 +273,39 @@ export class AudioManager {
 
     const audio = new Audio(src);
     audio.volume = volume * this.masterVolume * this.voiceVolume;
+
+    const onEnded = () => {
+      this.unduck();
+      this.notifyVoiceState(false);
+      if (this.currentVoiceAudio === audio) {
+        this.currentVoiceAudio = null;
+      }
+    };
+
+    audio.addEventListener('ended', onEnded, { once: true });
+    audio.addEventListener('error', onEnded, { once: true });
+
     audio.play().catch(() => {});
     this.currentVoiceAudio = audio;
+
+    // Apply audio ducking to background music
+    if (this.duckingEnabled && this.currentMusicAudio && !this.isMuted) {
+      this.isDucking = true;
+      const targetVolume = this.masterVolume * this.musicVolume * this.duckRatio;
+      this.fadeVolume(this.currentMusicAudio, this.currentMusicAudio.volume, targetVolume, 200);
+    }
+
+    this.notifyVoiceState(true, src);
+  }
+
+  public unduck(): void {
+    if (this.isDucking && this.currentMusicAudio && !this.isMuted) {
+      this.isDucking = false;
+      const targetVolume = this.masterVolume * this.musicVolume;
+      this.fadeVolume(this.currentMusicAudio, this.currentMusicAudio.volume, targetVolume, 350);
+    } else {
+      this.isDucking = false;
+    }
   }
 
   public stopVoice(): void {
@@ -262,6 +314,8 @@ export class AudioManager {
       this.currentVoiceAudio.src = '';
       this.currentVoiceAudio = null;
     }
+    this.unduck();
+    this.notifyVoiceState(false);
   }
 
   public destroy(): void {
