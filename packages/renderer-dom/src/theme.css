@@ -140,16 +140,25 @@ body.kawa-fullscreen {
   transition: opacity 0.85s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* Directional wipe transitions */
+/* Directional wipe & push & zoom transitions */
 .kawa-background[data-transition="wipeleft"] .kawa-bg-layer,
-.kawa-background[data-transition="wiperight"] .kawa-bg-layer {
-  transition: opacity 0.55s ease, clip-path 0.55s cubic-bezier(0.4, 0, 0.2, 1);
+.kawa-background[data-transition="wiperight"] .kawa-bg-layer,
+.kawa-background[data-transition="wipeup"] .kawa-bg-layer,
+.kawa-background[data-transition="wipedown"] .kawa-bg-layer,
+.kawa-background[data-transition="circlewipe"] .kawa-bg-layer,
+.kawa-background[data-transition="iris"] .kawa-bg-layer,
+.kawa-background[data-transition="pushleft"] .kawa-bg-layer,
+.kawa-background[data-transition="pushright"] .kawa-bg-layer,
+.kawa-background[data-transition="pushup"] .kawa-bg-layer,
+.kawa-background[data-transition="pushdown"] .kawa-bg-layer,
+.kawa-background[data-transition="zoom"] .kawa-bg-layer,
+.kawa-background[data-transition="blur"] .kawa-bg-layer {
+  transition: opacity 0.55s ease, clip-path 0.55s cubic-bezier(0.4, 0, 0.2, 1), transform 0.55s cubic-bezier(0.4, 0, 0.2, 1), filter 0.55s ease;
 }
 
 .kawa-bg-layer.kawa-wipe-from-left {
   clip-path: inset(0 100% 0 0);
 }
-
 .kawa-bg-layer.kawa-wipe-from-left.active {
   clip-path: inset(0 0 0 0);
 }
@@ -157,9 +166,73 @@ body.kawa-fullscreen {
 .kawa-bg-layer.kawa-wipe-from-right {
   clip-path: inset(0 0 0 100%);
 }
-
 .kawa-bg-layer.kawa-wipe-from-right.active {
   clip-path: inset(0 0 0 0);
+}
+
+.kawa-bg-layer.kawa-wipe-from-up {
+  clip-path: inset(0 0 100% 0);
+}
+.kawa-bg-layer.kawa-wipe-from-up.active {
+  clip-path: inset(0 0 0 0);
+}
+
+.kawa-bg-layer.kawa-wipe-from-down {
+  clip-path: inset(100% 0 0 0);
+}
+.kawa-bg-layer.kawa-wipe-from-down.active {
+  clip-path: inset(0 0 0 0);
+}
+
+.kawa-bg-layer.kawa-wipe-circle {
+  clip-path: circle(0% at 50% 50%);
+}
+.kawa-bg-layer.kawa-wipe-circle.active {
+  clip-path: circle(120% at 50% 50%);
+}
+
+.kawa-bg-layer.kawa-push-from-left {
+  transform: translateX(-100%);
+}
+.kawa-bg-layer.kawa-push-from-left.active {
+  transform: translateX(0);
+}
+
+.kawa-bg-layer.kawa-push-from-right {
+  transform: translateX(100%);
+}
+.kawa-bg-layer.kawa-push-from-right.active {
+  transform: translateX(0);
+}
+
+.kawa-bg-layer.kawa-push-from-up {
+  transform: translateY(-100%);
+}
+.kawa-bg-layer.kawa-push-from-up.active {
+  transform: translateY(0);
+}
+
+.kawa-bg-layer.kawa-push-from-down {
+  transform: translateY(100%);
+}
+.kawa-bg-layer.kawa-push-from-down.active {
+  transform: translateY(0);
+}
+
+.kawa-bg-layer.kawa-zoom-in {
+  transform: scale(1.15);
+  filter: blur(8px);
+}
+.kawa-bg-layer.kawa-zoom-in.active {
+  transform: scale(1);
+  filter: blur(0px);
+}
+
+.kawa-bg-layer.kawa-blur-transition {
+  filter: blur(16px);
+}
+.kawa-bg-layer.kawa-blur-transition.active {
+  filter: blur(0px);
 }
 
 /* Characters Layer */

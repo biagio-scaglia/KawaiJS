@@ -793,7 +793,44 @@ label start:
     window.requestAnimationFrame = originalRaf;
     (navigator as any).getGamepads = originalGetGamepads;
   });
+
+  it('supports advanced background transitions (circlewipe, pushleft, zoom, wipeup)', () => {
+    const story = compileScript(`label start:
+    scene bg room with circlewipe
+    "Circle wipe"
+    scene bg park with pushleft
+    "Push left"
+    scene bg school with zoom
+    "Zoom"
+`);
+    const vm = new StoryVM(story);
+    const renderer = new DOMRenderer(vm, {
+      container,
+      mainMenu: { enabled: false },
+      typewriterSpeed: 0
+    });
+    vm.start();
+
+    const bgEl = container.querySelector('.kawa-background') as HTMLElement;
+    expect(bgEl.dataset.transition).toBe('circlewipe');
+
+    const activeLayer = container.querySelector('.kawa-bg-layer.active') as HTMLElement;
+    expect(activeLayer.classList.contains('kawa-wipe-circle')).toBe(true);
+
+    vm.next();
+    expect(bgEl.dataset.transition).toBe('pushleft');
+    const activePush = container.querySelector('.kawa-bg-layer.active') as HTMLElement;
+    expect(activePush.classList.contains('kawa-push-from-right')).toBe(true);
+
+    vm.next();
+    expect(bgEl.dataset.transition).toBe('zoom');
+    const activeZoom = container.querySelector('.kawa-bg-layer.active') as HTMLElement;
+    expect(activeZoom.classList.contains('kawa-zoom-in')).toBe(true);
+
+    renderer.destroy();
+  });
 });
+
 
 
 

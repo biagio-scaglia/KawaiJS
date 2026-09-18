@@ -137,20 +137,62 @@ export class StageLayerComponent {
           transitionName === 'fade' ||
           transitionName === 'dissolve' ||
           transitionName === 'wipeleft' ||
-          transitionName === 'wiperight';
+          transitionName === 'wiperight' ||
+          transitionName === 'wipeup' ||
+          transitionName === 'wipedown' ||
+          transitionName === 'circlewipe' ||
+          transitionName === 'iris' ||
+          transitionName === 'pushleft' ||
+          transitionName === 'pushright' ||
+          transitionName === 'pushup' ||
+          transitionName === 'pushdown' ||
+          transitionName === 'zoom' ||
+          transitionName === 'blur';
 
         if (crossfade) {
           const nextLayer = this.activeBgLayer === 'A' ? this.bgLayerB : this.bgLayerA;
           const curLayer = this.activeBgLayer === 'A' ? this.bgLayerA : this.bgLayerB;
 
           nextLayer.style.backgroundImage = `url("${primaryUrl}")`;
-          // Reset wipe classes then apply for this transition
-          nextLayer.classList.remove('kawa-wipe-from-left', 'kawa-wipe-from-right');
-          curLayer.classList.remove('kawa-wipe-from-left', 'kawa-wipe-from-right');
+          // Reset transition classes then apply for this transition
+          const allTransClasses = [
+            'kawa-wipe-from-left',
+            'kawa-wipe-from-right',
+            'kawa-wipe-from-up',
+            'kawa-wipe-from-down',
+            'kawa-wipe-circle',
+            'kawa-push-from-left',
+            'kawa-push-from-right',
+            'kawa-push-from-up',
+            'kawa-push-from-down',
+            'kawa-zoom-in',
+            'kawa-blur-transition'
+          ];
+          nextLayer.classList.remove(...allTransClasses);
+          curLayer.classList.remove(...allTransClasses);
+
           if (transitionName === 'wipeleft') {
             nextLayer.classList.add('kawa-wipe-from-right');
           } else if (transitionName === 'wiperight') {
             nextLayer.classList.add('kawa-wipe-from-left');
+          } else if (transitionName === 'wipeup') {
+            nextLayer.classList.add('kawa-wipe-from-down');
+          } else if (transitionName === 'wipedown') {
+            nextLayer.classList.add('kawa-wipe-from-up');
+          } else if (transitionName === 'circlewipe' || transitionName === 'iris') {
+            nextLayer.classList.add('kawa-wipe-circle');
+          } else if (transitionName === 'pushleft') {
+            nextLayer.classList.add('kawa-push-from-right');
+          } else if (transitionName === 'pushright') {
+            nextLayer.classList.add('kawa-push-from-left');
+          } else if (transitionName === 'pushup') {
+            nextLayer.classList.add('kawa-push-from-down');
+          } else if (transitionName === 'pushdown') {
+            nextLayer.classList.add('kawa-push-from-up');
+          } else if (transitionName === 'zoom') {
+            nextLayer.classList.add('kawa-zoom-in');
+          } else if (transitionName === 'blur') {
+            nextLayer.classList.add('kawa-blur-transition');
           }
 
           nextLayer.classList.add('active');
