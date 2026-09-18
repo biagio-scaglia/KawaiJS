@@ -662,4 +662,16 @@ label courtyard:
     vm.start('courtyard');
     expect(vm.getState().dialogue?.text).toBe('direct');
   });
+
+  it('seeds state variables when initialVariables option is provided', () => {
+    const code = `label start:
+    "karma is [karma]"
+`;
+    const story = compileScript(code);
+    const vm = new StoryVM(story, { initialVariables: { karma: 42 } });
+    expect(vm.getState().variables['karma']).toBe(42);
+    vm.start();
+    expect(vm.getState().dialogue?.text).toBe('karma is 42');
+  });
 });
+

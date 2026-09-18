@@ -29,6 +29,8 @@ export interface VMOptions {
   readonly maxCallDepth?: number;
   /** Hard cap on instructions executed in a single burst (prevents infinite jump loops). */
   readonly maxInstructionsPerBurst?: number;
+  /** Initial variable values seeded into the story state. */
+  readonly initialVariables?: Record<string, unknown>;
 }
 
 export class StoryVM {
@@ -41,6 +43,7 @@ export class StoryVM {
   private readonly maxSnapshots: number;
   private readonly maxCallDepth: number;
   private readonly maxInstructionsPerBurst: number;
+  private readonly initialVariables?: Record<string, unknown>;
 
   private stateChangeListeners = new Set<StateChangeListener>();
   private audioEventListeners = new Set<AudioEventListener>();
@@ -77,12 +80,26 @@ export class StoryVM {
       if (typeof saveManagerOrOptions.maxInstructionsPerBurst === 'number') {
         maxBurst = saveManagerOrOptions.maxInstructionsPerBurst;
       }
+      if (saveManagerOrOptions.initialVariables) {
+        this.initialVariables = { ...saveManagerOrOptions.initialVariables };
+      }
     }
 
+    this.applyInitialVariables();
     this.saveManager = sm ?? new SaveManager();
     this.maxSnapshots = Math.max(1, maxSnaps);
     this.maxCallDepth = Math.max(1, maxDepth);
     this.maxInstructionsPerBurst = Math.max(1, maxBurst);
+  }
+
+  private applyInitialVariables(): void {
+    if (this.initialVariables) {
+      for (const [key, value] of Object.entries(this.initialVariables)) {
+        if (isSafeKey(key)) {
+          this.state.variables[key] = value;
+        }
+      }
+    }
   }
 
   public getState(): StoryState {
@@ -177,6 +194,7 @@ export class StoryVM {
     const prevMusic = this.state.audio.music;
     this.recordTrace(`START ${startLabel}`);
     this.state = createInitialState(startLabel);
+    this.applyInitialVariables();
     this.snapshotStack = [];
     this.virtualTimeMs = 0;
     this.historyManager.clear();

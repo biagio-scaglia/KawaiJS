@@ -23,8 +23,6 @@ export function bindGamepadControls(callbacks: GamepadCallbacks): BoundGamepadCo
   let lastButtonStates = new Map<number, boolean>();
   let lastAxisDown = false;
   let lastAxisUp = false;
-  let lastActionTime = 0;
-  const DEBOUNCE_MS = 200;
 
   const poll = () => {
     if (destroyed) return;
