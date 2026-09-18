@@ -673,5 +673,103 @@ label courtyard:
     vm.start();
     expect(vm.getState().dialogue?.text).toBe('karma is 42');
   });
+
+  it('restores pendingInput across save/load so next() cannot skip the prompt', async () => {
+    const code = `label start:
+    input name "Name?"
+    "Hi [name]"
+    return
+`;
+    const story = compileScript(code);
+    const sm = new SaveManager(new MemoryStorageAdapter());
+    const vm = new StoryVM(story, { saveManager: sm });
+    vm.start();
+    expect(vm.getState().pendingInput?.variable).toBe('name');
+    await vm.save('1');
+
+    const vm2 = new StoryVM(story, { saveManager: sm });
+    expect(await vm2.load('1')).toBe(true);
+    expect(vm2.getState().pendingInput?.variable).toBe('name');
+    vm2.next();
+    expect(vm2.getState().pendingInput?.variable).toBe('name');
+    vm2.submitInput('Ada');
+    expect(vm2.getState().dialogue?.text).toBe('Hi Ada');
+  });
+
+  it('restores hotspots across save/load so next() cannot bypass them', async () => {
+    const code = `label start:
+    hotspot door 40 50 10 10 jump room
+    "skip"
+
+label room:
+    "inside"
+    return
+`;
+    const story = compileScript(code);
+    const sm = new SaveManager(new MemoryStorageAdapter());
+    const vm = new StoryVM(story, { saveManager: sm });
+    vm.start();
+    expect(vm.getState().hotspots?.length).toBe(1);
+    await vm.save('1');
+
+    const vm2 = new StoryVM(story, { saveManager: sm });
+    expect(await vm2.load('1')).toBe(true);
+    expect(vm2.getState().hotspots?.length).toBe(1);
+    vm2.next();
+    expect(vm2.getState().hotspots?.length).toBe(1);
+    vm2.selectHotspot('door');
+    expect(vm2.getState().dialogue?.text).toBe('inside');
+  });
+
+  it('jump() clears isFinished and pendingInput so playback can resume', () => {
+    const code = `label start:
+    return
+
+label extra:
+    "More"
+    return
+`;
+    const story = compileScript(code);
+    const vm = new StoryVM(story);
+    vm.start();
+    expect(vm.getState().isFinished).toBe(true);
+    vm.jump('extra');
+    expect(vm.getState().isFinished).toBe(false);
+    expect(vm.getState().dialogue?.text).toBe('More');
+  });
+
+  it('jump() away from an input prompt does not soft-lock next()', () => {
+    const code = `label start:
+    input x "?"
+    "never"
+
+label other:
+    "ok"
+    return
+`;
+    const story = compileScript(code);
+    const vm = new StoryVM(story);
+    vm.start();
+    expect(vm.getState().pendingInput).not.toBeNull();
+    vm.jump('other');
+    expect(vm.getState().pendingInput).toBeNull();
+    expect(vm.getState().dialogue?.text).toBe('ok');
+    vm.next();
+    expect(vm.getState().isFinished).toBe(true);
+  });
+
+  it('clears executionTrace on restart', () => {
+    const code = `label start:
+    "a"
+    return
+`;
+    const story = compileScript(code);
+    const vm = new StoryVM(story);
+    vm.start();
+    const lenAfterFirst = vm.getExecutionTrace().length;
+    vm.start();
+    expect(vm.getExecutionTrace().length).toBe(lenAfterFirst);
+    expect(vm.getExecutionTrace()[0]).toMatch(/^START/);
+  });
 });
 

@@ -1,6 +1,6 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import { compileScript, formatDiagnostic, KawaError } from '@kawaijs/parser';
+import { compileScript, formatDiagnostic, KawaError, validateStory } from '@kawaijs/parser';
 import { getBaseThemeCss, getInlineRuntimeScript } from '../runtime-bundle.js';
 import { loadProjectConfig, createCliFileResolver } from '../config.js';
 import { buildPwaAssets, buildPwaIconSvg, renderPwaHeadTags, renderPwaRegisterScript } from '../pwa.js';
@@ -69,6 +69,17 @@ export function buildProject(projectDir = '.', options: BuildOptions = {}): bool
       fileResolver: createCliFileResolver(rootDir, scriptPath)
     });
     storyPackage = enrichStoryPackage(storyPackage, rootDir);
+    const validation = validateStory(storyPackage);
+    if (!validation.isValid) {
+      const source = fs.readFileSync(scriptPath, 'utf-8');
+      for (const err of validation.errors) {
+        console.error(formatDiagnostic(err, source));
+      }
+      return false;
+    }
+    for (const warn of validation.warnings) {
+      console.warn(formatDiagnostic(warn, fs.readFileSync(scriptPath, 'utf-8')));
+    }
     console.log(`✅ Script compiled successfully (${Object.keys(storyPackage.labels).length} labels).`);
   } catch (err: unknown) {
     if (err instanceof KawaError) {

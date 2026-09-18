@@ -48,4 +48,37 @@ label start:
     unsubscribe();
     audio.destroy();
   });
+
+  it('queues music until unlock instead of creating Audio early', () => {
+    const OriginalAudio = globalThis.Audio;
+    let constructed = 0;
+    // @ts-expect-error test stub
+    globalThis.Audio = class {
+      loop = false;
+      volume = 1;
+      paused = true;
+      src = '';
+      preload = '';
+      constructor() {
+        constructed++;
+      }
+      play() {
+        this.paused = false;
+        return Promise.resolve();
+      }
+      pause() {
+        this.paused = true;
+      }
+      addEventListener() {}
+      removeEventListener() {}
+    };
+
+    const audio = new AudioManager();
+    // Before any gesture, playMusic must only queue — never construct HTMLAudioElement.
+    audio.playMusic('track.mp3');
+    expect(constructed).toBe(0);
+
+    audio.destroy();
+    globalThis.Audio = OriginalAudio;
+  });
 });

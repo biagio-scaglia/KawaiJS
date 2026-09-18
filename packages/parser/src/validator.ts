@@ -37,6 +37,13 @@ export function validateStory(story: StoryPackage): ValidationReport {
       severity: 'error',
       hint: `Create a 'label ${startLabel}:' block as the entry point of your visual novel.`
     });
+  } else if (startLabel.startsWith('__')) {
+    errors.push({
+      code: 'E0203',
+      message: `Start label '${startLabel}' is an internal synthetic label and cannot be used as the story entry point.`,
+      severity: 'error',
+      hint: `Set meta.startLabel to a user-defined label (e.g. 'start').`
+    });
   }
 
   let totalInstructions = 0;
@@ -145,6 +152,31 @@ function validateInstruction(
             loc: inst.loc
           });
         }
+      }
+      if (inst.fallbackLabel) {
+        referencedLabels.add(inst.fallbackLabel);
+        if (!declaredLabels.has(inst.fallbackLabel)) {
+          errors.push({
+            code: 'E0202',
+            message: `Choice fallback label '${inst.fallbackLabel}' is not defined.`,
+            severity: 'error',
+            loc: inst.loc
+          });
+        }
+      }
+      break;
+    }
+
+    case 'hotspot': {
+      referencedLabels.add(inst.targetLabel);
+      if (!declaredLabels.has(inst.targetLabel)) {
+        errors.push({
+          code: 'E0202',
+          message: `Hotspot target label '${inst.targetLabel}' is not defined.`,
+          severity: 'error',
+          loc: inst.loc,
+          hint: findClosestLabelMatch(inst.targetLabel, declaredLabels)
+        });
       }
       break;
     }

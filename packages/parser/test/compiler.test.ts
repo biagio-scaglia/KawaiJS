@@ -189,6 +189,48 @@ label next:
       expect(hotspot.targetLabel).toBe('next');
     }
   });
+
+  it('does not pick synthetic __* labels as startLabel when start is missing', () => {
+    const code = `label intro:
+    if true:
+        "yes"
+    "after"
+`;
+    const story = compileScript(code);
+    expect(story.meta.startLabel).toBe('intro');
+    expect(story.meta.startLabel?.startsWith('__')).toBe(false);
+  });
+
+  it('rejects empty scripts with no labels', () => {
+    expect(() => compileScript('\n\n')).toThrow(KawaError);
+  });
+
+  it('rejects nested label/character/define declarations', () => {
+    expect(() =>
+      compileScript(`label start:
+    label inner:
+        "hello"
+    "outer"
+`)
+    ).toThrow(/Nested label/);
+
+    expect(() =>
+      compileScript(`label start:
+    character x "X"
+    "hi"
+`)
+    ).toThrow(/Nested character/);
+  });
+
+  it('rejects duplicate character declarations', () => {
+    expect(() =>
+      compileScript(`character yumia "First"
+character yumia "Second"
+label start:
+    "hi"
+`)
+    ).toThrow(/Duplicate character/);
+  });
 });
 
 

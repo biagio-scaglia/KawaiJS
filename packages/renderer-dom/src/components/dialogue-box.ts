@@ -74,8 +74,11 @@ export class DialogueBoxComponent {
     onComplete?: () => void
   ): void {
     if (!dialogue) {
+      this.stopTypewriter();
       this.el.style.display = 'none';
       this.announceEl.textContent = '';
+      this.indicatorEl.style.opacity = '0';
+      this.el.setAttribute('aria-busy', 'false');
       return;
     }
 
@@ -112,7 +115,9 @@ export class DialogueBoxComponent {
       this.isTypewriting = false;
       this.indicatorEl.style.opacity = '1';
       this.announceFinishedLine(dialogue);
-      this.onTypewriterComplete?.();
+      const complete = this.onTypewriterComplete;
+      this.onTypewriterComplete = undefined;
+      complete?.();
     } else {
       this.startTypewriter(this.fullCurrentText, dialogue);
     }
@@ -120,10 +125,7 @@ export class DialogueBoxComponent {
 
   public finishTypewriter(): void {
     if (!this.isTypewriting) return;
-    if (this.typewriterInterval) {
-      clearInterval(this.typewriterInterval);
-      this.typewriterInterval = null;
-    }
+    this.stopTypewriterIntervalOnly();
     this.isTypewriting = false;
     this.dialogueTextEl.innerHTML = formatRichText(this.fullCurrentText);
     this.indicatorEl.style.opacity = '1';
@@ -132,7 +134,9 @@ export class DialogueBoxComponent {
       speakerDisplayName: speaker,
       text: this.fullCurrentText
     });
-    this.onTypewriterComplete?.();
+    const complete = this.onTypewriterComplete;
+    this.onTypewriterComplete = undefined;
+    complete?.();
   }
 
   private announceFinishedLine(dialogue: {
@@ -180,10 +184,21 @@ export class DialogueBoxComponent {
     void dialogue;
   }
 
-  public destroy(): void {
+  /** Clear interval + completion callback without announcing (used when hiding the box). */
+  private stopTypewriter(): void {
+    this.stopTypewriterIntervalOnly();
+    this.isTypewriting = false;
+    this.onTypewriterComplete = undefined;
+  }
+
+  private stopTypewriterIntervalOnly(): void {
     if (this.typewriterInterval) {
       clearInterval(this.typewriterInterval);
       this.typewriterInterval = null;
     }
+  }
+
+  public destroy(): void {
+    this.stopTypewriter();
   }
 }

@@ -6,7 +6,17 @@ import { trapFocus } from '../utils/focus-trap.js';
 
 function sanitizeUrl(url: string): string {
   const trimmed = (url || '').trim();
-  if (/^(https?:|data:|\/|\.\/)/i.test(trimmed)) return trimmed;
+  // Allow http(s), root-relative, and same-dir relative paths.
+  if (/^(https?:|\/|\.\/)/i.test(trimmed)) {
+    return trimmed.replace(/["'<>\\]/g, '');
+  }
+  // Only image data URLs — block data:text/html and similar XSS vectors.
+  if (/^data:image\//i.test(trimmed)) {
+    return trimmed;
+  }
+  if (/^data:/i.test(trimmed)) {
+    return '';
+  }
   // Relative asset paths — strip quotes/parentheses that break CSS/HTML attrs
   return trimmed.replace(/["'()<>\\]/g, '');
 }

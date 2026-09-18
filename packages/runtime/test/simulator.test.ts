@@ -94,4 +94,21 @@ label final_check:
     const badEnding = result.endings.find(e => e.finalState.variables.karma === -10);
     expect(badEnding).toBeDefined();
   });
+
+  it('explores hotspot branches instead of soft-locking', () => {
+    const script = `
+label start:
+    hotspot door 40 50 10 10 jump room
+    "skip"
+
+label room:
+    "inside"
+    return
+`;
+    const story = compileScript(script);
+    const result = simulateStory(story, { maxStepsPerPath: 20 });
+    expect(result.errors).toHaveLength(0);
+    expect(result.visitedLabels.has('room')).toBe(true);
+    expect(result.totalPaths).toBeGreaterThanOrEqual(1);
+  });
 });

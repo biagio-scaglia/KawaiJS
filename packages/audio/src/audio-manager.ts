@@ -128,6 +128,7 @@ export class AudioManager {
 
   public setSoundVolume(val: number): void {
     this.soundVolume = Math.max(0, Math.min(1, val));
+    this.updateActiveVolumes();
   }
 
   public setVoiceVolume(val: number): void {
@@ -144,6 +145,7 @@ export class AudioManager {
 
     if (!this.isUnlocked) {
       this.pendingMusic = { src, options };
+      return;
     }
 
     const fadein = options.fadein ?? 0;
@@ -413,10 +415,20 @@ export class AudioManager {
 
   private updateActiveVolumes(): void {
     if (this.currentMusicAudio) {
-      this.currentMusicAudio.volume = this.isMuted ? 0 : this.masterVolume * this.musicVolume;
+      const duckMul = this.isDucking && !this.isMuted ? this.duckRatio : 1;
+      this.currentMusicAudio.volume = this.isMuted
+        ? 0
+        : this.masterVolume * this.musicVolume * duckMul;
     }
     if (this.currentVoiceAudio) {
       this.currentVoiceAudio.volume = this.isMuted ? 0 : this.masterVolume * this.voiceVolume;
+    }
+    for (const sfx of this.soundPool) {
+      try {
+        sfx.volume = this.isMuted ? 0 : this.masterVolume * this.soundVolume;
+      } catch {
+        /* ignore detached elements */
+      }
     }
   }
 }

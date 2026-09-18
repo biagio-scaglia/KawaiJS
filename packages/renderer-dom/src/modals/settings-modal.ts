@@ -1,5 +1,6 @@
 import { SVG_ICONS } from '../icons.js';
 import { trapFocus } from '../utils/focus-trap.js';
+import { escapeHtml } from '../utils/rich-text.js';
 
 export interface SettingsModalOptions {
   typewriterSpeed: number;
@@ -189,9 +190,11 @@ export function showSettingsModal(rootEl: HTMLElement, options: SettingsModalOpt
     const langRow = document.createElement('div');
     langRow.className = 'kawa-setting-row';
     const langOptionsHtml = options.availableLangs
-      .map(
-        (l) => `<option value="${l}" ${l === currentLang ? 'selected' : ''}>${l.toUpperCase()}</option>`
-      )
+      .map((l) => {
+        const safeValue = escapeHtml(l);
+        const safeLabel = escapeHtml(l.toUpperCase());
+        return `<option value="${safeValue}" ${l === currentLang ? 'selected' : ''}>${safeLabel}</option>`;
+      })
       .join('');
     langRow.innerHTML = `
       <div class="kawa-setting-header">

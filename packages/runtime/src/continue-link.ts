@@ -66,10 +66,8 @@ export function compactSaveForContinueLink(slot: SaveSlot, includeHistory = true
       id: slot.snapshot.id,
       timestamp: slot.snapshot.timestamp,
       state: slot.snapshot.state,
-      historyLength:
-        typeof slot.snapshot.historyLength === 'number'
-          ? slot.snapshot.historyLength
-          : history.length
+      // historyLength must match the entries we actually keep in the payload
+      historyLength: history.length
     },
     previewText: slot.previewText,
     historyEntries: history

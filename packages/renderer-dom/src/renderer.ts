@@ -699,7 +699,14 @@ export class DOMRenderer {
 
       const modal = this.rootEl.querySelector('.kawa-modal-overlay');
       if (modal) {
-        if (e.key === 'Escape') modal.remove();
+        if (e.key === 'Escape') {
+          e.preventDefault();
+          // Input prompts must not be dismissed — that soft-locks pendingInput.
+          if (modal.classList.contains('kawa-input-overlay')) {
+            return;
+          }
+          modal.remove();
+        }
         return;
       }
 
@@ -994,12 +1001,13 @@ export class DOMRenderer {
       this.stageLayer.setSpeakingCharacter(state.dialogue?.speaker ?? null);
       this.dialogueBox.render(state.dialogue, () => {
         this.stageLayer.setSpeakingCharacter(null);
+        if (this.destroyed || !this.isAutoMode) return;
+        const live = this.vm.getState();
         if (
-          this.isAutoMode &&
-          !state.isFinished &&
-          (!state.choices || state.choices.length === 0) &&
-          (!state.hotspots || state.hotspots.length === 0) &&
-          !state.pendingInput
+          !live.isFinished &&
+          (!live.choices || live.choices.length === 0) &&
+          (!live.hotspots || live.hotspots.length === 0) &&
+          !live.pendingInput
         ) {
           this.scheduleAutoAdvance();
         }

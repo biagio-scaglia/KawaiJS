@@ -247,4 +247,16 @@ label mistyped_label:
     expect(report.warnings.length).toBeGreaterThan(0);
     expect(report.warnings[0]?.message).toContain("Character 'unknown_char' used in dialogue is not declared");
   });
+
+  it('flags invalid hotspot jump targets via validateScript', () => {
+    const report = validateScript(
+      `label start:
+    hotspot door 40 50 10 10 jump nowhere
+    "hi"
+`,
+      'test.kawa'
+    );
+    expect(report.isValid).toBe(false);
+    expect(report.errors.some((e) => e.message.includes('nowhere'))).toBe(true);
+  });
 });

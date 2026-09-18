@@ -85,6 +85,12 @@ export class StageLayerComponent {
     return /\.(webm|mp4|m4v|ogg|ogv)$/i.test(path) || path.startsWith('video:');
   }
 
+  /** Safe CSS `url("...")` value — escapes quotes/backslashes that break background-image. */
+  private cssUrl(url: string): string {
+    const safe = String(url ?? '').replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+    return `url("${safe}")`;
+  }
+
   public updateBackground(background: string | null | undefined, transition: string | null | undefined): void {
     if (!background) {
       this.currentBgUrl = '';
@@ -155,7 +161,7 @@ export class StageLayerComponent {
           const nextLayer = this.activeBgLayer === 'A' ? this.bgLayerB : this.bgLayerA;
           const curLayer = this.activeBgLayer === 'A' ? this.bgLayerA : this.bgLayerB;
 
-          nextLayer.style.backgroundImage = `url("${primaryUrl}")`;
+          nextLayer.style.backgroundImage = this.cssUrl(primaryUrl);
           // Reset transition classes then apply for this transition
           const allTransClasses = [
             'kawa-wipe-from-left',
@@ -206,7 +212,7 @@ export class StageLayerComponent {
           this.activeBgLayer = this.activeBgLayer === 'A' ? 'B' : 'A';
         } else {
           const curLayer = this.activeBgLayer === 'A' ? this.bgLayerA : this.bgLayerB;
-          curLayer.style.backgroundImage = `url("${primaryUrl}")`;
+          curLayer.style.backgroundImage = this.cssUrl(primaryUrl);
           curLayer.classList.add('active');
         }
       }
@@ -232,7 +238,8 @@ export class StageLayerComponent {
     for (const [id, entry] of this.activeCharacters.entries()) {
       if (!presentChars.has(id)) {
         entry.div.style.opacity = '0';
-        entry.div.style.transform = `translateY(20px)`;
+        // Preserve horizontal centering from .kawa-pos-* while fading out.
+        entry.div.style.transform = 'translateX(-50%) translateY(20px)';
         const timer = setTimeout(() => {
           entry.div.remove();
           this.pendingRemovals.delete(id);
@@ -379,7 +386,7 @@ export class StageLayerComponent {
           this.cgVideoEl.remove();
           this.cgVideoEl = null;
         }
-        this.cgEl.style.backgroundImage = `url("${url}")`;
+        this.cgEl.style.backgroundImage = this.cssUrl(url);
       }
       this.cgEl.style.display = 'block';
     }
@@ -428,5 +435,15 @@ export class StageLayerComponent {
     }
     this.pendingRemovals.clear();
     this.activeCharacters.clear();
+    if (this.bgVideoEl) {
+      this.bgVideoEl.pause();
+      this.bgVideoEl.remove();
+      this.bgVideoEl = null;
+    }
+    if (this.cgVideoEl) {
+      this.cgVideoEl.pause();
+      this.cgVideoEl.remove();
+      this.cgVideoEl = null;
+    }
   }
 }

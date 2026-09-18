@@ -863,6 +863,69 @@ label start:
 
     renderer.destroy();
   });
+
+  it('stops typewriter when dialogue is hidden (choices / window hide)', async () => {
+    const story = compileScript(`label start:
+    "Long line that would type"
+    menu:
+        "A":
+            "picked"
+        "B":
+            "other"
+`);
+    const vm = new StoryVM(story);
+    const renderer = new DOMRenderer(vm, {
+      container,
+      mainMenu: { enabled: false },
+      typewriterSpeed: 50
+    });
+    vm.start();
+    expect(container.querySelector('.kawa-dialogue-box')).not.toBeNull();
+    vm.next();
+    expect(vm.getState().choices?.length).toBe(2);
+    const dialogueEl = container.querySelector('.kawa-dialogue-box') as HTMLElement;
+    expect(dialogueEl.style.display).toBe('none');
+    // Stale typewriter must not re-show text after hide
+    await new Promise((r) => setTimeout(r, 120));
+    expect(dialogueEl.style.display).toBe('none');
+    renderer.destroy();
+  });
+
+  it('DialogueBoxComponent clears typewriter interval on render(null)', async () => {
+    const box = new DialogueBoxComponent(20);
+    document.body.appendChild(box.el);
+    let completed = 0;
+    box.render({ text: 'Hello world this is long' }, () => {
+      completed++;
+    });
+    expect(box.getIsTypewriting()).toBe(true);
+    box.render(null);
+    expect(box.getIsTypewriting()).toBe(false);
+    await new Promise((r) => setTimeout(r, 80));
+    expect(completed).toBe(0);
+    box.destroy();
+    box.el.remove();
+  });
+
+  it('does not dismiss input modal on Escape', () => {
+    const story = compileScript(`label start:
+    input name "Name?"
+    "Hi [name]"
+`);
+    const vm = new StoryVM(story);
+    const renderer = new DOMRenderer(vm, {
+      container,
+      mainMenu: { enabled: false },
+      typewriterSpeed: 0
+    });
+    vm.start();
+    expect(container.querySelector('.kawa-input-overlay')).not.toBeNull();
+
+    window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    expect(container.querySelector('.kawa-input-overlay')).not.toBeNull();
+    expect(vm.getState().pendingInput?.variable).toBe('name');
+    renderer.destroy();
+  });
 });
 
 

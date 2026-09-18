@@ -141,6 +141,29 @@ export function simulateStory(story: StoryPackage, options: SimulateStoryOptions
           }
           break;
         }
+      } else if (state.hotspots && state.hotspots.length > 0) {
+        // Fork into each hotspot path (same exploration model as choices).
+        if (choiceCursor < item.choiceIndicesToTake.length) {
+          const chosenIdx = item.choiceIndicesToTake[choiceCursor]!;
+          const hotspot = state.hotspots[chosenIdx] ?? state.hotspots[0]!;
+          recordedChoices.push({
+            selectedIndex: chosenIdx,
+            selectedText: `hotspot:${hotspot.id}`
+          });
+          choiceCursor++;
+          vm.selectHotspot(hotspot.id);
+        } else {
+          for (let i = 0; i < state.hotspots.length; i++) {
+            queue.push({
+              choicePath: [...recordedChoices],
+              choiceIndicesToTake: [...item.choiceIndicesToTake, i]
+            });
+          }
+          break;
+        }
+      } else if (state.pendingInput) {
+        // Deterministic placeholder so input prompts do not soft-lock the explorer.
+        vm.submitInput('sim');
       } else {
         vm.next();
       }

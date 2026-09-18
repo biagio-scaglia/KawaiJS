@@ -160,6 +160,50 @@ export function normalizeStoryState(raw: unknown): StoryState | null {
       ? (visualRaw['characters'] as Record<string, CharacterState>)
       : {};
 
+  const pendingInputRaw =
+    s['pendingInput'] && typeof s['pendingInput'] === 'object'
+      ? (s['pendingInput'] as Record<string, unknown>)
+      : null;
+  const pendingInput =
+    pendingInputRaw &&
+    typeof pendingInputRaw['variable'] === 'string' &&
+    typeof pendingInputRaw['prompt'] === 'string'
+      ? {
+          variable: pendingInputRaw['variable'] as string,
+          prompt: pendingInputRaw['prompt'] as string
+        }
+      : null;
+
+  const hotspots = Array.isArray(s['hotspots'])
+    ? (s['hotspots'] as HotspotOption[]).filter(
+        (h): h is HotspotOption =>
+          !!h &&
+          typeof h === 'object' &&
+          typeof h.id === 'string' &&
+          typeof h.targetLabel === 'string' &&
+          typeof h.x === 'number' &&
+          typeof h.y === 'number' &&
+          typeof h.w === 'number' &&
+          typeof h.h === 'number'
+      )
+    : null;
+
+  const choices = Array.isArray(s['choices']) ? (s['choices'] as ChoiceOption[]) : null;
+
+  // Keep wait flag consistent with recoverable interactive state.
+  let isWaitingForInput = Boolean(s['isWaitingForInput']);
+  if (isWaitingForInput && !pendingInput && !hotspots && (!choices || choices.length === 0)) {
+    // Dialogue waits are fine without choices/input/hotspots; only clear when the saved
+    // blob claimed a wait but all interactive payloads were corrupt/missing AND there is
+    // no dialogue either (corrupt save mid-input with stripped fields).
+    if (!dialogueRaw || typeof dialogueRaw['text'] !== 'string') {
+      isWaitingForInput = false;
+    }
+  }
+  if (pendingInput || (hotspots && hotspots.length > 0) || (choices && choices.length > 0)) {
+    isWaitingForInput = true;
+  }
+
   return {
     currentLabel: s['currentLabel'] as string,
     instructionPointer: s['instructionPointer'] as number,
@@ -191,8 +235,8 @@ export function normalizeStoryState(raw: unknown): StoryState | null {
           text: dialogueRaw['text'] as string
         }
       : null,
-    choices: Array.isArray(s['choices']) ? (s['choices'] as ChoiceOption[]) : null,
-    hotspots: null, // never restore mid-hotspot from saves
+    choices,
+    hotspots: hotspots && hotspots.length > 0 ? hotspots : null,
     theme: typeof s['theme'] === 'string' ? s['theme'] : null,
     styleClasses:
       s['styleClasses'] && typeof s['styleClasses'] === 'object'
@@ -208,9 +252,9 @@ export function normalizeStoryState(raw: unknown): StoryState | null {
         : Object.create(null),
     lang: typeof s['lang'] === 'string' ? s['lang'] : null,
     pendingPauseMs: typeof s['pendingPauseMs'] === 'number' ? s['pendingPauseMs'] : null,
-    pendingInput: null, // never restore mid-prompt from saves
+    pendingInput,
     windowVisible: s['windowVisible'] === false ? false : true,
-    isWaitingForInput: Boolean(s['isWaitingForInput']),
+    isWaitingForInput,
     isFinished: Boolean(s['isFinished'])
   };
 }

@@ -67,6 +67,10 @@ export function showInputModal(
     if (e.key === 'Enter') {
       e.preventDefault();
       submit();
+    } else if (e.key === 'Escape') {
+      // Keep modal open — dismissing would soft-lock the VM pendingInput wait.
+      e.preventDefault();
+      e.stopPropagation();
     }
   });
 

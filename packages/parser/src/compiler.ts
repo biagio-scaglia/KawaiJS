@@ -40,6 +40,14 @@ export class Compiler {
     // 1. First pass: Collect character / define declarations and label bodies
     for (const stmt of flattenedStatements) {
       if (stmt.type === 'CharacterDecl') {
+        if (characters[stmt.id]) {
+          throw new KawaError({
+            code: 'E0208',
+            message: `Duplicate character declaration '${stmt.id}'`,
+            severity: 'error',
+            loc: stmt.loc
+          });
+        }
         characters[stmt.id] = {
           id: stmt.id,
           name: stmt.displayName,
@@ -73,11 +81,25 @@ export class Compiler {
       this.validateLabelReferences(labels);
     }
 
+    const userLabels = Object.keys(labels).filter((l) => !l.startsWith('__'));
+    if (userLabels.length === 0) {
+      throw new KawaError({
+        code: 'E0203',
+        message: 'Story has no labels to start from. Declare at least one `label`.',
+        severity: 'error',
+        loc: this.program.loc
+      });
+    }
+
+    // Prefer `start`, otherwise the first *user* label. Synthetic `__*` labels must never
+    // become the entrypoint (they are inserted while compiling menu/if bodies).
+    const startLabel = labels['start'] ? 'start' : userLabels[0]!;
+
     return {
       meta: {
         title: 'Kawaijs Visual Novel',
         version: '0.1.0',
-        startLabel: labels['start'] ? 'start' : Object.keys(labels)[0]
+        startLabel
       },
       characters,
       defines: { ...this.defines },
@@ -504,9 +526,20 @@ export class Compiler {
 
         case 'CharacterDecl':
         case 'DefineDecl':
-        case 'LabelDecl':
-          // Declarations belong at top level; ignore if nested.
-          break;
+        case 'LabelDecl': {
+          const kind =
+            stmt.type === 'CharacterDecl'
+              ? 'character'
+              : stmt.type === 'DefineDecl'
+                ? 'define'
+                : 'label';
+          throw new KawaError({
+            code: 'E0209',
+            message: `Nested ${kind} declaration is not allowed inside a label body. Move it to the top level.`,
+            severity: 'error',
+            loc: stmt.loc
+          });
+        }
       }
     }
 
@@ -517,26 +550,45 @@ export class Compiler {
     const knownLabels = new Set(Object.keys(labels));
     const userLabels = Array.from(knownLabels).filter(l => !l.startsWith('__'));
 
+    const assertKnown = (
+      targetLabel: string,
+      kind: string,
+      labelName: string,
+      loc: Instruction['loc']
+    ): void => {
+      if (knownLabels.has(targetLabel)) return;
+
+      const closestLabel = closestMatch(targetLabel, userLabels, 3);
+      let hint = `Available labels: ${userLabels.join(', ') || '(none)'}`;
+      if (closestLabel) {
+        hint = `Did you mean '${closestLabel}'?\n     Available labels: ${userLabels.join(', ')}`;
+      }
+
+      throw new KawaError({
+        code: 'E0202',
+        message: `Unknown label '${targetLabel}' referenced by ${kind} in '${labelName.startsWith('__') ? 'block' : labelName}'`,
+        severity: 'error',
+        loc,
+        hint
+      });
+    };
+
     for (const [labelName, instructions] of Object.entries(labels)) {
       for (const inst of instructions) {
-        if (
-          (inst.type === 'jump' || inst.type === 'call' || inst.type === 'hotspot') &&
-          !knownLabels.has(inst.targetLabel)
-        ) {
-          const closestLabel = closestMatch(inst.targetLabel, userLabels, 3);
-
-          let hint = `Available labels: ${userLabels.join(', ') || '(none)'}`;
-          if (closestLabel) {
-            hint = `Did you mean '${closestLabel}'?\n     Available labels: ${userLabels.join(', ')}`;
+        if (inst.type === 'jump' || inst.type === 'call' || inst.type === 'hotspot') {
+          assertKnown(inst.targetLabel, inst.type, labelName, inst.loc);
+        } else if (inst.type === 'branch') {
+          assertKnown(inst.thenLabel, 'branch', labelName, inst.loc);
+          if (inst.elseLabel) {
+            assertKnown(inst.elseLabel, 'branch', labelName, inst.loc);
           }
-
-          throw new KawaError({
-            code: 'E0202',
-            message: `Unknown label '${inst.targetLabel}' referenced by ${inst.type} in '${labelName.startsWith('__') ? 'block' : labelName}'`,
-            severity: 'error',
-            loc: inst.loc,
-            hint
-          });
+        } else if (inst.type === 'choice') {
+          for (const choice of inst.choices) {
+            assertKnown(choice.targetLabel, 'choice', labelName, inst.loc);
+          }
+          if (inst.fallbackLabel) {
+            assertKnown(inst.fallbackLabel, 'choice', labelName, inst.loc);
+          }
         }
       }
     }

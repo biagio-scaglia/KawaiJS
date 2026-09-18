@@ -192,6 +192,7 @@ export class StoryVM {
     }
 
     const prevMusic = this.state.audio.music;
+    this.executionTrace = [];
     this.recordTrace(`START ${startLabel}`);
     this.state = createInitialState(startLabel);
     this.applyInitialVariables();
@@ -358,8 +359,10 @@ export class StoryVM {
       instructionPointer: 0,
       choices: null,
       hotspots: null,
+      pendingInput: null,
       pendingPauseMs: null,
-      isWaitingForInput: false
+      isWaitingForInput: false,
+      isFinished: false
     };
 
     this.executeUntilWaiting();
@@ -445,10 +448,11 @@ export class StoryVM {
       ...slot.snapshot,
       historyLength:
         typeof slot.snapshot.historyLength === 'number'
-          ? slot.snapshot.historyLength
+          ? Math.min(slot.snapshot.historyLength, restoredHistory.length)
           : restoredHistory.length
     };
     this.snapshotStack = [snap];
+    this.virtualTimeMs = 0;
     this.recordTrace(traceLabel);
     this.resyncAudio(prevMusic);
     this.notifyStateChanged();
@@ -463,19 +467,27 @@ export class StoryVM {
     this.emitAudioEvent({ action: 'stop', channel: 'sound' });
 
     const nextMusic = this.state.audio.music;
-    if (previousMusic === nextMusic) {
-      return;
+    if (previousMusic !== nextMusic) {
+      if (nextMusic) {
+        this.emitAudioEvent({
+          action: 'play',
+          channel: 'music',
+          track: nextMusic,
+          loop: true
+        });
+      } else {
+        this.emitAudioEvent({ action: 'stop', channel: 'music' });
+      }
     }
 
-    if (nextMusic) {
+    // Voice is always stopped above; replay from restored state when present.
+    const nextVoice = this.state.audio.voice;
+    if (nextVoice) {
       this.emitAudioEvent({
         action: 'play',
-        channel: 'music',
-        track: nextMusic,
-        loop: true
+        channel: 'voice',
+        track: nextVoice
       });
-    } else {
-      this.emitAudioEvent({ action: 'stop', channel: 'music' });
     }
   }
 
@@ -876,6 +888,14 @@ export class StoryVM {
               music: inst.track
             }
           };
+        } else if (inst.channel === 'voice') {
+          this.state = {
+            ...this.state,
+            audio: {
+              ...this.state.audio,
+              voice: inst.track
+            }
+          };
         }
         break;
       }
@@ -893,6 +913,14 @@ export class StoryVM {
             audio: {
               ...this.state.audio,
               music: null
+            }
+          };
+        } else if (inst.channel === 'voice') {
+          this.state = {
+            ...this.state,
+            audio: {
+              ...this.state.audio,
+              voice: null
             }
           };
         }
@@ -1098,6 +1126,10 @@ export class StoryVM {
     this.snapshotStack.push(snap);
     if (this.snapshotStack.length > this.maxSnapshots) {
       this.snapshotStack.shift();
+      const oldest = this.snapshotStack[0];
+      if (oldest && typeof oldest.historyLength === 'number') {
+        this.historyManager.trimTo(oldest.historyLength);
+      }
     }
   }
 

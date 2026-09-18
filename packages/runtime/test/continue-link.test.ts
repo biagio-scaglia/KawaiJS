@@ -62,4 +62,26 @@ label next:
     expect(bad.success).toBe(false);
     expect(bad.reason).toBe('incompatible_story');
   });
+
+  it('aligns historyLength with kept historyEntries when history is stripped', async () => {
+    const story = compileScript(script);
+    const vm = new StoryVM(story);
+    vm.start();
+    const slot = await vm.save('1');
+    const withFakeHistory = {
+      ...slot,
+      historyEntries: Array.from({ length: 50 }, (_, i) => ({
+        id: `h${i}`,
+        text: `line ${i}`,
+        timestamp: i
+      })),
+      snapshot: {
+        ...slot.snapshot,
+        historyLength: 50
+      }
+    };
+    const compact = compactSaveForContinueLink(withFakeHistory, false);
+    expect(compact.historyEntries).toEqual([]);
+    expect(compact.snapshot.historyLength).toBe(0);
+  });
 });
