@@ -3,4 +3,6 @@ export * from './history.js';
 export * from './save.js';
 export * from './continue-link.js';
 export * from './evaluator.js';
+export * from './simulator.js';
 export * from './vm.js';
+
