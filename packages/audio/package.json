@@ -1,6 +1,6 @@
 {
   "name": "@kawaijs/audio",
-  "version": "0.1.14",
+  "version": "0.1.15",
   "description": "Multi-channel HTMLAudio music, SFX, and voice management for Kawaijs visual novels",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -34,7 +34,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@kawaijs/runtime": "^0.1.14"
+    "@kawaijs/runtime": "^0.1.15"
   },
   "keywords": [
     "kawaijs",
