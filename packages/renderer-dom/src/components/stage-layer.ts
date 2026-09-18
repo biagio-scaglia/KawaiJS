@@ -78,6 +78,13 @@ export class StageLayerComponent {
     this.stageEl.appendChild(this.modeBadgeEl);
   }
 
+  private bgVideoEl: HTMLVideoElement | null = null;
+  private cgVideoEl: HTMLVideoElement | null = null;
+
+  private isVideoPath(path: string): boolean {
+    return /\.(webm|mp4|m4v|ogg|ogv)$/i.test(path) || path.startsWith('video:');
+  }
+
   public updateBackground(background: string | null | undefined, transition: string | null | undefined): void {
     if (!background) {
       this.currentBgUrl = '';
@@ -85,45 +92,76 @@ export class StageLayerComponent {
       this.bgLayerB.style.backgroundImage = '';
       this.bgLayerA.classList.remove('active');
       this.bgLayerB.classList.remove('active');
+      if (this.bgVideoEl) {
+        this.bgVideoEl.pause();
+        this.bgVideoEl.remove();
+        this.bgVideoEl = null;
+      }
       return;
     }
 
     const transitionName = (transition ?? 'none').toLowerCase();
     this.backgroundEl.dataset.transition = transitionName;
-    const cleanBg = background.replace(/^bg[\s_]+/i, '').trim();
+    const cleanBg = background.replace(/^bg[\s_]+/i, '').replace(/^video:[\s_]*/i, '').trim();
+    const isVideo = this.isVideoPath(background);
     const primaryUrl = this.assetResolver(cleanBg, 'background');
 
     if (primaryUrl !== this.currentBgUrl) {
       this.currentBgUrl = primaryUrl;
 
-      const crossfade =
-        transitionName === 'fade' ||
-        transitionName === 'dissolve' ||
-        transitionName === 'wipeleft' ||
-        transitionName === 'wiperight';
-
-      if (crossfade) {
-        const nextLayer = this.activeBgLayer === 'A' ? this.bgLayerB : this.bgLayerA;
-        const curLayer = this.activeBgLayer === 'A' ? this.bgLayerA : this.bgLayerB;
-
-        nextLayer.style.backgroundImage = `url("${primaryUrl}")`;
-        // Reset wipe classes then apply for this transition
-        nextLayer.classList.remove('kawa-wipe-from-left', 'kawa-wipe-from-right');
-        curLayer.classList.remove('kawa-wipe-from-left', 'kawa-wipe-from-right');
-        if (transitionName === 'wipeleft') {
-          nextLayer.classList.add('kawa-wipe-from-right');
-        } else if (transitionName === 'wiperight') {
-          nextLayer.classList.add('kawa-wipe-from-left');
+      if (isVideo) {
+        // Video Background
+        this.bgLayerA.classList.remove('active');
+        this.bgLayerB.classList.remove('active');
+        if (!this.bgVideoEl) {
+          this.bgVideoEl = document.createElement('video');
+          this.bgVideoEl.className = 'kawa-bg-video';
+          this.bgVideoEl.autoplay = true;
+          this.bgVideoEl.loop = true;
+          this.bgVideoEl.muted = true;
+          this.bgVideoEl.playsInline = true;
+          this.bgVideoEl.setAttribute('aria-hidden', 'true');
+          this.backgroundEl.appendChild(this.bgVideoEl);
+        }
+        this.bgVideoEl.src = primaryUrl;
+        this.bgVideoEl.play().catch(() => {});
+      } else {
+        // Static Image Background
+        if (this.bgVideoEl) {
+          this.bgVideoEl.pause();
+          this.bgVideoEl.remove();
+          this.bgVideoEl = null;
         }
 
-        nextLayer.classList.add('active');
-        curLayer.classList.remove('active');
+        const crossfade =
+          transitionName === 'fade' ||
+          transitionName === 'dissolve' ||
+          transitionName === 'wipeleft' ||
+          transitionName === 'wiperight';
 
-        this.activeBgLayer = this.activeBgLayer === 'A' ? 'B' : 'A';
-      } else {
-        const curLayer = this.activeBgLayer === 'A' ? this.bgLayerA : this.bgLayerB;
-        curLayer.style.backgroundImage = `url("${primaryUrl}")`;
-        curLayer.classList.add('active');
+        if (crossfade) {
+          const nextLayer = this.activeBgLayer === 'A' ? this.bgLayerB : this.bgLayerA;
+          const curLayer = this.activeBgLayer === 'A' ? this.bgLayerA : this.bgLayerB;
+
+          nextLayer.style.backgroundImage = `url("${primaryUrl}")`;
+          // Reset wipe classes then apply for this transition
+          nextLayer.classList.remove('kawa-wipe-from-left', 'kawa-wipe-from-right');
+          curLayer.classList.remove('kawa-wipe-from-left', 'kawa-wipe-from-right');
+          if (transitionName === 'wipeleft') {
+            nextLayer.classList.add('kawa-wipe-from-right');
+          } else if (transitionName === 'wiperight') {
+            nextLayer.classList.add('kawa-wipe-from-left');
+          }
+
+          nextLayer.classList.add('active');
+          curLayer.classList.remove('active');
+
+          this.activeBgLayer = this.activeBgLayer === 'A' ? 'B' : 'A';
+        } else {
+          const curLayer = this.activeBgLayer === 'A' ? this.bgLayerA : this.bgLayerB;
+          curLayer.style.backgroundImage = `url("${primaryUrl}")`;
+          curLayer.classList.add('active');
+        }
       }
     }
   }
@@ -265,9 +303,37 @@ export class StageLayerComponent {
     if (!cgPath) {
       this.cgEl.style.display = 'none';
       this.cgEl.style.backgroundImage = '';
+      if (this.cgVideoEl) {
+        this.cgVideoEl.pause();
+        this.cgVideoEl.remove();
+        this.cgVideoEl = null;
+      }
     } else {
-      const url = this.assetResolver(cgPath, 'background');
-      this.cgEl.style.backgroundImage = `url("${url}")`;
+      const isVideo = this.isVideoPath(cgPath);
+      const cleanCg = cgPath.replace(/^video:[\s_]*/i, '').trim();
+      const url = this.assetResolver(cleanCg, 'background');
+
+      if (isVideo) {
+        this.cgEl.style.backgroundImage = '';
+        if (!this.cgVideoEl) {
+          this.cgVideoEl = document.createElement('video');
+          this.cgVideoEl.className = 'kawa-cg-video';
+          this.cgVideoEl.autoplay = true;
+          this.cgVideoEl.loop = true;
+          this.cgVideoEl.muted = true;
+          this.cgVideoEl.playsInline = true;
+          this.cgEl.appendChild(this.cgVideoEl);
+        }
+        this.cgVideoEl.src = url;
+        this.cgVideoEl.play().catch(() => {});
+      } else {
+        if (this.cgVideoEl) {
+          this.cgVideoEl.pause();
+          this.cgVideoEl.remove();
+          this.cgVideoEl = null;
+        }
+        this.cgEl.style.backgroundImage = `url("${url}")`;
+      }
       this.cgEl.style.display = 'block';
     }
   }

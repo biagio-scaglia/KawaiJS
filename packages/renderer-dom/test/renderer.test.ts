@@ -693,7 +693,33 @@ label start:
 
     renderer.destroy();
   });
+
+  it('renders video backgrounds and video CG cutscenes', () => {
+    const story = compileScript(`label start:
+    scene "cutscene.webm"
+    cg "ending_anim.mp4"
+    "Video playing"
+`);
+    const vm = new StoryVM(story);
+    const renderer = new DOMRenderer(vm, {
+      container,
+      mainMenu: { enabled: false },
+      typewriterSpeed: 0
+    });
+    vm.start();
+
+    const bgVideo = container.querySelector('video.kawa-bg-video') as HTMLVideoElement;
+    expect(bgVideo).not.toBeNull();
+    expect(bgVideo.src).toContain('cutscene.webm');
+
+    const cgVideo = container.querySelector('video.kawa-cg-video') as HTMLVideoElement;
+    expect(cgVideo).not.toBeNull();
+    expect(cgVideo.src).toContain('ending_anim.mp4');
+
+    renderer.destroy();
+  });
 });
+
 
 
 
