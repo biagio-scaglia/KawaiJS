@@ -3,7 +3,7 @@
         xmlns:xhtml="http://www.w3.org/1999/xhtml">
   <url>
     <loc>https://biagio-scaglia.github.io/KawaiJS/</loc>
-    <lastmod>2026-09-16</lastmod>
+    <lastmod>2026-09-18</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
     <xhtml:link rel="alternate" hreflang="en" href="https://biagio-scaglia.github.io/KawaiJS/" />
@@ -12,19 +12,19 @@
   </url>
   <url>
     <loc>https://biagio-scaglia.github.io/KawaiJS/showcase/</loc>
-    <lastmod>2026-09-16</lastmod>
+    <lastmod>2026-09-18</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
     <loc>https://biagio-scaglia.github.io/KawaiJS/playground/</loc>
-    <lastmod>2026-09-16</lastmod>
+    <lastmod>2026-09-18</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
     <loc>https://biagio-scaglia.github.io/KawaiJS/?lang=it</loc>
-    <lastmod>2026-09-16</lastmod>
+    <lastmod>2026-09-18</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
     <xhtml:link rel="alternate" hreflang="en" href="https://biagio-scaglia.github.io/KawaiJS/" />
@@ -33,49 +33,49 @@
   </url>
   <url>
     <loc>https://biagio-scaglia.github.io/KawaiJS/?at=hub</loc>
-    <lastmod>2026-09-16</lastmod>
+    <lastmod>2026-09-18</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
     <loc>https://biagio-scaglia.github.io/KawaiJS/?at=lesson_install</loc>
-    <lastmod>2026-09-16</lastmod>
+    <lastmod>2026-09-18</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
     <loc>https://biagio-scaglia.github.io/KawaiJS/?at=lesson_script</loc>
-    <lastmod>2026-09-16</lastmod>
+    <lastmod>2026-09-18</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
     <loc>https://biagio-scaglia.github.io/KawaiJS/?at=lesson_stage</loc>
-    <lastmod>2026-09-16</lastmod>
+    <lastmod>2026-09-18</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
     <loc>https://biagio-scaglia.github.io/KawaiJS/?at=lesson_branch</loc>
-    <lastmod>2026-09-16</lastmod>
+    <lastmod>2026-09-18</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
     <loc>https://biagio-scaglia.github.io/KawaiJS/?at=lesson_deploy</loc>
-    <lastmod>2026-09-16</lastmod>
+    <lastmod>2026-09-18</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
     <loc>https://biagio-scaglia.github.io/KawaiJS/?at=lesson_seo</loc>
-    <lastmod>2026-09-16</lastmod>
+    <lastmod>2026-09-18</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
     <loc>https://biagio-scaglia.github.io/KawaiJS/llms.txt</loc>
-    <lastmod>2026-09-16</lastmod>
+    <lastmod>2026-09-18</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.4</priority>
   </url>

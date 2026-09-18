@@ -22787,6 +22787,11 @@ var KEYWORDS_MAP = /* @__PURE__ */ new Map([
   ["animate", "ANIMATE"],
   ["unlock", "UNLOCK"],
   ["lang", "LANG"],
+  ["include", "INCLUDE"],
+  ["import", "IMPORT"],
+  ["and", "AND"],
+  ["or", "OR"],
+  ["not", "NOT"],
   ["true", "BOOLEAN"],
   ["false", "BOOLEAN"]
 ]);
@@ -22996,6 +23001,80 @@ var Lexer = class {
             loc: createLocation(this.file, startLoc2, this.getCurrentPosition())
           };
         }
+        return {
+          type: "NOT",
+          value: "!",
+          loc: createLocation(this.file, startLoc2, this.getCurrentPosition())
+        };
+      }
+      if (ch === "&") {
+        const startLoc2 = this.getCurrentPosition();
+        this.advance();
+        if (this.peek() === "&") {
+          this.advance();
+        }
+        return {
+          type: "AND",
+          value: "&&",
+          loc: createLocation(this.file, startLoc2, this.getCurrentPosition())
+        };
+      }
+      if (ch === "|") {
+        const startLoc2 = this.getCurrentPosition();
+        this.advance();
+        if (this.peek() === "|") {
+          this.advance();
+        }
+        return {
+          type: "OR",
+          value: "||",
+          loc: createLocation(this.file, startLoc2, this.getCurrentPosition())
+        };
+      }
+      if (ch === "*") {
+        const startLoc2 = this.getCurrentPosition();
+        this.advance();
+        return {
+          type: "MULTIPLY",
+          value: "*",
+          loc: createLocation(this.file, startLoc2, this.getCurrentPosition())
+        };
+      }
+      if (ch === "/") {
+        const startLoc2 = this.getCurrentPosition();
+        this.advance();
+        return {
+          type: "DIVIDE",
+          value: "/",
+          loc: createLocation(this.file, startLoc2, this.getCurrentPosition())
+        };
+      }
+      if (ch === "%") {
+        const startLoc2 = this.getCurrentPosition();
+        this.advance();
+        return {
+          type: "MODULO",
+          value: "%",
+          loc: createLocation(this.file, startLoc2, this.getCurrentPosition())
+        };
+      }
+      if (ch === "(") {
+        const startLoc2 = this.getCurrentPosition();
+        this.advance();
+        return {
+          type: "LPAREN",
+          value: "(",
+          loc: createLocation(this.file, startLoc2, this.getCurrentPosition())
+        };
+      }
+      if (ch === ")") {
+        const startLoc2 = this.getCurrentPosition();
+        this.advance();
+        return {
+          type: "RPAREN",
+          value: ")",
+          loc: createLocation(this.file, startLoc2, this.getCurrentPosition())
+        };
       }
       if (ch === ">") {
         const startLoc2 = this.getCurrentPosition();
@@ -23459,6 +23538,9 @@ var Parser2 = class _Parser {
         return this.parseUnlockStmt();
       case "LANG":
         return this.parseLangStmt();
+      case "INCLUDE":
+      case "IMPORT":
+        return this.parseIncludeStmt();
       case "STRING":
         return this.parseDialogueStmt();
       case "NARRATOR":
@@ -23716,25 +23798,39 @@ var Parser2 = class _Parser {
         loc: this.currentLocation()
       });
     }
-    let value;
-    let isVariable = false;
-    if (this.check("STRING")) {
-      value = this.advance().value;
-      isVariable = false;
-    } else if (this.check("NUMBER")) {
-      value = Number(this.advance().value);
-    } else if (this.check("BOOLEAN")) {
-      value = this.advance().value === "true";
-    } else if (this.check("IDENTIFIER")) {
-      value = this.advance().value;
-      isVariable = true;
-    } else {
+    const exprTokens = [];
+    while (!this.isAtEnd() && !this.check("NEWLINE")) {
+      exprTokens.push(this.advance());
+    }
+    if (exprTokens.length === 0) {
       throw new KawaError({
         code: "E0103",
-        message: "Expected string, number, or boolean value in set assignment",
+        message: "Expected value or expression in set assignment",
         severity: "error",
         loc: this.currentLocation()
       });
+    }
+    let value;
+    let isVariable = false;
+    if (exprTokens.length === 1) {
+      const single = exprTokens[0];
+      if (single.type === "STRING") {
+        value = single.value;
+        isVariable = false;
+      } else if (single.type === "NUMBER") {
+        value = Number(single.value);
+      } else if (single.type === "BOOLEAN") {
+        value = single.value === "true";
+      } else if (single.type === "IDENTIFIER") {
+        value = single.value;
+        isVariable = true;
+      } else {
+        value = single.value;
+        isVariable = true;
+      }
+    } else {
+      value = exprTokens.map((t2) => t2.type === "STRING" ? `"${t2.value}"` : t2.value).join(" ");
+      isVariable = true;
     }
     this.consumeOptionalNewline();
     return {
@@ -23743,6 +23839,28 @@ var Parser2 = class _Parser {
       operator: operator2,
       value,
       isVariable,
+      loc: createLocation(this.file, startTok.loc.start, this.previousLocation().end)
+    };
+  }
+  parseIncludeStmt() {
+    const startTok = this.check("INCLUDE") ? this.consume("INCLUDE", 'Expected "include" keyword') : this.consume("IMPORT", 'Expected "import" keyword');
+    let filePath = "";
+    if (this.check("STRING")) {
+      filePath = this.advance().value;
+    } else if (this.check("IDENTIFIER") || this.checkSoftIdentifier()) {
+      filePath = this.advance().value;
+    } else {
+      throw new KawaError({
+        code: "E0106",
+        message: "Expected file path string after include / import",
+        severity: "error",
+        loc: this.currentLocation()
+      });
+    }
+    this.consumeOptionalNewline();
+    return {
+      type: "IncludeStmt",
+      file: filePath,
       loc: createLocation(this.file, startTok.loc.start, this.previousLocation().end)
     };
   }
@@ -24322,7 +24440,9 @@ var Compiler = class {
     const characters = {};
     const labels = {};
     this.defines = {};
-    for (const stmt of this.program.statements) {
+    const rootFile = this.program.loc?.file ?? "<anonymous>";
+    const flattenedStatements = this.expandStatements(this.program.statements, rootFile, /* @__PURE__ */ new Set([rootFile]));
+    for (const stmt of flattenedStatements) {
       if (stmt.type === "CharacterDecl") {
         characters[stmt.id] = {
           id: stmt.id,
@@ -24364,6 +24484,44 @@ var Compiler = class {
       defines: { ...this.defines },
       labels
     };
+  }
+  expandStatements(statements, currentFile, visited) {
+    const result = [];
+    for (const stmt of statements) {
+      if (stmt.type === "IncludeStmt") {
+        const targetPath = stmt.file;
+        let source;
+        if (this.options.fileResolver) {
+          source = this.options.fileResolver(targetPath, currentFile);
+        }
+        if (source === void 0) {
+          throw new KawaError({
+            code: "E0207",
+            message: `Cannot resolve include file '${targetPath}' from '${currentFile}'. Ensure file exists or fileResolver is provided.`,
+            severity: "error",
+            loc: stmt.loc
+          });
+        }
+        if (visited.has(targetPath)) {
+          throw new KawaError({
+            code: "E0206",
+            message: `Circular include detected: '${targetPath}'`,
+            severity: "error",
+            loc: stmt.loc
+          });
+        }
+        const nextVisited = new Set(visited);
+        nextVisited.add(targetPath);
+        const lexer = new Lexer(source, targetPath);
+        const parser = new Parser2(lexer.tokenize(), targetPath);
+        const subProgram = parser.parse();
+        const expandedSub = this.expandStatements(subProgram.statements, targetPath, nextVisited);
+        result.push(...expandedSub);
+      } else {
+        result.push(stmt);
+      }
+    }
+    return result;
   }
   /** Resolve `define` aliases. Returns `fallback` (or `primary`) when unset. */
   resolveAlias(primary, fallback) {
@@ -24738,6 +24896,9 @@ var AudioManager = class {
   soundVolume;
   voiceVolume;
   isMuted = false;
+  duckingEnabled = true;
+  duckRatio = 0.35;
+  isDucking = false;
   currentMusicAudio = null;
   currentMusicTrack = null;
   currentVoiceAudio = null;
@@ -24745,6 +24906,7 @@ var AudioManager = class {
   isUnlocked = false;
   pendingMusic = null;
   musicFadeIntervals = /* @__PURE__ */ new Map();
+  voiceStateListeners = /* @__PURE__ */ new Set();
   unlockHandler = null;
   maxSoundPool = 4;
   preferLightPreload;
@@ -24753,6 +24915,8 @@ var AudioManager = class {
     this.musicVolume = options.musicVolume ?? 0.8;
     this.soundVolume = options.soundVolume ?? 1;
     this.voiceVolume = options.voiceVolume ?? 1;
+    this.duckingEnabled = options.ducking ?? true;
+    this.duckRatio = options.duckRatio ?? 0.35;
     this.preferLightPreload = typeof navigator !== "undefined" && (Boolean(navigator.connection?.saveData) || typeof window !== "undefined" && typeof window.matchMedia === "function" && window.matchMedia("(pointer: coarse)").matches);
     if (typeof window !== "undefined") {
       this.addUnlockListeners();
@@ -24920,6 +25084,18 @@ var AudioManager = class {
     }
     this.soundPool = [];
   }
+  onVoiceStateChange(listener) {
+    this.voiceStateListeners.add(listener);
+    return () => this.voiceStateListeners.delete(listener);
+  }
+  notifyVoiceState(isPlaying, track) {
+    for (const listener of this.voiceStateListeners) {
+      try {
+        listener(isPlaying, track);
+      } catch {
+      }
+    }
+  }
   playVoice(src, volume = 1) {
     if (typeof Audio === "undefined")
       return;
@@ -24929,9 +25105,33 @@ var AudioManager = class {
     }
     const audio = new Audio(src);
     audio.volume = volume * this.masterVolume * this.voiceVolume;
+    const onEnded = () => {
+      this.unduck();
+      this.notifyVoiceState(false);
+      if (this.currentVoiceAudio === audio) {
+        this.currentVoiceAudio = null;
+      }
+    };
+    audio.addEventListener("ended", onEnded, { once: true });
+    audio.addEventListener("error", onEnded, { once: true });
     audio.play().catch(() => {
     });
     this.currentVoiceAudio = audio;
+    if (this.duckingEnabled && this.currentMusicAudio && !this.isMuted) {
+      this.isDucking = true;
+      const targetVolume = this.masterVolume * this.musicVolume * this.duckRatio;
+      this.fadeVolume(this.currentMusicAudio, this.currentMusicAudio.volume, targetVolume, 200);
+    }
+    this.notifyVoiceState(true, src);
+  }
+  unduck() {
+    if (this.isDucking && this.currentMusicAudio && !this.isMuted) {
+      this.isDucking = false;
+      const targetVolume = this.masterVolume * this.musicVolume;
+      this.fadeVolume(this.currentMusicAudio, this.currentMusicAudio.volume, targetVolume, 350);
+    } else {
+      this.isDucking = false;
+    }
   }
   stopVoice() {
     if (this.currentVoiceAudio) {
@@ -24939,6 +25139,8 @@ var AudioManager = class {
       this.currentVoiceAudio.src = "";
       this.currentVoiceAudio = null;
     }
+    this.unduck();
+    this.notifyVoiceState(false);
   }
   destroy() {
     this.removeUnlockListeners();
@@ -25511,6 +25713,10 @@ function formatRichText(raw) {
   let formatted = escapeHtml(raw);
   formatted = formatted.replace(/\{b\}(.*?)\{\/b\}/gi, '<strong class="kawa-bold">$1</strong>');
   formatted = formatted.replace(/\{i\}(.*?)\{\/i\}/gi, '<em class="kawa-italic">$1</em>');
+  formatted = formatted.replace(/\{glitch\}(.*?)\{\/glitch\}/gi, '<span class="kawa-text-glitch" data-text="$1">$1</span>');
+  formatted = formatted.replace(/\{shake\}(.*?)\{\/shake\}/gi, '<span class="kawa-text-shake">$1</span>');
+  formatted = formatted.replace(/\{rainbow\}(.*?)\{\/rainbow\}/gi, '<span class="kawa-text-rainbow">$1</span>');
+  formatted = formatted.replace(/\{corrupt\}(.*?)\{\/corrupt\}/gi, '<span class="kawa-text-corrupt" data-text="$1">$1</span>');
   formatted = formatted.replace(/\{color=([#a-zA-Z0-9_.,\s-]+)\}(.*?)\{\/color\}/gi, (_match, colorVal, inner) => {
     const cleanColor = colorVal.replace(/[^#a-zA-Z0-9_.,\s-]/g, "").trim();
     return `<span style="color:${cleanColor}">${inner}</span>`;
@@ -25573,6 +25779,11 @@ var StageLayerComponent = class {
     this.stageEl.appendChild(this.cgEl);
     this.stageEl.appendChild(this.modeBadgeEl);
   }
+  bgVideoEl = null;
+  cgVideoEl = null;
+  isVideoPath(path) {
+    return /\.(webm|mp4|m4v|ogg|ogv)$/i.test(path) || path.startsWith("video:");
+  }
   updateBackground(background2, transition) {
     if (!background2) {
       this.currentBgUrl = "";
@@ -25580,33 +25791,96 @@ var StageLayerComponent = class {
       this.bgLayerB.style.backgroundImage = "";
       this.bgLayerA.classList.remove("active");
       this.bgLayerB.classList.remove("active");
+      if (this.bgVideoEl) {
+        this.bgVideoEl.pause();
+        this.bgVideoEl.remove();
+        this.bgVideoEl = null;
+      }
       return;
     }
     const transitionName = (transition ?? "none").toLowerCase();
     this.backgroundEl.dataset.transition = transitionName;
-    const cleanBg = background2.replace(/^bg[\s_]+/i, "").trim();
+    const cleanBg = background2.replace(/^bg[\s_]+/i, "").replace(/^video:[\s_]*/i, "").trim();
+    const isVideo = this.isVideoPath(background2);
     const primaryUrl = this.assetResolver(cleanBg, "background");
     if (primaryUrl !== this.currentBgUrl) {
       this.currentBgUrl = primaryUrl;
-      const crossfade = transitionName === "fade" || transitionName === "dissolve" || transitionName === "wipeleft" || transitionName === "wiperight";
-      if (crossfade) {
-        const nextLayer = this.activeBgLayer === "A" ? this.bgLayerB : this.bgLayerA;
-        const curLayer = this.activeBgLayer === "A" ? this.bgLayerA : this.bgLayerB;
-        nextLayer.style.backgroundImage = `url("${primaryUrl}")`;
-        nextLayer.classList.remove("kawa-wipe-from-left", "kawa-wipe-from-right");
-        curLayer.classList.remove("kawa-wipe-from-left", "kawa-wipe-from-right");
-        if (transitionName === "wipeleft") {
-          nextLayer.classList.add("kawa-wipe-from-right");
-        } else if (transitionName === "wiperight") {
-          nextLayer.classList.add("kawa-wipe-from-left");
+      if (isVideo) {
+        this.bgLayerA.classList.remove("active");
+        this.bgLayerB.classList.remove("active");
+        if (!this.bgVideoEl) {
+          this.bgVideoEl = document.createElement("video");
+          this.bgVideoEl.className = "kawa-bg-video";
+          this.bgVideoEl.autoplay = true;
+          this.bgVideoEl.loop = true;
+          this.bgVideoEl.muted = true;
+          this.bgVideoEl.playsInline = true;
+          this.bgVideoEl.setAttribute("aria-hidden", "true");
+          this.backgroundEl.appendChild(this.bgVideoEl);
         }
-        nextLayer.classList.add("active");
-        curLayer.classList.remove("active");
-        this.activeBgLayer = this.activeBgLayer === "A" ? "B" : "A";
+        this.bgVideoEl.src = primaryUrl;
+        this.bgVideoEl.play().catch(() => {
+        });
       } else {
-        const curLayer = this.activeBgLayer === "A" ? this.bgLayerA : this.bgLayerB;
-        curLayer.style.backgroundImage = `url("${primaryUrl}")`;
-        curLayer.classList.add("active");
+        if (this.bgVideoEl) {
+          this.bgVideoEl.pause();
+          this.bgVideoEl.remove();
+          this.bgVideoEl = null;
+        }
+        const crossfade = transitionName === "fade" || transitionName === "dissolve" || transitionName === "wipeleft" || transitionName === "wiperight" || transitionName === "wipeup" || transitionName === "wipedown" || transitionName === "circlewipe" || transitionName === "iris" || transitionName === "pushleft" || transitionName === "pushright" || transitionName === "pushup" || transitionName === "pushdown" || transitionName === "zoom" || transitionName === "blur" || transitionName === "glitch" || transitionName === "corrupt";
+        if (crossfade) {
+          const nextLayer = this.activeBgLayer === "A" ? this.bgLayerB : this.bgLayerA;
+          const curLayer = this.activeBgLayer === "A" ? this.bgLayerA : this.bgLayerB;
+          nextLayer.style.backgroundImage = `url("${primaryUrl}")`;
+          const allTransClasses = [
+            "kawa-wipe-from-left",
+            "kawa-wipe-from-right",
+            "kawa-wipe-from-up",
+            "kawa-wipe-from-down",
+            "kawa-wipe-circle",
+            "kawa-push-from-left",
+            "kawa-push-from-right",
+            "kawa-push-from-up",
+            "kawa-push-from-down",
+            "kawa-zoom-in",
+            "kawa-blur-transition",
+            "kawa-glitch-transition"
+          ];
+          nextLayer.classList.remove(...allTransClasses);
+          curLayer.classList.remove(...allTransClasses);
+          if (transitionName === "wipeleft") {
+            nextLayer.classList.add("kawa-wipe-from-right");
+          } else if (transitionName === "wiperight") {
+            nextLayer.classList.add("kawa-wipe-from-left");
+          } else if (transitionName === "wipeup") {
+            nextLayer.classList.add("kawa-wipe-from-down");
+          } else if (transitionName === "wipedown") {
+            nextLayer.classList.add("kawa-wipe-from-up");
+          } else if (transitionName === "circlewipe" || transitionName === "iris") {
+            nextLayer.classList.add("kawa-wipe-circle");
+          } else if (transitionName === "pushleft") {
+            nextLayer.classList.add("kawa-push-from-right");
+          } else if (transitionName === "pushright") {
+            nextLayer.classList.add("kawa-push-from-left");
+          } else if (transitionName === "pushup") {
+            nextLayer.classList.add("kawa-push-from-down");
+          } else if (transitionName === "pushdown") {
+            nextLayer.classList.add("kawa-push-from-up");
+          } else if (transitionName === "zoom") {
+            nextLayer.classList.add("kawa-zoom-in");
+          } else if (transitionName === "blur") {
+            nextLayer.classList.add("kawa-blur-transition");
+          } else if (transitionName === "glitch" || transitionName === "corrupt") {
+            nextLayer.classList.add("kawa-glitch-transition");
+          }
+          nextLayer.classList.add("active");
+          curLayer.classList.remove("active");
+          this.activeBgLayer = this.activeBgLayer === "A" ? "B" : "A";
+        } else {
+          const curLayer = this.activeBgLayer === "A" ? this.bgLayerA : this.bgLayerB;
+          curLayer.style.backgroundImage = `url("${primaryUrl}")`;
+          curLayer.classList.add("active");
+        }
       }
     }
   }
@@ -25718,9 +25992,37 @@ var StageLayerComponent = class {
     if (!cgPath) {
       this.cgEl.style.display = "none";
       this.cgEl.style.backgroundImage = "";
+      if (this.cgVideoEl) {
+        this.cgVideoEl.pause();
+        this.cgVideoEl.remove();
+        this.cgVideoEl = null;
+      }
     } else {
-      const url = this.assetResolver(cgPath, "background");
-      this.cgEl.style.backgroundImage = `url("${url}")`;
+      const isVideo = this.isVideoPath(cgPath);
+      const cleanCg = cgPath.replace(/^video:[\s_]*/i, "").trim();
+      const url = this.assetResolver(cleanCg, "background");
+      if (isVideo) {
+        this.cgEl.style.backgroundImage = "";
+        if (!this.cgVideoEl) {
+          this.cgVideoEl = document.createElement("video");
+          this.cgVideoEl.className = "kawa-cg-video";
+          this.cgVideoEl.autoplay = true;
+          this.cgVideoEl.loop = true;
+          this.cgVideoEl.muted = true;
+          this.cgVideoEl.playsInline = true;
+          this.cgEl.appendChild(this.cgVideoEl);
+        }
+        this.cgVideoEl.src = url;
+        this.cgVideoEl.play().catch(() => {
+        });
+      } else {
+        if (this.cgVideoEl) {
+          this.cgVideoEl.pause();
+          this.cgVideoEl.remove();
+          this.cgVideoEl = null;
+        }
+        this.cgEl.style.backgroundImage = `url("${url}")`;
+      }
       this.cgEl.style.display = "block";
     }
   }
@@ -25745,6 +26047,13 @@ var StageLayerComponent = class {
       this.flashTimer = null;
       flash.remove();
     }, 600);
+  }
+  setSpeakingCharacter(characterId) {
+    const cleanId = characterId ? characterId.toLowerCase().trim() : null;
+    for (const [charKey, charObj] of this.activeCharacters.entries()) {
+      const matches = cleanId !== null && (charKey.toLowerCase() === cleanId || charKey.toLowerCase().startsWith(`${cleanId}/`));
+      charObj.div.classList.toggle("kawa-speaking", matches);
+    }
   }
   destroy() {
     this.vfxLayer.destroy();
@@ -26489,83 +26798,253 @@ function hasVar(variables, key) {
     return false;
   return Object.prototype.hasOwnProperty.call(variables, key);
 }
-function resolveValue(token, variables, isVariable) {
-  const trimmed = token.trim();
-  if (trimmed === "true")
-    return true;
-  if (trimmed === "false")
-    return false;
-  if (!isNaN(Number(trimmed)) && trimmed !== "") {
-    return Number(trimmed);
-  }
-  if (trimmed.startsWith('"') && trimmed.endsWith('"') || trimmed.startsWith("'") && trimmed.endsWith("'")) {
-    return trimmed.slice(1, -1);
-  }
-  if (isVariable === false) {
-    return trimmed;
-  }
-  if (hasVar(variables, trimmed)) {
-    return variables[trimmed];
-  }
-  if (/^[a-zA-Z_][a-zA-Z0-9_-]*$/.test(trimmed)) {
-    return void 0;
-  }
-  return trimmed;
-}
-function findOperatorOutsideQuotes(str, targetOps) {
-  let inQuote = null;
-  for (let i3 = 0; i3 < str.length; i3++) {
-    const ch = str[i3];
-    if (inQuote) {
-      if (ch === inQuote && str[i3 - 1] !== "\\")
-        inQuote = null;
-      continue;
-    }
-    if (ch === '"' || ch === "'") {
-      inQuote = ch;
-      continue;
-    }
-    for (const op of targetOps) {
-      if (str.startsWith(op, i3)) {
-        if (op === "and" || op === "or") {
-          const before = i3 === 0 ? " " : str[i3 - 1];
-          const after = i3 + op.length >= str.length ? " " : str[i3 + op.length];
-          if (/\s/.test(before) && /\s/.test(after)) {
-            return { op, index: i3 };
-          }
-        } else {
-          return { op, index: i3 };
-        }
-      }
-    }
-  }
-  return null;
-}
 function isTruthy(val) {
   if (val === false || val === "false" || val === 0 || val === "0" || val === void 0 || val === null || val === "") {
     return false;
   }
   return Boolean(val);
 }
-function evaluateCondition(condition, variables) {
-  const trimmed = condition.trim();
-  if (!trimmed || trimmed === "true")
-    return true;
-  if (trimmed === "false")
+function tokenizeExpr(expr) {
+  const tokens = [];
+  let i3 = 0;
+  const len = expr.length;
+  while (i3 < len) {
+    const ch = expr[i3];
+    if (/\s/.test(ch)) {
+      i3++;
+      continue;
+    }
+    if (ch === "(" || ch === ")") {
+      tokens.push({ type: "paren", value: ch });
+      i3++;
+      continue;
+    }
+    if (ch === '"' || ch === "'") {
+      const quote = ch;
+      let str = "";
+      i3++;
+      while (i3 < len && expr[i3] !== quote) {
+        if (expr[i3] === "\\" && i3 + 1 < len) {
+          i3++;
+          str += expr[i3];
+        } else {
+          str += expr[i3];
+        }
+        i3++;
+      }
+      if (i3 < len && expr[i3] === quote) {
+        i3++;
+      }
+      tokens.push({ type: "str", value: str });
+      continue;
+    }
+    const two = expr.slice(i3, i3 + 2);
+    if (two === "&&" || two === "||" || two === "==" || two === "!=" || two === ">=" || two === "<=") {
+      tokens.push({ type: "op", value: two });
+      i3 += 2;
+      continue;
+    }
+    if (["+", "-", "*", "/", "%", "^", ">", "<", "!"].includes(ch)) {
+      tokens.push({ type: "op", value: ch });
+      i3++;
+      continue;
+    }
+    if (/\d/.test(ch) || ch === "." && i3 + 1 < len && /\d/.test(expr[i3 + 1])) {
+      let numStr = "";
+      while (i3 < len && (/\d/.test(expr[i3]) || expr[i3] === ".")) {
+        numStr += expr[i3];
+        i3++;
+      }
+      tokens.push({ type: "num", value: numStr });
+      continue;
+    }
+    if (/[a-zA-Z_]/.test(ch)) {
+      let idStr = "";
+      while (i3 < len && /[a-zA-Z0-9_-]/.test(expr[i3])) {
+        idStr += expr[i3];
+        i3++;
+      }
+      const lower = idStr.toLowerCase();
+      if (lower === "true" || lower === "false") {
+        tokens.push({ type: "bool", value: lower });
+      } else if (lower === "and") {
+        tokens.push({ type: "op", value: "&&" });
+      } else if (lower === "or") {
+        tokens.push({ type: "op", value: "||" });
+      } else if (lower === "not") {
+        tokens.push({ type: "op", value: "!" });
+      } else {
+        tokens.push({ type: "id", value: idStr });
+      }
+      continue;
+    }
+    i3++;
+  }
+  return tokens;
+}
+var ExpressionParser = class {
+  tokens;
+  variables;
+  pos = 0;
+  constructor(tokens, variables) {
+    this.tokens = tokens;
+    this.variables = variables;
+  }
+  peek() {
+    return this.tokens[this.pos];
+  }
+  advance() {
+    return this.tokens[this.pos++];
+  }
+  match(val) {
+    const t2 = this.peek();
+    if (t2 && t2.value === val) {
+      this.pos++;
+      return true;
+    }
     return false;
-  const orMatch = findOperatorOutsideQuotes(trimmed, ["||", "or"]);
-  if (orMatch) {
-    const left = trimmed.slice(0, orMatch.index);
-    const right = trimmed.slice(orMatch.index + orMatch.op.length);
-    return evaluateCondition(left, variables) || evaluateCondition(right, variables);
   }
-  const andMatch = findOperatorOutsideQuotes(trimmed, ["&&", "and"]);
-  if (andMatch) {
-    const left = trimmed.slice(0, andMatch.index);
-    const right = trimmed.slice(andMatch.index + andMatch.op.length);
-    return evaluateCondition(left, variables) && evaluateCondition(right, variables);
+  parse() {
+    if (this.tokens.length === 0)
+      return void 0;
+    const res = this.parseOr();
+    return res;
   }
-  const toNum = (v) => {
+  parseOr() {
+    let left = this.parseAnd();
+    while (this.match("||")) {
+      const right = this.parseAnd();
+      left = isTruthy(left) || isTruthy(right);
+    }
+    return left;
+  }
+  parseAnd() {
+    let left = this.parseEquality();
+    while (this.match("&&")) {
+      const right = this.parseEquality();
+      left = isTruthy(left) && isTruthy(right);
+    }
+    return left;
+  }
+  parseEquality() {
+    let left = this.parseComparison();
+    while (true) {
+      if (this.match("==")) {
+        const right = this.parseComparison();
+        left = left === right || String(left) === String(right);
+      } else if (this.match("!=")) {
+        const right = this.parseComparison();
+        left = left !== right && String(left) !== String(right);
+      } else {
+        break;
+      }
+    }
+    return left;
+  }
+  parseComparison() {
+    let left = this.parseAddSub();
+    while (true) {
+      if (this.match(">=")) {
+        const right = this.parseAddSub();
+        left = this.toNum(left) >= this.toNum(right);
+      } else if (this.match("<=")) {
+        const right = this.parseAddSub();
+        left = this.toNum(left) <= this.toNum(right);
+      } else if (this.match(">")) {
+        const right = this.parseAddSub();
+        left = this.toNum(left) > this.toNum(right);
+      } else if (this.match("<")) {
+        const right = this.parseAddSub();
+        left = this.toNum(left) < this.toNum(right);
+      } else {
+        break;
+      }
+    }
+    return left;
+  }
+  parseAddSub() {
+    let left = this.parseMulDiv();
+    while (true) {
+      if (this.match("+")) {
+        const right = this.parseMulDiv();
+        if (typeof left === "string" || typeof right === "string") {
+          left = String(left ?? "") + String(right ?? "");
+        } else {
+          left = this.toNum(left) + this.toNum(right);
+        }
+      } else if (this.match("-")) {
+        const right = this.parseMulDiv();
+        left = this.toNum(left) - this.toNum(right);
+      } else {
+        break;
+      }
+    }
+    return left;
+  }
+  parseMulDiv() {
+    let left = this.parseUnary();
+    while (true) {
+      if (this.match("*")) {
+        const right = this.parseUnary();
+        left = this.toNum(left) * this.toNum(right);
+      } else if (this.match("/")) {
+        const right = this.parseUnary();
+        const denom = this.toNum(right);
+        left = denom === 0 ? 0 : this.toNum(left) / denom;
+      } else if (this.match("%")) {
+        const right = this.parseUnary();
+        const denom = this.toNum(right);
+        left = denom === 0 ? 0 : this.toNum(left) % denom;
+      } else if (this.match("^")) {
+        const right = this.parseUnary();
+        left = Math.pow(this.toNum(left), this.toNum(right));
+      } else {
+        break;
+      }
+    }
+    return left;
+  }
+  parseUnary() {
+    if (this.match("!")) {
+      const val = this.parseUnary();
+      return !isTruthy(val);
+    }
+    if (this.match("-")) {
+      const val = this.parseUnary();
+      return -this.toNum(val);
+    }
+    if (this.match("+")) {
+      return this.parseUnary();
+    }
+    return this.parsePrimary();
+  }
+  parsePrimary() {
+    const t2 = this.advance();
+    if (!t2)
+      return void 0;
+    if (t2.type === "paren" && t2.value === "(") {
+      const val = this.parseOr();
+      this.match(")");
+      return val;
+    }
+    if (t2.type === "num") {
+      return Number(t2.value);
+    }
+    if (t2.type === "str") {
+      return t2.value;
+    }
+    if (t2.type === "bool") {
+      return t2.value === "true";
+    }
+    if (t2.type === "id") {
+      if (hasVar(this.variables, t2.value)) {
+        return this.variables[t2.value];
+      }
+      return void 0;
+    }
+    return t2.value;
+  }
+  toNum(v) {
     if (typeof v === "number")
       return v;
     if (v === true)
@@ -26574,57 +27053,48 @@ function evaluateCondition(condition, variables) {
       return 0;
     const n = Number(v);
     return isNaN(n) ? 0 : n;
-  };
-  const operators = [">=", "<=", "!=", "==", ">", "<"];
-  const cmpMatch = findOperatorOutsideQuotes(trimmed, operators);
-  if (cmpMatch) {
-    const op = cmpMatch.op;
-    const leftRaw = trimmed.slice(0, cmpMatch.index);
-    const rightRaw = trimmed.slice(cmpMatch.index + op.length);
-    const leftVal = resolveValue(leftRaw, variables);
-    const rightVal = resolveValue(rightRaw, variables);
-    const isLeftNumeric = typeof leftVal === "number" || !isNaN(Number(leftVal)) && typeof leftVal === "string" && leftVal.trim() !== "";
-    const isRightNumeric = typeof rightVal === "number" || !isNaN(Number(rightVal)) && typeof rightVal === "string" && rightVal.trim() !== "";
-    switch (op) {
-      case "==":
-        return leftVal === rightVal || String(leftVal) === String(rightVal);
-      case "!=":
-        return leftVal !== rightVal && String(leftVal) !== String(rightVal);
-      case ">=":
-        if (isLeftNumeric && isRightNumeric)
-          return toNum(leftVal) >= toNum(rightVal);
-        return String(leftVal ?? "") >= String(rightVal ?? "");
-      case "<=":
-        if (isLeftNumeric && isRightNumeric)
-          return toNum(leftVal) <= toNum(rightVal);
-        return String(leftVal ?? "") <= String(rightVal ?? "");
-      case ">":
-        if (isLeftNumeric && isRightNumeric)
-          return toNum(leftVal) > toNum(rightVal);
-        return String(leftVal ?? "") > String(rightVal ?? "");
-      case "<":
-        if (isLeftNumeric && isRightNumeric)
-          return toNum(leftVal) < toNum(rightVal);
-        return String(leftVal ?? "") < String(rightVal ?? "");
-    }
   }
-  if (trimmed.startsWith("!")) {
-    const inner = trimmed.slice(1).trim();
-    return !evaluateCondition(inner, variables);
-  }
-  const val = hasVar(variables, trimmed) ? variables[trimmed] : resolveValue(trimmed, variables);
-  return isTruthy(val);
+};
+function evaluateExpression(expr, variables) {
+  const trimmed = expr.trim();
+  if (!trimmed)
+    return void 0;
+  const tokens = tokenizeExpr(trimmed);
+  const parser = new ExpressionParser(tokens, variables);
+  return parser.parse();
+}
+function evaluateCondition(condition, variables) {
+  const trimmed = condition.trim();
+  if (!trimmed || trimmed === "true")
+    return true;
+  if (trimmed === "false")
+    return false;
+  const result = evaluateExpression(trimmed, variables);
+  return isTruthy(result);
 }
 function applySetOperation(currentValue, operator2, assignedValue, variables, isVariable) {
-  const resolved = isVariable !== false && typeof assignedValue === "string" && hasVar(variables, assignedValue) ? variables[assignedValue] : assignedValue;
+  let resolved;
+  if (typeof assignedValue === "string") {
+    const trimmed = assignedValue.trim();
+    if (trimmed.startsWith('"') && trimmed.endsWith('"') || trimmed.startsWith("'") && trimmed.endsWith("'")) {
+      resolved = trimmed.slice(1, -1);
+    } else if (isVariable === false) {
+      resolved = assignedValue;
+    } else {
+      const evaluated = evaluateExpression(trimmed, variables);
+      resolved = evaluated !== void 0 ? evaluated : trimmed;
+    }
+  } else {
+    resolved = assignedValue;
+  }
   switch (operator2) {
     case "+=":
       if (typeof currentValue === "string" || typeof resolved === "string") {
         return String(currentValue ?? "") + String(resolved ?? "");
       }
-      return Number(currentValue ?? 0) + Number(resolved);
+      return Number(currentValue ?? 0) + Number(resolved ?? 0);
     case "-=":
-      return Number(currentValue ?? 0) - Number(resolved);
+      return Number(currentValue ?? 0) - Number(resolved ?? 0);
     case "=":
     default:
       return resolved;
@@ -26681,6 +27151,7 @@ var StoryVM = class {
   maxSnapshots;
   maxCallDepth;
   maxInstructionsPerBurst;
+  initialVariables;
   stateChangeListeners = /* @__PURE__ */ new Set();
   audioEventListeners = /* @__PURE__ */ new Set();
   cameraEventListeners = /* @__PURE__ */ new Set();
@@ -26712,11 +27183,24 @@ var StoryVM = class {
       if (typeof saveManagerOrOptions.maxInstructionsPerBurst === "number") {
         maxBurst = saveManagerOrOptions.maxInstructionsPerBurst;
       }
+      if (saveManagerOrOptions.initialVariables) {
+        this.initialVariables = { ...saveManagerOrOptions.initialVariables };
+      }
     }
+    this.applyInitialVariables();
     this.saveManager = sm ?? new SaveManager();
     this.maxSnapshots = Math.max(1, maxSnaps);
     this.maxCallDepth = Math.max(1, maxDepth);
     this.maxInstructionsPerBurst = Math.max(1, maxBurst);
+  }
+  applyInitialVariables() {
+    if (this.initialVariables) {
+      for (const [key, value] of Object.entries(this.initialVariables)) {
+        if (isSafeKey(key)) {
+          this.state.variables[key] = value;
+        }
+      }
+    }
   }
   getState() {
     return this.state;
@@ -26794,6 +27278,7 @@ var StoryVM = class {
     const prevMusic = this.state.audio.music;
     this.recordTrace(`START ${startLabel}`);
     this.state = createInitialState(startLabel);
+    this.applyInitialVariables();
     this.snapshotStack = [];
     this.virtualTimeMs = 0;
     this.historyManager.clear();
@@ -28041,6 +28526,9 @@ function showSettingsModal(rootEl, options) {
   let currentDelay = options.autoDelayMs;
   let currentMusic = options.musicVolume ?? 0.8;
   let currentSound = options.soundVolume ?? 1;
+  let currentDyslexia = options.dyslexiaFont ?? false;
+  let currentHighContrast = options.highContrast ?? false;
+  let currentLang = options.currentLang ?? "en";
   const overlay = document.createElement("div");
   overlay.className = "kawa-modal-overlay";
   const card = document.createElement("div");
@@ -28052,7 +28540,7 @@ function showSettingsModal(rootEl, options) {
   header.className = "kawa-modal-header";
   const title = document.createElement("div");
   title.className = "kawa-modal-title";
-  title.innerHTML = `${SVG_ICONS.settings} <span>Preferences</span>`;
+  title.innerHTML = `${SVG_ICONS.settings} <span>Preferences & Accessibility</span>`;
   const releaseFocus = trapFocus(card);
   const close = () => {
     releaseFocus();
@@ -28076,7 +28564,10 @@ function showSettingsModal(rootEl, options) {
       typewriterSpeed: currentSpeed,
       autoDelayMs: currentDelay,
       musicVolume: currentMusic,
-      soundVolume: currentSound
+      soundVolume: currentSound,
+      dyslexiaFont: currentDyslexia,
+      highContrast: currentHighContrast,
+      lang: currentLang
     });
   };
   const speedRow = document.createElement("div");
@@ -28146,10 +28637,53 @@ function showSettingsModal(rootEl, options) {
     sfxValEl.textContent = `${sfxInput.value}%`;
     notifyChange();
   });
+  const a11ySection = document.createElement("div");
+  a11ySection.className = "kawa-setting-section";
+  a11ySection.innerHTML = `
+    <div class="kawa-setting-section-title">\u267F Accessibility</div>
+    <label class="kawa-toggle-label">
+      <input type="checkbox" id="kawa-dyslexia-toggle" ${currentDyslexia ? "checked" : ""}>
+      <span>Dyslexia-Friendly Font (High Readability)</span>
+    </label>
+    <label class="kawa-toggle-label">
+      <input type="checkbox" id="kawa-contrast-toggle" ${currentHighContrast ? "checked" : ""}>
+      <span>High Contrast Mode (Sharp Text & Borders)</span>
+    </label>
+  `;
+  const dyslexiaInput = a11ySection.querySelector("#kawa-dyslexia-toggle");
+  dyslexiaInput.addEventListener("change", () => {
+    currentDyslexia = dyslexiaInput.checked;
+    notifyChange();
+  });
+  const contrastInput = a11ySection.querySelector("#kawa-contrast-toggle");
+  contrastInput.addEventListener("change", () => {
+    currentHighContrast = contrastInput.checked;
+    notifyChange();
+  });
+  if (options.availableLangs && options.availableLangs.length > 1) {
+    const langRow = document.createElement("div");
+    langRow.className = "kawa-setting-row";
+    const langOptionsHtml = options.availableLangs.map((l) => `<option value="${l}" ${l === currentLang ? "selected" : ""}>${l.toUpperCase()}</option>`).join("");
+    langRow.innerHTML = `
+      <div class="kawa-setting-header">
+        <span>\u{1F310} Language / Lingua</span>
+      </div>
+      <select class="kawa-select" id="kawa-lang-select">
+        ${langOptionsHtml}
+      </select>
+    `;
+    const langSelect = langRow.querySelector("#kawa-lang-select");
+    langSelect.addEventListener("change", () => {
+      currentLang = langSelect.value;
+      notifyChange();
+    });
+    body.appendChild(langRow);
+  }
   body.appendChild(speedRow);
   body.appendChild(autoRow);
   body.appendChild(musicRow);
   body.appendChild(sfxRow);
+  body.appendChild(a11ySection);
   card.appendChild(header);
   card.appendChild(body);
   overlay.appendChild(card);
@@ -29131,6 +29665,78 @@ function bindSwipeControls(el, handlers2) {
   };
 }
 
+// packages/renderer-dom/dist/gamepad.js
+function bindGamepadControls(callbacks) {
+  if (typeof window === "undefined" || typeof navigator === "undefined" || !navigator.getGamepads) {
+    return { destroy: () => {
+    } };
+  }
+  let rafId = null;
+  let destroyed = false;
+  let lastButtonStates = /* @__PURE__ */ new Map();
+  let lastAxisDown = false;
+  let lastAxisUp = false;
+  const poll = () => {
+    if (destroyed)
+      return;
+    const gamepads = navigator.getGamepads ? navigator.getGamepads() : [];
+    const pad = gamepads[0] || gamepads[1] || gamepads[2] || gamepads[3];
+    if (pad && pad.connected) {
+      const isPressed = (index) => {
+        const btn = pad.buttons[index];
+        return typeof btn === "object" ? btn.pressed : btn === 1;
+      };
+      const checkEdge = (index) => {
+        const current = isPressed(index);
+        const prev = lastButtonStates.get(index) ?? false;
+        lastButtonStates.set(index, current);
+        return current && !prev;
+      };
+      if (checkEdge(0)) {
+        callbacks.onConfirm();
+      }
+      if (checkEdge(1)) {
+        callbacks.onRollback();
+      }
+      if (checkEdge(2)) {
+        callbacks.onToggleSkip();
+      }
+      if (checkEdge(3)) {
+        callbacks.onToggleAuto();
+      }
+      if (checkEdge(9)) {
+        callbacks.onToggleMenu();
+      }
+      const axisY = pad.axes[1] ?? 0;
+      const dpadDown = isPressed(13);
+      const stickDown = axisY > 0.5;
+      const isDown = dpadDown || stickDown;
+      if (isDown && !lastAxisDown) {
+        callbacks.onNavigateDown();
+      }
+      lastAxisDown = isDown;
+      const dpadUp = isPressed(12);
+      const stickUp = axisY < -0.5;
+      const isUp = dpadUp || stickUp;
+      if (isUp && !lastAxisUp) {
+        callbacks.onNavigateUp();
+      }
+      lastAxisUp = isUp;
+    }
+    rafId = requestAnimationFrame(poll);
+  };
+  rafId = requestAnimationFrame(poll);
+  return {
+    destroy: () => {
+      destroyed = true;
+      if (rafId !== null) {
+        cancelAnimationFrame(rafId);
+        rafId = null;
+      }
+    }
+  };
+}
+
 // packages/renderer-dom/dist/embed.js
 function resolveEmbedMode(search) {
   let query = search;
@@ -29192,6 +29798,8 @@ var DOMRenderer = class {
   appliedStyleTargets = /* @__PURE__ */ new Set();
   isAutoMode = false;
   isSkipMode = false;
+  dyslexiaFont = false;
+  highContrast = false;
   autoTimer = null;
   skipInterval = null;
   pauseTimer = null;
@@ -29204,6 +29812,7 @@ var DOMRenderer = class {
   unsubscribeError;
   boundKeyHandler;
   touchControls;
+  gamepadControls;
   constructor(vm, options) {
     this.vm = vm;
     this.container = options.container;
@@ -29237,6 +29846,10 @@ var DOMRenderer = class {
             this.typewriterSpeed = parsed.typewriterSpeed;
           if (typeof parsed.autoDelayMs === "number")
             this.autoDelayMs = parsed.autoDelayMs;
+          if (typeof parsed.dyslexiaFont === "boolean")
+            this.dyslexiaFont = parsed.dyslexiaFont;
+          if (typeof parsed.highContrast === "boolean")
+            this.highContrast = parsed.highContrast;
           if (typeof parsed.musicVolume === "number") {
             this.musicVolume = parsed.musicVolume;
             this.audioManager?.setMusicVolume(this.musicVolume);
@@ -29250,6 +29863,10 @@ var DOMRenderer = class {
       }
     }
     this.buildDOM();
+    if (this.dyslexiaFont)
+      this.rootEl.classList.add("kawa-dyslexia-font");
+    if (this.highContrast)
+      this.rootEl.classList.add("kawa-high-contrast");
     this.bindEvents();
     this.unsubscribeVMState = this.vm.onStateChange((state2) => {
       this.render(state2);
@@ -29354,6 +29971,10 @@ var DOMRenderer = class {
     if (this.touchControls) {
       this.touchControls.destroy();
       this.touchControls = void 0;
+    }
+    if (this.gamepadControls) {
+      this.gamepadControls.destroy();
+      this.gamepadControls = void 0;
     }
     this.container.innerHTML = "";
   }
@@ -29493,11 +30114,16 @@ var DOMRenderer = class {
     });
   }
   showSettingsModal() {
+    const availableLangs = Object.keys(this.vm.getStory().i18n ?? {});
     showSettingsModal(this.rootEl, {
       typewriterSpeed: this.typewriterSpeed,
       autoDelayMs: this.autoDelayMs,
       musicVolume: this.musicVolume,
       soundVolume: this.soundVolume,
+      dyslexiaFont: this.dyslexiaFont,
+      highContrast: this.highContrast,
+      currentLang: this.vm.getState().lang ?? "en",
+      availableLangs,
       onSettingsChange: (s) => {
         this.typewriterSpeed = s.typewriterSpeed;
         this.autoDelayMs = s.autoDelayMs;
@@ -29508,6 +30134,17 @@ var DOMRenderer = class {
         if (s.soundVolume !== void 0) {
           this.soundVolume = s.soundVolume;
           this.audioManager?.setSoundVolume(this.soundVolume);
+        }
+        if (s.dyslexiaFont !== void 0) {
+          this.dyslexiaFont = s.dyslexiaFont;
+          this.rootEl.classList.toggle("kawa-dyslexia-font", this.dyslexiaFont);
+        }
+        if (s.highContrast !== void 0) {
+          this.highContrast = s.highContrast;
+          this.rootEl.classList.toggle("kawa-high-contrast", this.highContrast);
+        }
+        if (s.lang !== void 0 && s.lang !== this.vm.getState().lang) {
+          this.vm.setLang(s.lang);
         }
         this.dialogueBox.setTypewriterSpeed(this.typewriterSpeed);
         this.saveSettings();
@@ -29737,6 +30374,96 @@ var DOMRenderer = class {
         }
       });
     }
+    if (this.options.features?.gamepad !== false) {
+      this.gamepadControls = bindGamepadControls({
+        onAdvance: () => {
+          if (this.isMainMenuActive())
+            return;
+          if (this.isAutoMode)
+            this.toggleAutoMode(false);
+          if (this.isSkipMode)
+            this.toggleSkipMode(false);
+          this.handleUserAdvance();
+        },
+        onRollback: () => {
+          const confirm = this.rootEl.querySelector(".kawa-confirm-overlay");
+          if (confirm) {
+            confirm.remove();
+            return;
+          }
+          const modal = this.rootEl.querySelector(".kawa-modal-overlay");
+          if (modal) {
+            modal.remove();
+            return;
+          }
+          if (this.isMainMenuActive())
+            return;
+          if (this.isAutoMode)
+            this.toggleAutoMode(false);
+          if (this.isSkipMode)
+            this.toggleSkipMode(false);
+          if (this.vm.canRollback())
+            this.vm.rollback();
+        },
+        onToggleAuto: () => {
+          if (this.isMainMenuActive())
+            return;
+          this.toggleAutoMode();
+        },
+        onToggleSkip: () => {
+          if (this.isMainMenuActive())
+            return;
+          this.toggleSkipMode();
+        },
+        onToggleMenu: () => {
+          if (this.isMainMenuActive()) {
+            this.hideMainMenu();
+          } else {
+            this.showMainMenu();
+          }
+        },
+        onNavigateDown: () => {
+          this.navigateFocus(1);
+        },
+        onNavigateUp: () => {
+          this.navigateFocus(-1);
+        },
+        onConfirm: () => {
+          if (document.activeElement && typeof document.activeElement.click === "function") {
+            const el = document.activeElement;
+            if (el.tagName === "BUTTON" || el.tagName === "A" || el.getAttribute("role") === "button" || el.classList.contains("kawa-choice-button") || el.classList.contains("kawa-menu-btn")) {
+              el.click();
+              return;
+            }
+          }
+          if (this.isMainMenuActive())
+            return;
+          if (this.isAutoMode)
+            this.toggleAutoMode(false);
+          if (this.isSkipMode)
+            this.toggleSkipMode(false);
+          this.handleUserAdvance();
+        }
+      });
+    }
+  }
+  navigateFocus(direction) {
+    const focusableSelectors = 'button:not([disabled]), [tabindex]:not([tabindex="-1"]), a[href], input:not([disabled])';
+    const modal = this.rootEl.querySelector(".kawa-modal-overlay, .kawa-confirm-overlay");
+    const scope = modal || (this.isMainMenuActive() ? this.rootEl.querySelector(".kawa-main-menu") : this.rootEl);
+    if (!scope)
+      return;
+    const focusables = Array.from(scope.querySelectorAll(focusableSelectors)).filter((el) => el.offsetParent !== null || el.offsetWidth > 0 || el.offsetHeight > 0 || getComputedStyle(el).display !== "none");
+    if (focusables.length === 0)
+      return;
+    const currentIndex = focusables.indexOf(document.activeElement);
+    let nextIndex = 0;
+    if (currentIndex === -1) {
+      nextIndex = direction === 1 ? 0 : focusables.length - 1;
+    } else {
+      nextIndex = (currentIndex + direction + focusables.length) % focusables.length;
+    }
+    focusables[nextIndex]?.focus();
   }
   handleUserAdvance() {
     if (this.isMainMenuActive())
@@ -29843,8 +30570,11 @@ var DOMRenderer = class {
     this.hotspotLayer.render(state2.hotspots);
     if (state2.windowVisible === false || state2.choices && state2.choices.length > 0) {
       this.dialogueBox.render(null);
+      this.stageLayer.setSpeakingCharacter(null);
     } else {
+      this.stageLayer.setSpeakingCharacter(state2.dialogue?.speaker ?? null);
       this.dialogueBox.render(state2.dialogue, () => {
+        this.stageLayer.setSpeakingCharacter(null);
         if (this.isAutoMode && !state2.isFinished && (!state2.choices || state2.choices.length === 0) && (!state2.hotspots || state2.hotspots.length === 0) && !state2.pendingInput) {
           this.scheduleAutoAdvance();
         }
@@ -29916,7 +30646,9 @@ var DOMRenderer = class {
           typewriterSpeed: this.typewriterSpeed,
           autoDelayMs: this.autoDelayMs,
           musicVolume: this.musicVolume,
-          soundVolume: this.soundVolume
+          soundVolume: this.soundVolume,
+          dyslexiaFont: this.dyslexiaFont,
+          highContrast: this.highContrast
         }));
       } catch {
       }

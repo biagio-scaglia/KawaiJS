@@ -141,16 +141,25 @@ body.kawa-fullscreen {
   transition: opacity 0.85s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* Directional wipe transitions */
+/* Directional wipe & push & zoom transitions */
 .kawa-background[data-transition="wipeleft"] .kawa-bg-layer,
-.kawa-background[data-transition="wiperight"] .kawa-bg-layer {
-  transition: opacity 0.55s ease, clip-path 0.55s cubic-bezier(0.4, 0, 0.2, 1);
+.kawa-background[data-transition="wiperight"] .kawa-bg-layer,
+.kawa-background[data-transition="wipeup"] .kawa-bg-layer,
+.kawa-background[data-transition="wipedown"] .kawa-bg-layer,
+.kawa-background[data-transition="circlewipe"] .kawa-bg-layer,
+.kawa-background[data-transition="iris"] .kawa-bg-layer,
+.kawa-background[data-transition="pushleft"] .kawa-bg-layer,
+.kawa-background[data-transition="pushright"] .kawa-bg-layer,
+.kawa-background[data-transition="pushup"] .kawa-bg-layer,
+.kawa-background[data-transition="pushdown"] .kawa-bg-layer,
+.kawa-background[data-transition="zoom"] .kawa-bg-layer,
+.kawa-background[data-transition="blur"] .kawa-bg-layer {
+  transition: opacity 0.55s ease, clip-path 0.55s cubic-bezier(0.4, 0, 0.2, 1), transform 0.55s cubic-bezier(0.4, 0, 0.2, 1), filter 0.55s ease;
 }
 
 .kawa-bg-layer.kawa-wipe-from-left {
   clip-path: inset(0 100% 0 0);
 }
-
 .kawa-bg-layer.kawa-wipe-from-left.active {
   clip-path: inset(0 0 0 0);
 }
@@ -158,9 +167,203 @@ body.kawa-fullscreen {
 .kawa-bg-layer.kawa-wipe-from-right {
   clip-path: inset(0 0 0 100%);
 }
-
 .kawa-bg-layer.kawa-wipe-from-right.active {
   clip-path: inset(0 0 0 0);
+}
+
+.kawa-bg-layer.kawa-wipe-from-up {
+  clip-path: inset(0 0 100% 0);
+}
+.kawa-bg-layer.kawa-wipe-from-up.active {
+  clip-path: inset(0 0 0 0);
+}
+
+.kawa-bg-layer.kawa-wipe-from-down {
+  clip-path: inset(100% 0 0 0);
+}
+.kawa-bg-layer.kawa-wipe-from-down.active {
+  clip-path: inset(0 0 0 0);
+}
+
+.kawa-bg-layer.kawa-wipe-circle {
+  clip-path: circle(0% at 50% 50%);
+}
+.kawa-bg-layer.kawa-wipe-circle.active {
+  clip-path: circle(120% at 50% 50%);
+}
+
+.kawa-bg-layer.kawa-push-from-left {
+  transform: translateX(-100%);
+}
+.kawa-bg-layer.kawa-push-from-left.active {
+  transform: translateX(0);
+}
+
+.kawa-bg-layer.kawa-push-from-right {
+  transform: translateX(100%);
+}
+.kawa-bg-layer.kawa-push-from-right.active {
+  transform: translateX(0);
+}
+
+.kawa-bg-layer.kawa-push-from-up {
+  transform: translateY(-100%);
+}
+.kawa-bg-layer.kawa-push-from-up.active {
+  transform: translateY(0);
+}
+
+.kawa-bg-layer.kawa-push-from-down {
+  transform: translateY(100%);
+}
+.kawa-bg-layer.kawa-push-from-down.active {
+  transform: translateY(0);
+}
+
+.kawa-bg-layer.kawa-zoom-in {
+  transform: scale(1.15);
+  filter: blur(8px);
+}
+.kawa-bg-layer.kawa-zoom-in.active {
+  transform: scale(1);
+  filter: blur(0px);
+}
+
+.kawa-bg-layer.kawa-blur-transition {
+  filter: blur(16px);
+}
+.kawa-bg-layer.kawa-blur-transition.active {
+  filter: blur(0px);
+}
+
+/* Scene Glitch / Corrupt Transition */
+@keyframes kawa-scene-glitch {
+  0% {
+    filter: none;
+    transform: scale(1) skewX(0deg);
+  }
+  20% {
+    filter: invert(0.8) hue-rotate(90deg) contrast(200%);
+    transform: scale(1.05) skewX(4deg);
+    clip-path: polygon(0 0, 100% 0, 100% 45%, 0 45%, 0 60%, 100% 60%, 100% 100%, 0 100%);
+  }
+  40% {
+    filter: saturate(300%) contrast(150%);
+    transform: scale(0.98) skewX(-3deg);
+  }
+  60% {
+    filter: invert(0.3) drop-shadow(-8px 0 #ef4444) drop-shadow(8px 0 #06b6d4);
+    transform: scale(1.02) skewX(2deg);
+  }
+  80% {
+    filter: contrast(180%) brightness(120%);
+    transform: scale(1) skewX(-1deg);
+  }
+  100% {
+    filter: none;
+    transform: scale(1) skewX(0deg);
+  }
+}
+
+.kawa-bg-layer.kawa-glitch-transition {
+  animation: kawa-scene-glitch 0.6s ease-in-out forwards;
+}
+.kawa-bg-layer.kawa-glitch-transition.active {
+  animation: kawa-scene-glitch 0.6s ease-in-out forwards;
+}
+
+/* Animated Rich Text Effects: Glitch, Shake, Rainbow, Corrupt */
+@keyframes kawa-glitch-anim {
+  0% {
+    transform: translate(0);
+    text-shadow: -2px 0 #ef4444, 2px 0 #06b6d4;
+  }
+  20% {
+    transform: translate(-2px, 2px);
+    text-shadow: 2px 0 #ef4444, -2px 0 #06b6d4;
+  }
+  40% {
+    transform: translate(-2px, -2px);
+    text-shadow: -2px 0 #ec4899, 2px 0 #10b981;
+  }
+  60% {
+    transform: translate(2px, 2px);
+    text-shadow: 2px 0 #3b82f6, -2px 0 #f59e0b;
+  }
+  80% {
+    transform: translate(2px, -2px);
+    text-shadow: -2px 0 #ef4444, 2px 0 #06b6d4;
+  }
+  100% {
+    transform: translate(0);
+    text-shadow: 0 0 transparent;
+  }
+}
+
+.kawa-text-glitch {
+  display: inline-block;
+  position: relative;
+  color: #f8fafc;
+  font-weight: 700;
+  animation: kawa-glitch-anim 0.35s infinite steps(2, start);
+}
+
+@keyframes kawa-shake-anim {
+  0% { transform: translate(1px, 1px) rotate(0deg); }
+  10% { transform: translate(-1px, -2px) rotate(-1deg); }
+  20% { transform: translate(-3px, 0px) rotate(1deg); }
+  30% { transform: translate(3px, 2px) rotate(0deg); }
+  40% { transform: translate(1px, -1px) rotate(1deg); }
+  50% { transform: translate(-1px, 2px) rotate(-1deg); }
+  60% { transform: translate(-3px, 1px) rotate(0deg); }
+  70% { transform: translate(3px, 1px) rotate(-1deg); }
+  80% { transform: translate(-1px, -1px) rotate(1deg); }
+  90% { transform: translate(1px, 2px) rotate(0deg); }
+  100% { transform: translate(1px, -2px) rotate(-1deg); }
+}
+
+.kawa-text-shake {
+  display: inline-block;
+  animation: kawa-shake-anim 0.2s infinite ease-in-out;
+  color: #f43f5e;
+}
+
+@keyframes kawa-rainbow-anim {
+  0% { filter: hue-rotate(0deg); }
+  100% { filter: hue-rotate(360deg); }
+}
+
+.kawa-text-rainbow {
+  display: inline-block;
+  background: linear-gradient(90deg, #ff007f, #ffaa00, #00ff66, #00f0ff, #aa00ff, #ff007f);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: kawa-rainbow-anim 3s linear infinite;
+  font-weight: bold;
+}
+
+.kawa-text-corrupt {
+  display: inline-block;
+  font-family: monospace;
+  letter-spacing: 0.15em;
+  color: #ef4444;
+  text-shadow: 0 0 8px rgba(239, 68, 68, 0.8), 2px 2px 0 rgba(0, 0, 0, 0.9);
+  animation: kawa-glitch-anim 0.2s infinite;
+}
+
+/* Sprite Meta/Horror Glitch Effects */
+.kawa-sprite.kawa-glitch img {
+  animation: kawa-glitch-anim 0.25s infinite steps(2, start);
+  filter: drop-shadow(-4px 0 #ef4444) drop-shadow(4px 0 #06b6d4) contrast(140%);
+}
+
+.kawa-sprite.kawa-invert img {
+  filter: invert(1) hue-rotate(180deg) drop-shadow(0 0 16px rgba(255, 255, 255, 0.8));
+}
+
+.kawa-sprite.kawa-vhs img {
+  filter: saturate(180%) contrast(130%) brightness(110%);
 }
 
 /* Characters Layer */
@@ -1331,6 +1534,17 @@ body.kawa-fullscreen {
   animation: kawa-fade-in 0.5s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
+.kawa-bg-video,
+.kawa-cg-video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  pointer-events: none;
+  z-index: 1;
+}
+
 /* ==========================================================================
    Camera Shake, Flash & Stage Directives
    ========================================================================== */
@@ -2123,6 +2337,112 @@ body.kawa-fullscreen {
   font-size: 0.75rem;
   color: #64748b;
 }
+
+/* ==========================================================================
+   Accessibility & Themes (A11y, Dyslexia Font & High Contrast)
+   ========================================================================== */
+
+.kawa-dyslexia-font,
+.kawa-dyslexia-font .kawa-dialogue-text,
+.kawa-dyslexia-font .kawa-speaker-tag,
+.kawa-dyslexia-font .kawa-choice-btn,
+.kawa-dyslexia-font .kawa-modal-card {
+  font-family: 'OpenDyslexic', 'Comic Sans MS', sans-serif !important;
+  letter-spacing: 0.05em !important;
+  word-spacing: 0.12em !important;
+  line-height: 1.7 !important;
+}
+
+.kawa-high-contrast .kawa-dialogue-box {
+  background: #000000 !important;
+  border: 3px solid #ffffff !important;
+  box-shadow: 0 0 0 2px #000000 !important;
+}
+
+.kawa-high-contrast .kawa-dialogue-text {
+  color: #ffffff !important;
+  font-weight: 700 !important;
+  text-shadow: none !important;
+}
+
+.kawa-high-contrast .kawa-speaker-tag {
+  background: #ffff00 !important;
+  color: #000000 !important;
+  border: 2px solid #ffffff !important;
+  font-weight: 900 !important;
+}
+
+.kawa-high-contrast .kawa-choice-btn {
+  background: #000000 !important;
+  color: #ffffff !important;
+  border: 2px solid #ffff00 !important;
+  font-weight: 700 !important;
+}
+
+.kawa-high-contrast .kawa-choice-btn:hover,
+.kawa-high-contrast .kawa-choice-btn:focus-visible {
+  background: #ffff00 !important;
+  color: #000000 !important;
+}
+
+.kawa-setting-section {
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.kawa-setting-section-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #f8fafc;
+  margin-bottom: 2px;
+}
+
+.kawa-toggle-label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.9rem;
+  color: #cbd5e1;
+  cursor: pointer;
+}
+
+.kawa-toggle-label input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--kawa-primary-accent, #f43f5e);
+  cursor: pointer;
+}
+
+.kawa-select {
+  width: 100%;
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: rgba(15, 23, 42, 0.8);
+  color: #f8fafc;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  font-size: 0.95rem;
+  cursor: pointer;
+  outline: none;
+}
+
+.kawa-select:focus {
+  border-color: var(--kawa-primary-accent, #f43f5e);
+}
+
+.kawa-sprite.kawa-speaking {
+  animation: kawa-sprite-lip-sync 0.35s ease-in-out infinite alternate;
+}
+
+@keyframes kawa-sprite-lip-sync {
+  0% { transform: translateY(0) scale(1); }
+  100% { transform: translateY(-3px) scale(1.015); }
+}
+
+
 
 
 :root {

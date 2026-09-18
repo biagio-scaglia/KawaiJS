@@ -5,7 +5,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![npm version](https://img.shields.io/npm/v/kawaijs.svg)](https://www.npmjs.com/package/kawaijs)
 [![TypeScript](https://img.shields.io/badge/TypeScript-Strict-blue?logo=typescript)](https://www.typescriptlang.org/)
-[![Tests](https://img.shields.io/badge/Tests-77%2B%20Passing-brightgreen)](https://github.com/biagio-scaglia/KawaiJS)
+[![Tests](https://img.shields.io/badge/Tests-119%2B%20Passing-brightgreen)](https://github.com/biagio-scaglia/KawaiJS)
 [![Docs](https://img.shields.io/badge/Docs-Playable%20VN-f43f5e)](https://biagio-scaglia.github.io/KawaiJS/)
 
 [Playable Docs](https://biagio-scaglia.github.io/KawaiJS/) · [Play Demo](https://biagio-scaglia.github.io/KawaiJS/showcase/) · [Playground](https://biagio-scaglia.github.io/KawaiJS/playground/) · [Quick Start](#-quick-start) · [Syntax Guide](#-kawa-script-syntax-guide) · [Start Menu](#-start-menu--ui-customization) · [Keyboard Shortcuts](#-keyboard-shortcuts) · [Architecture](#-architecture)
@@ -147,50 +147,72 @@ label leave_early:
 | :--- | :--- | :--- |
 | **Character** | `character <id> "<Name>" [<color>]` | `character yumia "Yumia" #f43f5e` |
 | **Labels** | `label <name>:` | `label chapter_1:` |
+| **Multi-file Include** | `include "<path.kawa>"` \| `import "<path>"` | `include "chapter2.kawa"` |
 | **Scene & Background** | `scene bg <name> [with <transition>]` | `scene bg sunset with fade` |
-| **Scene transitions** | `fade` \| `dissolve` \| `wipeleft` \| `wiperight` | `scene bg park with wipeleft` |
+| **Video Background / CG** | `scene "<video.webm>"` \| `cg "<anim.mp4>"` | `scene "intro_cutscene.webm"` |
+| **Scene Transitions** | `fade` \| `dissolve` \| `wipeleft` \| `wiperight` \| `wipeup` \| `wipedown` \| `circlewipe` \| `iris` \| `pushleft` \| `pushright` \| `pushup` \| `pushdown` \| `zoom` \| `blur` \| `glitch` \| `corrupt` | `scene bg park with circlewipe` |
 | **Show Sprite** | `show <char> [<expr>] [at <pos>] [with <anim>]` | `show yumia smile at center with bounce` |
 | **Hide Sprite** | `hide <char> [with <anim>]` | `hide yumia` |
-| **Sprite transitions** | `with bounce` \| `dissolve` \| `nod` \| `shake` \| `slideleft` \| `slideright` | `show yumia with dissolve` |
-| **Define alias** | `define <name...> = "<path>"` | `define bg classroom = "classroom.svg"` |
-| **Player input** | `input <var> ["prompt"]` | `input player_name "Your name?"` |
-| **Dialogue window** | `window show` \| `window hide` | `window hide` |
-| **Theme token** | `theme "<name>"` | `theme "noir"` / `"sakura"` / `"ocean"` / `"dusk"` |
-| **Style hook** | `style <target> <name>` | `style dialogue glass` / `style choices pill` |
+| **Sprite Transitions & Effects** | `with bounce` \| `dissolve` \| `nod` \| `shake` \| `slideleft` \| `slideright` \| `glitch` \| `invert` \| `vhs` | `show yumia with glitch` |
+| **Define Alias** | `define <name...> = "<path>"` | `define bg classroom = "classroom.svg"` |
+| **Player Input** | `input <var> ["prompt"]` | `input player_name "Your name?"` |
+| **Dialogue Window** | `window show` \| `window hide` | `window hide` |
+| **Theme Token** | `theme "<name>"` | `theme "noir"` / `"sakura"` / `"ocean"` / `"dusk"` |
+| **Style Hook** | `style <target> <name>` | `style dialogue glass` / `style choices pill` |
 | **Layer / z-order** | `layer <name>` · `show … z <n>` · `show … layer <name>` | `layer overlay` / `show yumia at left z 2` |
-| **CSS animate** | `animate <char> with "<name> [ms]"` | `animate yumia with "slide-in 400ms"` |
+| **CSS Animate** | `animate <char> with "<name> [ms]"` | `animate yumia with "slide-in 400ms"` |
 | **Achievement** | `unlock <id> ["title"] ["desc"]` | `unlock first_end "First Ending"` |
-| **Language** | `lang "<code>"` · text `{t:key}` | `lang "it"` / `yumia "{t:hello}"` |
+| **Language & i18n** | `lang "<code>"` · text `{t:key}` | `lang "it"` / `yumia "{t:hello}"` |
 | **Hotspot** | `hotspot <id> <x> <y> <w> <h> jump <label>` | `hotspot door 40 50 18 12 jump courtyard` |
-| **Deep link** | URL `?at=<label>` or `?label=` | `/?at=courtyard_scene` |
-| **Embed mode** | URL `?embed=1` | iframe / blog embed (no main menu) |
+| **Deep Link** | URL `?at=<label>` or `?label=` | `/?at=courtyard_scene` |
+| **Embed Mode** | URL `?embed=1` | iframe / blog embed (no main menu) |
 | **Dialogue** | `<char> "<text>"` | `yumia "Hello world!"` |
 | **Narration** | `"<text>"` | `"Silence filled the room."` |
-| **Variables** | `set <var> = <val>` / `+=` / `-=` | `set karma += 5` |
-| **Conditionals** | `if <cond>:` / `elif:` / `else:` | `if score >= 50 and flag:` |
+| **Math & Variables** | `set <var> = <expr>` / `+=` / `-=` / `*=` / `/=` | `set karma = (str + agi) * 1.5 - penalty` |
+| **Conditionals** | `if <cond>:` / `elif:` / `else:` | `if (affinity >= 10 and has_key) or is_admin:` |
 | **Choice Menu** | `menu:` with `"Text" [if <cond>]:` | `"Open door" if has_key:` |
-| **Audio - Music** | `play music "<file>" [fadein <s>] [loop]` | `play music "bgm.mp3" fadein 1.5` |
+| **Audio - Music (BGM)** | `play music "<file>" [fadein <s>] [loop]` | `play music "bgm.mp3" fadein 1.5` |
 | **Audio - Sound SFX** | `play sound "<file>"` | `play sound "door_creak.mp3"` |
-| **Audio - Voice** | `play voice "<file>"` | `play voice "yumia_01.mp3"` |
+| **Audio - Voice (Ducking)**| `play voice "<file>"` | `play voice "yumia_01.mp3"` |
 | **Stop Audio** | `stop music [fadeout <s>]` | `stop music fadeout 2.0` |
 | **Navigation** | `jump <label>` / `call <label>` / `return` | `jump next_chapter` |
 | **Variable Interpolation** | `"<text> [var_name] <text>"` | `"Hello [player_name], you have [gold] coins!"` |
 | **VFX Weather & Atmosphere** | `vfx <rain\|snow\|sakura\|fog\|tint\|stop> [<intensity\|color>]` | `vfx sakura` / `vfx tint "#f43f5e"` / `vfx stop` |
 | **Camera & Shake Effects** | `camera <shake\|vpunch\|hpunch\|flash> [<duration_ms>]` | `camera shake 600` / `camera flash` |
 | **Timed Pause** | `pause [<duration_ms>]` | `pause 1200` |
-| **Fullscreen Event CG** | `cg "<image>" [as "<unlock_id>"]` | `cg "cg_sunset.jpg" as "sunset"` |
+| **Fullscreen Event CG** | `cg "<image\|video>" [as "<unlock_id>"]` | `cg "cg_sunset.jpg" as "sunset"` |
 
 ---
 
-### 🖋️ Rich Text & Variable Interpolation
+### 🖋️ Rich Text & Animated Effects
 
-Kawaijs supports inline text tags and dynamic variable interpolation:
+Kawaijs supports inline formatting, micro-animations, and dynamic variable interpolation:
 
 - **Variables**: `"Hello, [player_name]! Your affinity is [affinity]."`
 - **Bold**: `{b}Bold Text{/b}` ➔ **Bold Text**
 - **Italic**: `{i}Italic Text{/i}` ➔ *Italic Text*
-- **Color**: `{color=#f43f5e}Custom Color{/color}` ➔ <span style="color:#f43f5e">Custom Color</span>
+- **Color**: `{color=#f43f5e}Custom Color{/color}` ➔ Custom color
 - **Font Size**: `{size=1.3rem}Sized Text{/size}` ➔ Custom font size
+- **Glitch & Aberration**: `{glitch}Distorted Reality{/glitch}` ➔ Animated RGB chromatic glitch
+- **Shake / Fear**: `{shake}Intense Tremble{/shake}` ➔ Jittering animated text
+- **Rainbow**: `{rainbow}Magical Aura{/rainbow}` ➔ Continuous hue-rotating rainbow gradient
+- **Corrupt**: `{corrupt}0xDEADBEEF{/corrupt}` ➔ Monospace corrupted glitch text
+
+---
+
+### 🎮 Controller & Gamepad Support
+
+Kawaijs includes out-of-the-box standard gamepad navigation via the Web Gamepad API:
+
+| Button | Action |
+| :--- | :--- |
+| <kbd>A</kbd> / <kbd>Cross</kbd> (Btn 0) | Advance dialogue / Confirm menu choice / Trigger focused button |
+| <kbd>B</kbd> / <kbd>Circle</kbd> (Btn 1) | Rollback / Close open modal or confirm dialog |
+| <kbd>X</kbd> / <kbd>Square</kbd> (Btn 2) | Toggle Fast Skip Mode |
+| <kbd>Y</kbd> / <kbd>Triangle</kbd> (Btn 3) | Toggle Auto-Forward Mode |
+| <kbd>Start</kbd> / <kbd>Menu</kbd> (Btn 9) | Toggle Main Menu / Pause Screen |
+| <kbd>D-Pad Up</kbd> / <kbd>Stick Up</kbd> | Navigate focus upwards across buttons and choices |
+| <kbd>D-Pad Down</kbd> / <kbd>Stick Down</kbd> | Navigate focus downwards across buttons and choices |
 
 ---
 
@@ -408,10 +430,33 @@ const renderer = new DOMRenderer(vm, {
 ## 🛠️ CLI Reference
 
 ```bash
-kawa create <directory>       # Scaffold a new visual novel template
-kawa validate [directory]     # Lint script labels/syntax and report missing assets
-kawa dev [directory]          # Start local dev server with hot reload
-kawa build [directory]        # Export static standalone HTML5 distribution
+kawa create <directory>                    # Scaffold a new visual novel template
+kawa validate [directory]                  # Lint script labels/syntax and report missing assets
+kawa dev [directory]                       # Start local dev server with hot reload
+kawa build [directory]                     # Export static standalone HTML5 distribution
+kawa export [dir] --target=tauri|electron  # Scaffold native desktop build (Tauri / Electron)
+kawa extract-i18n [dir] [--lang=code]      # Scan dialogue & choices and emit translation JSON
+kawa embed --src <url>                     # Generate responsive iframe snippet
+```
+
+---
+
+## 🧪 Automated Testing & Headless Story Simulator
+
+You can test all branching story paths, endings, dead-ends, and unreachable labels programmatically without loading a browser:
+
+```typescript
+import { compileScript } from '@kawaijs/parser';
+import { simulateStory } from '@kawaijs/runtime';
+
+const story = compileScript(kawaCode);
+const result = simulateStory(story, {
+  initialVariables: { karma: 0 }
+});
+
+console.log(`Explored ${result.totalPaths} branching paths.`);
+console.log(`Unreachable labels (dead code):`, result.unreachableLabels);
+console.log(`Discovered ${result.endings.length} distinct endings.`);
 ```
 
 ---
