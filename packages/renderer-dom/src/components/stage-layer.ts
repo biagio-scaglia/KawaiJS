@@ -2,6 +2,7 @@ import type { AssetType } from '../types.js';
 import type { VfxState } from '@kawaijs/runtime';
 import { VfxLayerComponent } from './vfx-layer.js';
 import { escapeHtml } from '../utils/rich-text.js';
+import { clearBgTransitionClasses, cssUrl } from '../utils/css-url.js';
 import { bindImageSrcFallbacks, characterAssetCandidates } from '../asset-fallbacks.js';
 
 export class StageLayerComponent {
@@ -16,6 +17,7 @@ export class StageLayerComponent {
   private bgLayerB: HTMLDivElement;
   private activeBgLayer: 'A' | 'B' = 'A';
   private currentBgUrl = '';
+  private currentBgTransition = '';
 
   private activeCharacters = new Map<
     string,
@@ -85,19 +87,15 @@ export class StageLayerComponent {
     return /\.(webm|mp4|m4v|ogg|ogv)$/i.test(path) || path.startsWith('video:');
   }
 
-  /** Safe CSS `url("...")` value — escapes quotes/backslashes that break background-image. */
-  private cssUrl(url: string): string {
-    const safe = String(url ?? '').replace(/\\/g, '\\\\').replace(/"/g, '\\"');
-    return `url("${safe}")`;
-  }
-
   public updateBackground(background: string | null | undefined, transition: string | null | undefined): void {
     if (!background) {
       this.currentBgUrl = '';
+      this.currentBgTransition = '';
       this.bgLayerA.style.backgroundImage = '';
       this.bgLayerB.style.backgroundImage = '';
       this.bgLayerA.classList.remove('active');
       this.bgLayerB.classList.remove('active');
+      clearBgTransitionClasses(this.bgLayerA, this.bgLayerB);
       if (this.bgVideoEl) {
         this.bgVideoEl.pause();
         this.bgVideoEl.remove();
@@ -112,110 +110,106 @@ export class StageLayerComponent {
     const isVideo = this.isVideoPath(background);
     const primaryUrl = this.assetResolver(cleanBg, 'background');
 
-    if (primaryUrl !== this.currentBgUrl) {
-      this.currentBgUrl = primaryUrl;
+    // Re-run when the asset OR the transition changes (same URL + new wipe must still animate).
+    if (primaryUrl === this.currentBgUrl && transitionName === this.currentBgTransition) {
+      return;
+    }
 
-      if (isVideo) {
-        // Video Background
-        this.bgLayerA.classList.remove('active');
-        this.bgLayerB.classList.remove('active');
-        if (!this.bgVideoEl) {
-          this.bgVideoEl = document.createElement('video');
-          this.bgVideoEl.className = 'kawa-bg-video';
-          this.bgVideoEl.autoplay = true;
-          this.bgVideoEl.loop = true;
-          this.bgVideoEl.muted = true;
-          this.bgVideoEl.playsInline = true;
-          this.bgVideoEl.setAttribute('aria-hidden', 'true');
-          this.backgroundEl.appendChild(this.bgVideoEl);
-        }
-        this.bgVideoEl.src = primaryUrl;
-        this.bgVideoEl.play().catch(() => {});
-      } else {
-        // Static Image Background
-        if (this.bgVideoEl) {
-          this.bgVideoEl.pause();
-          this.bgVideoEl.remove();
-          this.bgVideoEl = null;
-        }
+    this.currentBgUrl = primaryUrl;
+    this.currentBgTransition = transitionName;
 
-        const crossfade =
-          transitionName === 'fade' ||
-          transitionName === 'dissolve' ||
-          transitionName === 'wipeleft' ||
-          transitionName === 'wiperight' ||
-          transitionName === 'wipeup' ||
-          transitionName === 'wipedown' ||
-          transitionName === 'circlewipe' ||
-          transitionName === 'iris' ||
-          transitionName === 'pushleft' ||
-          transitionName === 'pushright' ||
-          transitionName === 'pushup' ||
-          transitionName === 'pushdown' ||
-          transitionName === 'zoom' ||
-          transitionName === 'blur' ||
-          transitionName === 'glitch' ||
-          transitionName === 'corrupt';
-
-        if (crossfade) {
-          const nextLayer = this.activeBgLayer === 'A' ? this.bgLayerB : this.bgLayerA;
-          const curLayer = this.activeBgLayer === 'A' ? this.bgLayerA : this.bgLayerB;
-
-          nextLayer.style.backgroundImage = this.cssUrl(primaryUrl);
-          // Reset transition classes then apply for this transition
-          const allTransClasses = [
-            'kawa-wipe-from-left',
-            'kawa-wipe-from-right',
-            'kawa-wipe-from-up',
-            'kawa-wipe-from-down',
-            'kawa-wipe-circle',
-            'kawa-push-from-left',
-            'kawa-push-from-right',
-            'kawa-push-from-up',
-            'kawa-push-from-down',
-            'kawa-zoom-in',
-            'kawa-blur-transition',
-            'kawa-glitch-transition'
-          ];
-          nextLayer.classList.remove(...allTransClasses);
-          curLayer.classList.remove(...allTransClasses);
-
-          if (transitionName === 'wipeleft') {
-            nextLayer.classList.add('kawa-wipe-from-right');
-          } else if (transitionName === 'wiperight') {
-            nextLayer.classList.add('kawa-wipe-from-left');
-          } else if (transitionName === 'wipeup') {
-            nextLayer.classList.add('kawa-wipe-from-down');
-          } else if (transitionName === 'wipedown') {
-            nextLayer.classList.add('kawa-wipe-from-up');
-          } else if (transitionName === 'circlewipe' || transitionName === 'iris') {
-            nextLayer.classList.add('kawa-wipe-circle');
-          } else if (transitionName === 'pushleft') {
-            nextLayer.classList.add('kawa-push-from-right');
-          } else if (transitionName === 'pushright') {
-            nextLayer.classList.add('kawa-push-from-left');
-          } else if (transitionName === 'pushup') {
-            nextLayer.classList.add('kawa-push-from-down');
-          } else if (transitionName === 'pushdown') {
-            nextLayer.classList.add('kawa-push-from-up');
-          } else if (transitionName === 'zoom') {
-            nextLayer.classList.add('kawa-zoom-in');
-          } else if (transitionName === 'blur') {
-            nextLayer.classList.add('kawa-blur-transition');
-          } else if (transitionName === 'glitch' || transitionName === 'corrupt') {
-            nextLayer.classList.add('kawa-glitch-transition');
-          }
-
-          nextLayer.classList.add('active');
-          curLayer.classList.remove('active');
-
-          this.activeBgLayer = this.activeBgLayer === 'A' ? 'B' : 'A';
-        } else {
-          const curLayer = this.activeBgLayer === 'A' ? this.bgLayerA : this.bgLayerB;
-          curLayer.style.backgroundImage = this.cssUrl(primaryUrl);
-          curLayer.classList.add('active');
-        }
+    if (isVideo) {
+      // Video Background
+      this.bgLayerA.classList.remove('active');
+      this.bgLayerB.classList.remove('active');
+      clearBgTransitionClasses(this.bgLayerA, this.bgLayerB);
+      if (!this.bgVideoEl) {
+        this.bgVideoEl = document.createElement('video');
+        this.bgVideoEl.className = 'kawa-bg-video';
+        this.bgVideoEl.autoplay = true;
+        this.bgVideoEl.loop = true;
+        this.bgVideoEl.muted = true;
+        this.bgVideoEl.playsInline = true;
+        this.bgVideoEl.setAttribute('aria-hidden', 'true');
+        this.backgroundEl.appendChild(this.bgVideoEl);
       }
+      this.bgVideoEl.src = primaryUrl;
+      this.bgVideoEl.play().catch(() => {});
+      return;
+    }
+
+    // Static Image Background
+    if (this.bgVideoEl) {
+      this.bgVideoEl.pause();
+      this.bgVideoEl.remove();
+      this.bgVideoEl = null;
+    }
+
+    const crossfade =
+      transitionName === 'fade' ||
+      transitionName === 'dissolve' ||
+      transitionName === 'wipeleft' ||
+      transitionName === 'wiperight' ||
+      transitionName === 'wipeup' ||
+      transitionName === 'wipedown' ||
+      transitionName === 'circlewipe' ||
+      transitionName === 'iris' ||
+      transitionName === 'pushleft' ||
+      transitionName === 'pushright' ||
+      transitionName === 'pushup' ||
+      transitionName === 'pushdown' ||
+      transitionName === 'zoom' ||
+      transitionName === 'blur' ||
+      transitionName === 'glitch' ||
+      transitionName === 'corrupt';
+
+    if (crossfade) {
+      const nextLayer = this.activeBgLayer === 'A' ? this.bgLayerB : this.bgLayerA;
+      const curLayer = this.activeBgLayer === 'A' ? this.bgLayerA : this.bgLayerB;
+
+      nextLayer.style.backgroundImage = cssUrl(primaryUrl);
+      clearBgTransitionClasses(nextLayer, curLayer);
+
+      // Force reflow so CSS transition/animation classes re-trigger reliably.
+      void nextLayer.offsetWidth;
+
+      if (transitionName === 'wipeleft') {
+        nextLayer.classList.add('kawa-wipe-from-right');
+      } else if (transitionName === 'wiperight') {
+        nextLayer.classList.add('kawa-wipe-from-left');
+      } else if (transitionName === 'wipeup') {
+        nextLayer.classList.add('kawa-wipe-from-down');
+      } else if (transitionName === 'wipedown') {
+        nextLayer.classList.add('kawa-wipe-from-up');
+      } else if (transitionName === 'circlewipe' || transitionName === 'iris') {
+        nextLayer.classList.add('kawa-wipe-circle');
+      } else if (transitionName === 'pushleft') {
+        nextLayer.classList.add('kawa-push-from-right');
+      } else if (transitionName === 'pushright') {
+        nextLayer.classList.add('kawa-push-from-left');
+      } else if (transitionName === 'pushup') {
+        nextLayer.classList.add('kawa-push-from-down');
+      } else if (transitionName === 'pushdown') {
+        nextLayer.classList.add('kawa-push-from-up');
+      } else if (transitionName === 'zoom') {
+        nextLayer.classList.add('kawa-zoom-in');
+      } else if (transitionName === 'blur') {
+        nextLayer.classList.add('kawa-blur-transition');
+      } else if (transitionName === 'glitch' || transitionName === 'corrupt') {
+        nextLayer.classList.add('kawa-glitch-transition');
+      }
+
+      nextLayer.classList.add('active');
+      curLayer.classList.remove('active');
+
+      this.activeBgLayer = this.activeBgLayer === 'A' ? 'B' : 'A';
+    } else {
+      const curLayer = this.activeBgLayer === 'A' ? this.bgLayerA : this.bgLayerB;
+      const otherLayer = this.activeBgLayer === 'A' ? this.bgLayerB : this.bgLayerA;
+      clearBgTransitionClasses(this.bgLayerA, this.bgLayerB);
+      curLayer.style.backgroundImage = cssUrl(primaryUrl);
+      curLayer.classList.add('active');
+      otherLayer.classList.remove('active');
     }
   }
 
@@ -386,7 +380,7 @@ export class StageLayerComponent {
           this.cgVideoEl.remove();
           this.cgVideoEl = null;
         }
-        this.cgEl.style.backgroundImage = this.cssUrl(url);
+        this.cgEl.style.backgroundImage = cssUrl(url);
       }
       this.cgEl.style.display = 'block';
     }
