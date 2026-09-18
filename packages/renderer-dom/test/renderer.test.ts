@@ -830,6 +830,44 @@ label start:
     renderer.destroy();
   });
 
+  it('re-runs background transition when only the transition name changes', () => {
+    const story = compileScript(`label start:
+    scene bg room with circlewipe
+    "first"
+    scene bg room with pushleft
+    "second"
+    scene bg room
+    "plain"
+`);
+    const vm = new StoryVM(story);
+    const renderer = new DOMRenderer(vm, {
+      container,
+      mainMenu: { enabled: false },
+      typewriterSpeed: 0
+    });
+    vm.start();
+
+    const bgEl = container.querySelector('.kawa-background') as HTMLElement;
+    expect(bgEl.dataset.transition).toBe('circlewipe');
+    expect(container.querySelector('.kawa-bg-layer.active')?.classList.contains('kawa-wipe-circle')).toBe(true);
+
+    vm.next();
+    expect(bgEl.dataset.transition).toBe('pushleft');
+    const activePush = container.querySelector('.kawa-bg-layer.active') as HTMLElement;
+    expect(activePush.classList.contains('kawa-push-from-right')).toBe(true);
+    expect(activePush.classList.contains('kawa-wipe-circle')).toBe(false);
+
+    vm.next();
+    expect(bgEl.dataset.transition).toBe('none');
+    const layers = container.querySelectorAll('.kawa-bg-layer');
+    for (const layer of layers) {
+      expect(layer.classList.contains('kawa-wipe-circle')).toBe(false);
+      expect(layer.classList.contains('kawa-push-from-right')).toBe(false);
+    }
+
+    renderer.destroy();
+  });
+
   it('renders animated rich-text tags ({glitch}, {shake}, {rainbow}, {corrupt}) and glitch scene transitions', () => {
     const story = compileScript(`label start:
     scene bg classroom with glitch
