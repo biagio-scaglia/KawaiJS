@@ -54,38 +54,6 @@ export function resolveValue(
   return trimmed;
 }
 
-function findOperatorOutsideQuotes(
-  str: string,
-  targetOps: readonly string[]
-): { op: string; index: number } | null {
-  let inQuote: '"' | "'" | null = null;
-  for (let i = 0; i < str.length; i++) {
-    const ch = str[i]!;
-    if (inQuote) {
-      if (ch === inQuote && str[i - 1] !== '\\') inQuote = null;
-      continue;
-    }
-    if (ch === '"' || ch === "'") {
-      inQuote = ch;
-      continue;
-    }
-    for (const op of targetOps) {
-      if (str.startsWith(op, i)) {
-        if (op === 'and' || op === 'or') {
-          const before = i === 0 ? ' ' : str[i - 1]!;
-          const after = i + op.length >= str.length ? ' ' : str[i + op.length]!;
-          if (/\s/.test(before) && /\s/.test(after)) {
-            return { op, index: i };
-          }
-        } else {
-          return { op, index: i };
-        }
-      }
-    }
-  }
-  return null;
-}
-
 function isTruthy(val: unknown): boolean {
   if (
     val === false ||
@@ -101,6 +69,303 @@ function isTruthy(val: unknown): boolean {
   return Boolean(val);
 }
 
+interface ExprToken {
+  type: 'num' | 'str' | 'bool' | 'id' | 'op' | 'paren';
+  value: string;
+}
+
+function tokenizeExpr(expr: string): ExprToken[] {
+  const tokens: ExprToken[] = [];
+  let i = 0;
+  const len = expr.length;
+
+  while (i < len) {
+    const ch = expr[i]!;
+
+    if (/\s/.test(ch)) {
+      i++;
+      continue;
+    }
+
+    if (ch === '(' || ch === ')') {
+      tokens.push({ type: 'paren', value: ch });
+      i++;
+      continue;
+    }
+
+    // String literals
+    if (ch === '"' || ch === "'") {
+      const quote = ch;
+      let str = '';
+      i++;
+      while (i < len && expr[i] !== quote) {
+        if (expr[i] === '\\' && i + 1 < len) {
+          i++;
+          str += expr[i];
+        } else {
+          str += expr[i];
+        }
+        i++;
+      }
+      if (i < len && expr[i] === quote) {
+        i++;
+      }
+      tokens.push({ type: 'str', value: str });
+      continue;
+    }
+
+    // Multi-char operators: &&, ||, ==, !=, >=, <=
+    const two = expr.slice(i, i + 2);
+    if (two === '&&' || two === '||' || two === '==' || two === '!=' || two === '>=' || two === '<=') {
+      tokens.push({ type: 'op', value: two });
+      i += 2;
+      continue;
+    }
+
+    // Single-char operators: +, -, *, /, %, ^, >, <, !
+    if (['+', '-', '*', '/', '%', '^', '>', '<', '!'].includes(ch)) {
+      tokens.push({ type: 'op', value: ch });
+      i++;
+      continue;
+    }
+
+    // Numbers (including decimals)
+    if (/\d/.test(ch) || (ch === '.' && i + 1 < len && /\d/.test(expr[i + 1]!))) {
+      let numStr = '';
+      while (i < len && (/\d/.test(expr[i]!) || expr[i] === '.')) {
+        numStr += expr[i];
+        i++;
+      }
+      tokens.push({ type: 'num', value: numStr });
+      continue;
+    }
+
+    // Identifiers & keywords (and, or, not, true, false, variable_names)
+    if (/[a-zA-Z_]/.test(ch)) {
+      let idStr = '';
+      while (i < len && /[a-zA-Z0-9_-]/.test(expr[i]!)) {
+        idStr += expr[i];
+        i++;
+      }
+      const lower = idStr.toLowerCase();
+      if (lower === 'true' || lower === 'false') {
+        tokens.push({ type: 'bool', value: lower });
+      } else if (lower === 'and') {
+        tokens.push({ type: 'op', value: '&&' });
+      } else if (lower === 'or') {
+        tokens.push({ type: 'op', value: '||' });
+      } else if (lower === 'not') {
+        tokens.push({ type: 'op', value: '!' });
+      } else {
+        tokens.push({ type: 'id', value: idStr });
+      }
+      continue;
+    }
+
+    // Unknown char fallback
+    i++;
+  }
+
+  return tokens;
+}
+
+class ExpressionParser {
+  private pos = 0;
+  constructor(
+    private readonly tokens: ExprToken[],
+    private readonly variables: Record<string, unknown>
+  ) {}
+
+  private peek(): ExprToken | undefined {
+    return this.tokens[this.pos];
+  }
+
+  private advance(): ExprToken | undefined {
+    return this.tokens[this.pos++];
+  }
+
+  private match(val: string): boolean {
+    const t = this.peek();
+    if (t && t.value === val) {
+      this.pos++;
+      return true;
+    }
+    return false;
+  }
+
+  public parse(): unknown {
+    if (this.tokens.length === 0) return undefined;
+    const res = this.parseOr();
+    return res;
+  }
+
+  private parseOr(): unknown {
+    let left = this.parseAnd();
+    while (this.match('||')) {
+      const right = this.parseAnd();
+      left = isTruthy(left) || isTruthy(right);
+    }
+    return left;
+  }
+
+  private parseAnd(): unknown {
+    let left = this.parseEquality();
+    while (this.match('&&')) {
+      const right = this.parseEquality();
+      left = isTruthy(left) && isTruthy(right);
+    }
+    return left;
+  }
+
+  private parseEquality(): unknown {
+    let left = this.parseComparison();
+    while (true) {
+      if (this.match('==')) {
+        const right = this.parseComparison();
+        left = left === right || String(left) === String(right);
+      } else if (this.match('!=')) {
+        const right = this.parseComparison();
+        left = left !== right && String(left) !== String(right);
+      } else {
+        break;
+      }
+    }
+    return left;
+  }
+
+  private parseComparison(): unknown {
+    let left = this.parseAddSub();
+    while (true) {
+      if (this.match('>=')) {
+        const right = this.parseAddSub();
+        left = this.toNum(left) >= this.toNum(right);
+      } else if (this.match('<=')) {
+        const right = this.parseAddSub();
+        left = this.toNum(left) <= this.toNum(right);
+      } else if (this.match('>')) {
+        const right = this.parseAddSub();
+        left = this.toNum(left) > this.toNum(right);
+      } else if (this.match('<')) {
+        const right = this.parseAddSub();
+        left = this.toNum(left) < this.toNum(right);
+      } else {
+        break;
+      }
+    }
+    return left;
+  }
+
+  private parseAddSub(): unknown {
+    let left = this.parseMulDiv();
+    while (true) {
+      if (this.match('+')) {
+        const right = this.parseMulDiv();
+        if (typeof left === 'string' || typeof right === 'string') {
+          left = String(left ?? '') + String(right ?? '');
+        } else {
+          left = this.toNum(left) + this.toNum(right);
+        }
+      } else if (this.match('-')) {
+        const right = this.parseMulDiv();
+        left = this.toNum(left) - this.toNum(right);
+      } else {
+        break;
+      }
+    }
+    return left;
+  }
+
+  private parseMulDiv(): unknown {
+    let left = this.parseUnary();
+    while (true) {
+      if (this.match('*')) {
+        const right = this.parseUnary();
+        left = this.toNum(left) * this.toNum(right);
+      } else if (this.match('/')) {
+        const right = this.parseUnary();
+        const denom = this.toNum(right);
+        left = denom === 0 ? 0 : this.toNum(left) / denom;
+      } else if (this.match('%')) {
+        const right = this.parseUnary();
+        const denom = this.toNum(right);
+        left = denom === 0 ? 0 : this.toNum(left) % denom;
+      } else if (this.match('^')) {
+        const right = this.parseUnary();
+        left = Math.pow(this.toNum(left), this.toNum(right));
+      } else {
+        break;
+      }
+    }
+    return left;
+  }
+
+  private parseUnary(): unknown {
+    if (this.match('!')) {
+      const val = this.parseUnary();
+      return !isTruthy(val);
+    }
+    if (this.match('-')) {
+      const val = this.parseUnary();
+      return -this.toNum(val);
+    }
+    if (this.match('+')) {
+      return this.parseUnary();
+    }
+    return this.parsePrimary();
+  }
+
+  private parsePrimary(): unknown {
+    const t = this.advance();
+    if (!t) return undefined;
+
+    if (t.type === 'paren' && t.value === '(') {
+      const val = this.parseOr();
+      this.match(')');
+      return val;
+    }
+
+    if (t.type === 'num') {
+      return Number(t.value);
+    }
+
+    if (t.type === 'str') {
+      return t.value;
+    }
+
+    if (t.type === 'bool') {
+      return t.value === 'true';
+    }
+
+    if (t.type === 'id') {
+      if (hasVar(this.variables, t.value)) {
+        return this.variables[t.value];
+      }
+      return undefined;
+    }
+
+    return t.value;
+  }
+
+  private toNum(v: unknown): number {
+    if (typeof v === 'number') return v;
+    if (v === true) return 1;
+    if (v === false || v === undefined || v === null || v === '') return 0;
+    const n = Number(v);
+    return isNaN(n) ? 0 : n;
+  }
+}
+
+/**
+ * Evaluates an arbitrary arithmetic or logical expression against variables.
+ */
+export function evaluateExpression(expr: string, variables: Record<string, unknown>): unknown {
+  const trimmed = expr.trim();
+  if (!trimmed) return undefined;
+  const tokens = tokenizeExpr(trimmed);
+  const parser = new ExpressionParser(tokens, variables);
+  return parser.parse();
+}
+
 /**
  * Evaluates a condition expression against the current variables.
  */
@@ -109,72 +374,8 @@ export function evaluateCondition(condition: string, variables: Record<string, u
   if (!trimmed || trimmed === 'true') return true;
   if (trimmed === 'false') return false;
 
-  // 1. Compound OR ('||' or ' or ')
-  const orMatch = findOperatorOutsideQuotes(trimmed, ['||', 'or']);
-  if (orMatch) {
-    const left = trimmed.slice(0, orMatch.index);
-    const right = trimmed.slice(orMatch.index + orMatch.op.length);
-    return evaluateCondition(left, variables) || evaluateCondition(right, variables);
-  }
-
-  // 2. Compound AND ('&&' or ' and ')
-  const andMatch = findOperatorOutsideQuotes(trimmed, ['&&', 'and']);
-  if (andMatch) {
-    const left = trimmed.slice(0, andMatch.index);
-    const right = trimmed.slice(andMatch.index + andMatch.op.length);
-    return evaluateCondition(left, variables) && evaluateCondition(right, variables);
-  }
-
-  const toNum = (v: unknown): number => {
-    if (typeof v === 'number') return v;
-    if (v === true) return 1;
-    if (v === false || v === undefined || v === null || v === '') return 0;
-    const n = Number(v);
-    return isNaN(n) ? 0 : n;
-  };
-
-  // 3. Binary comparison operators: >=, <=, !=, ==, >, <
-  const operators = ['>=', '<=', '!=', '==', '>', '<'] as const;
-  const cmpMatch = findOperatorOutsideQuotes(trimmed, operators);
-  if (cmpMatch) {
-    const op = cmpMatch.op;
-    const leftRaw = trimmed.slice(0, cmpMatch.index);
-    const rightRaw = trimmed.slice(cmpMatch.index + op.length);
-    const leftVal = resolveValue(leftRaw, variables);
-    const rightVal = resolveValue(rightRaw, variables);
-
-    const isLeftNumeric = typeof leftVal === 'number' || (!isNaN(Number(leftVal)) && typeof leftVal === 'string' && leftVal.trim() !== '');
-    const isRightNumeric = typeof rightVal === 'number' || (!isNaN(Number(rightVal)) && typeof rightVal === 'string' && rightVal.trim() !== '');
-
-    switch (op) {
-      case '==':
-        return leftVal === rightVal || String(leftVal) === String(rightVal);
-      case '!=':
-        return leftVal !== rightVal && String(leftVal) !== String(rightVal);
-      case '>=':
-        if (isLeftNumeric && isRightNumeric) return toNum(leftVal) >= toNum(rightVal);
-        return String(leftVal ?? '') >= String(rightVal ?? '');
-      case '<=':
-        if (isLeftNumeric && isRightNumeric) return toNum(leftVal) <= toNum(rightVal);
-        return String(leftVal ?? '') <= String(rightVal ?? '');
-      case '>':
-        if (isLeftNumeric && isRightNumeric) return toNum(leftVal) > toNum(rightVal);
-        return String(leftVal ?? '') > String(rightVal ?? '');
-      case '<':
-        if (isLeftNumeric && isRightNumeric) return toNum(leftVal) < toNum(rightVal);
-        return String(leftVal ?? '') < String(rightVal ?? '');
-    }
-  }
-
-  // 4. Negation
-  if (trimmed.startsWith('!')) {
-    const inner = trimmed.slice(1).trim();
-    return !evaluateCondition(inner, variables);
-  }
-
-  // 5. Single identifier / flag
-  const val = hasVar(variables, trimmed) ? variables[trimmed] : resolveValue(trimmed, variables);
-  return isTruthy(val);
+  const result = evaluateExpression(trimmed, variables);
+  return isTruthy(result);
 }
 
 /**
@@ -187,18 +388,32 @@ export function applySetOperation(
   variables: Record<string, unknown>,
   isVariable?: boolean
 ): unknown {
-  const resolved = isVariable !== false && typeof assignedValue === 'string' && hasVar(variables, assignedValue)
-    ? variables[assignedValue]
-    : assignedValue;
+  let resolved: unknown;
+
+  if (typeof assignedValue === 'string') {
+    const trimmed = assignedValue.trim();
+    // If it's a quoted string literal, unpack it
+    if ((trimmed.startsWith('"') && trimmed.endsWith('"')) || (trimmed.startsWith("'") && trimmed.endsWith("'"))) {
+      resolved = trimmed.slice(1, -1);
+    } else if (isVariable === false) {
+      resolved = assignedValue;
+    } else {
+      // Evaluate as expression (can be identifier, number, or compound expression)
+      const evaluated = evaluateExpression(trimmed, variables);
+      resolved = evaluated !== undefined ? evaluated : trimmed;
+    }
+  } else {
+    resolved = assignedValue;
+  }
 
   switch (operator) {
     case '+=':
       if (typeof currentValue === 'string' || typeof resolved === 'string') {
         return String(currentValue ?? '') + String(resolved ?? '');
       }
-      return Number(currentValue ?? 0) + Number(resolved);
+      return Number(currentValue ?? 0) + Number(resolved ?? 0);
     case '-=':
-      return Number(currentValue ?? 0) - Number(resolved);
+      return Number(currentValue ?? 0) - Number(resolved ?? 0);
     case '=':
     default:
       return resolved;

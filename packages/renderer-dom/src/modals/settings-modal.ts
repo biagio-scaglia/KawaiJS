@@ -6,11 +6,18 @@ export interface SettingsModalOptions {
   autoDelayMs: number;
   musicVolume?: number;
   soundVolume?: number;
+  dyslexiaFont?: boolean;
+  highContrast?: boolean;
+  currentLang?: string;
+  availableLangs?: string[];
   onSettingsChange: (settings: {
     typewriterSpeed: number;
     autoDelayMs: number;
     musicVolume?: number;
     soundVolume?: number;
+    dyslexiaFont?: boolean;
+    highContrast?: boolean;
+    lang?: string;
   }) => void;
 }
 
@@ -22,6 +29,9 @@ export function showSettingsModal(rootEl: HTMLElement, options: SettingsModalOpt
   let currentDelay = options.autoDelayMs;
   let currentMusic = options.musicVolume ?? 0.8;
   let currentSound = options.soundVolume ?? 1.0;
+  let currentDyslexia = options.dyslexiaFont ?? false;
+  let currentHighContrast = options.highContrast ?? false;
+  let currentLang = options.currentLang ?? 'en';
 
   const overlay = document.createElement('div');
   overlay.className = 'kawa-modal-overlay';
@@ -37,7 +47,7 @@ export function showSettingsModal(rootEl: HTMLElement, options: SettingsModalOpt
 
   const title = document.createElement('div');
   title.className = 'kawa-modal-title';
-  title.innerHTML = `${SVG_ICONS.settings} <span>Preferences</span>`;
+  title.innerHTML = `${SVG_ICONS.settings} <span>Preferences & Accessibility</span>`;
 
   const releaseFocus = trapFocus(card);
   const close = (): void => {
@@ -66,7 +76,10 @@ export function showSettingsModal(rootEl: HTMLElement, options: SettingsModalOpt
       typewriterSpeed: currentSpeed,
       autoDelayMs: currentDelay,
       musicVolume: currentMusic,
-      soundVolume: currentSound
+      soundVolume: currentSound,
+      dyslexiaFont: currentDyslexia,
+      highContrast: currentHighContrast,
+      lang: currentLang
     });
   };
 
@@ -144,10 +157,63 @@ export function showSettingsModal(rootEl: HTMLElement, options: SettingsModalOpt
     notifyChange();
   });
 
+  // 4. Accessibility Options
+  const a11ySection = document.createElement('div');
+  a11ySection.className = 'kawa-setting-section';
+  a11ySection.innerHTML = `
+    <div class="kawa-setting-section-title">♿ Accessibility</div>
+    <label class="kawa-toggle-label">
+      <input type="checkbox" id="kawa-dyslexia-toggle" ${currentDyslexia ? 'checked' : ''}>
+      <span>Dyslexia-Friendly Font (High Readability)</span>
+    </label>
+    <label class="kawa-toggle-label">
+      <input type="checkbox" id="kawa-contrast-toggle" ${currentHighContrast ? 'checked' : ''}>
+      <span>High Contrast Mode (Sharp Text & Borders)</span>
+    </label>
+  `;
+
+  const dyslexiaInput = a11ySection.querySelector('#kawa-dyslexia-toggle') as HTMLInputElement;
+  dyslexiaInput.addEventListener('change', () => {
+    currentDyslexia = dyslexiaInput.checked;
+    notifyChange();
+  });
+
+  const contrastInput = a11ySection.querySelector('#kawa-contrast-toggle') as HTMLInputElement;
+  contrastInput.addEventListener('change', () => {
+    currentHighContrast = contrastInput.checked;
+    notifyChange();
+  });
+
+  // 5. Language Selector (if available)
+  if (options.availableLangs && options.availableLangs.length > 1) {
+    const langRow = document.createElement('div');
+    langRow.className = 'kawa-setting-row';
+    const langOptionsHtml = options.availableLangs
+      .map(
+        (l) => `<option value="${l}" ${l === currentLang ? 'selected' : ''}>${l.toUpperCase()}</option>`
+      )
+      .join('');
+    langRow.innerHTML = `
+      <div class="kawa-setting-header">
+        <span>🌐 Language / Lingua</span>
+      </div>
+      <select class="kawa-select" id="kawa-lang-select">
+        ${langOptionsHtml}
+      </select>
+    `;
+    const langSelect = langRow.querySelector('#kawa-lang-select') as HTMLSelectElement;
+    langSelect.addEventListener('change', () => {
+      currentLang = langSelect.value;
+      notifyChange();
+    });
+    body.appendChild(langRow);
+  }
+
   body.appendChild(speedRow);
   body.appendChild(autoRow);
   body.appendChild(musicRow);
   body.appendChild(sfxRow);
+  body.appendChild(a11ySection);
 
   card.appendChild(header);
   card.appendChild(body);

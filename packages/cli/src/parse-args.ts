@@ -86,6 +86,61 @@ export function parseBuildCommandArgs(args: string[]): BuildCommandArgs {
   return { projectDir, startLabel, outDir };
 }
 
+export interface ExportCommandArgs {
+  readonly projectDir: string;
+  readonly target?: 'tauri' | 'electron';
+  readonly outDir?: string;
+  readonly startLabel?: string;
+}
+
+/**
+ * Parse `kawa export [path] [--target tauri|electron] [--out dir] [--at label]`.
+ */
+export function parseExportCommandArgs(args: string[]): ExportCommandArgs {
+  let projectDir = '.';
+  let target: 'tauri' | 'electron' | undefined;
+  let outDir: string | undefined;
+  let startLabel: string | undefined;
+
+  for (let i = 1; i < args.length; i++) {
+    const token = args[i];
+    if (!token) continue;
+
+    if (token.startsWith('--target=')) {
+      const t = token.slice(9).trim().toLowerCase();
+      if (t === 'tauri' || t === 'electron') target = t;
+      continue;
+    }
+    if (token === '--target' || token === '-t') {
+      const t = args[++i]?.trim().toLowerCase();
+      if (t === 'tauri' || t === 'electron') target = t;
+      continue;
+    }
+    if (token.startsWith('--out=')) {
+      outDir = token.slice(6).trim() || undefined;
+      continue;
+    }
+    if (token === '--out') {
+      outDir = args[++i]?.trim() || undefined;
+      continue;
+    }
+    if (token.startsWith('--at=')) {
+      startLabel = token.slice(5).trim() || undefined;
+      continue;
+    }
+    if (token === '--at') {
+      startLabel = args[++i]?.trim() || undefined;
+      continue;
+    }
+    if (token.startsWith('-')) {
+      continue;
+    }
+    projectDir = token;
+  }
+
+  return { projectDir, target, outDir, startLabel };
+}
+
 export interface StaticMetaInput {
   readonly title: string;
   readonly description?: string;

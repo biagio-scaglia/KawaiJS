@@ -32,7 +32,8 @@ import type {
   LayerStmtNode,
   AnimateStmtNode,
   UnlockStmtNode,
-  LangStmtNode
+  LangStmtNode,
+  IncludeStmtNode
 } from '@kawaijs/ast';
 import { createLocation } from '@kawaijs/ast';
 import { Token, TokenType } from './token.js';
@@ -138,6 +139,9 @@ export class Parser {
         return this.parseUnlockStmt();
       case 'LANG':
         return this.parseLangStmt();
+      case 'INCLUDE':
+      case 'IMPORT':
+        return this.parseIncludeStmt();
       case 'STRING':
         // Narration without speaker identifier
         return this.parseDialogueStmt();
@@ -444,25 +448,44 @@ export class Parser {
       });
     }
 
-    let value: unknown;
-    let isVariable = false;
-    if (this.check('STRING')) {
-      value = this.advance().value;
-      isVariable = false;
-    } else if (this.check('NUMBER')) {
-      value = Number(this.advance().value);
-    } else if (this.check('BOOLEAN')) {
-      value = this.advance().value === 'true';
-    } else if (this.check('IDENTIFIER')) {
-      value = this.advance().value;
-      isVariable = true;
-    } else {
+    // Read remaining tokens on line
+    const exprTokens: Token[] = [];
+    while (!this.isAtEnd() && !this.check('NEWLINE')) {
+      exprTokens.push(this.advance());
+    }
+
+    if (exprTokens.length === 0) {
       throw new KawaError({
         code: 'E0103',
-        message: 'Expected string, number, or boolean value in set assignment',
+        message: 'Expected value or expression in set assignment',
         severity: 'error',
         loc: this.currentLocation()
       });
+    }
+
+    let value: unknown;
+    let isVariable = false;
+
+    if (exprTokens.length === 1) {
+      const single = exprTokens[0]!;
+      if (single.type === 'STRING') {
+        value = single.value;
+        isVariable = false;
+      } else if (single.type === 'NUMBER') {
+        value = Number(single.value);
+      } else if (single.type === 'BOOLEAN') {
+        value = single.value === 'true';
+      } else if (single.type === 'IDENTIFIER') {
+        value = single.value;
+        isVariable = true;
+      } else {
+        value = single.value;
+        isVariable = true;
+      }
+    } else {
+      // Compound expression: join tokens
+      value = exprTokens.map(t => (t.type === 'STRING' ? `"${t.value}"` : t.value)).join(' ');
+      isVariable = true;
     }
 
     this.consumeOptionalNewline();
@@ -472,6 +495,32 @@ export class Parser {
       operator,
       value,
       isVariable,
+      loc: createLocation(this.file, startTok.loc.start, this.previousLocation().end)
+    };
+  }
+
+  private parseIncludeStmt(): IncludeStmtNode {
+    const startTok = this.check('INCLUDE')
+      ? this.consume('INCLUDE', 'Expected "include" keyword')
+      : this.consume('IMPORT', 'Expected "import" keyword');
+    let filePath = '';
+    if (this.check('STRING')) {
+      filePath = this.advance().value;
+    } else if (this.check('IDENTIFIER') || this.checkSoftIdentifier()) {
+      filePath = this.advance().value;
+    } else {
+      throw new KawaError({
+        code: 'E0106',
+        message: 'Expected file path string after include / import',
+        severity: 'error',
+        loc: this.currentLocation()
+      });
+    }
+
+    this.consumeOptionalNewline();
+    return {
+      type: 'IncludeStmt',
+      file: filePath,
       loc: createLocation(this.file, startTok.loc.start, this.previousLocation().end)
     };
   }

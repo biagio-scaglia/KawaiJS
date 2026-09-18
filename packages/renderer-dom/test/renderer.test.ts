@@ -652,7 +652,49 @@ label courtyard:
     expect(meta.title).toBe('Opening');
     expect(meta.description).toBe('Custom blurb');
   });
+
+  it('supports accessibility features including screen reader announcements, dyslexia font and high contrast', () => {
+    const story = compileScript(`character yumia "Yumia" #f43f5e
+label start:
+    yumia "Accessible dialogue"
+`);
+    const vm = new StoryVM(story);
+    const renderer = new DOMRenderer(vm, {
+      container,
+      mainMenu: { enabled: false },
+      typewriterSpeed: 0
+    });
+    vm.start();
+
+    // 1. Screen reader announcer
+    const announceEl = container.querySelector('.kawa-dialogue-announce') as HTMLElement;
+    expect(announceEl).not.toBeNull();
+    expect(announceEl.getAttribute('aria-live')).toBe('polite');
+    expect(announceEl.textContent).toContain('Accessible dialogue');
+
+    // 2. Settings modal with accessibility options
+    renderer.showSettingsModal();
+    const modal = container.querySelector('.kawa-modal-card') as HTMLElement;
+    expect(modal).not.toBeNull();
+    expect(modal.querySelector('#kawa-dyslexia-toggle')).not.toBeNull();
+    expect(modal.querySelector('#kawa-contrast-toggle')).not.toBeNull();
+
+    const dyslexiaToggle = modal.querySelector('#kawa-dyslexia-toggle') as HTMLInputElement;
+    dyslexiaToggle.checked = true;
+    dyslexiaToggle.dispatchEvent(new Event('change'));
+
+    const root = container.querySelector('.kawa-root') as HTMLElement;
+    expect(root.classList.contains('kawa-dyslexia-font')).toBe(true);
+
+    const contrastToggle = modal.querySelector('#kawa-contrast-toggle') as HTMLInputElement;
+    contrastToggle.checked = true;
+    contrastToggle.dispatchEvent(new Event('change'));
+    expect(root.classList.contains('kawa-high-contrast')).toBe(true);
+
+    renderer.destroy();
+  });
 });
+
 
 
 

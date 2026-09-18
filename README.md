@@ -247,6 +247,10 @@ label dramatic_scene:
 
 > **Tip:** A new `scene` clears characters and VFX. Re-apply `vfx sakura` (or fog/rain) after each scene change.  
 > **Tip:** `define` aliases are resolved at compile time for `scene`, `play`, and `cg`.  
+> **Tip:** Multi-file stories: use `include "chapter1.kawa"` to split your VN across multiple `.kawa` files.  
+> **Tip:** Export to Desktop: `kawa export --target=tauri` or `kawa export --target=electron` to build native PC/Mac executables.  
+> **Tip:** i18n extraction: `kawa extract-i18n --lang=it` automatically extracts dialogue keys into `game/lang/it.json`.  
+> **Tip:** Accessibility & Dyslexia font: built-in toggle for high-readability font and high contrast mode in Preferences.  
 > **Tip:** Open a build with `?at=label_name` to deep-link past the main menu (labels starting with `__` are ignored).  
 > **Tip:** Use `?embed=1` for iframe / itch / Notion embeds (compact UI, no main menu).  
 > **Tip:** Share progress with **Copy continue link** in Save/Load (URL `?continue=…` restores the save).  

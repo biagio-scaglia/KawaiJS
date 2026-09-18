@@ -197,6 +197,87 @@ export class Lexer {
             loc: createLocation(this.file, startLoc, this.getCurrentPosition())
           };
         }
+        return {
+          type: 'NOT',
+          value: '!',
+          loc: createLocation(this.file, startLoc, this.getCurrentPosition())
+        };
+      }
+
+      if (ch === '&') {
+        const startLoc = this.getCurrentPosition();
+        this.advance();
+        if (this.peek() === '&') {
+          this.advance();
+        }
+        return {
+          type: 'AND',
+          value: '&&',
+          loc: createLocation(this.file, startLoc, this.getCurrentPosition())
+        };
+      }
+
+      if (ch === '|') {
+        const startLoc = this.getCurrentPosition();
+        this.advance();
+        if (this.peek() === '|') {
+          this.advance();
+        }
+        return {
+          type: 'OR',
+          value: '||',
+          loc: createLocation(this.file, startLoc, this.getCurrentPosition())
+        };
+      }
+
+      if (ch === '*') {
+        const startLoc = this.getCurrentPosition();
+        this.advance();
+        return {
+          type: 'MULTIPLY',
+          value: '*',
+          loc: createLocation(this.file, startLoc, this.getCurrentPosition())
+        };
+      }
+
+      if (ch === '/') {
+        const startLoc = this.getCurrentPosition();
+        this.advance();
+        return {
+          type: 'DIVIDE',
+          value: '/',
+          loc: createLocation(this.file, startLoc, this.getCurrentPosition())
+        };
+      }
+
+      if (ch === '%') {
+        const startLoc = this.getCurrentPosition();
+        this.advance();
+        return {
+          type: 'MODULO',
+          value: '%',
+          loc: createLocation(this.file, startLoc, this.getCurrentPosition())
+        };
+      }
+
+      if (ch === '(') {
+        const startLoc = this.getCurrentPosition();
+        this.advance();
+        return {
+          type: 'LPAREN',
+          value: '(',
+          loc: createLocation(this.file, startLoc, this.getCurrentPosition())
+        };
+      }
+
+      if (ch === ')') {
+        const startLoc = this.getCurrentPosition();
+        this.advance();
+        return {
+          type: 'RPAREN',
+          value: ')',
+          loc: createLocation(this.file, startLoc, this.getCurrentPosition())
+        };
       }
 
       if (ch === '>') {

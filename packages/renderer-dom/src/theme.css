@@ -2122,3 +2122,99 @@ body.kawa-fullscreen {
   font-size: 0.75rem;
   color: #64748b;
 }
+
+/* ==========================================================================
+   Accessibility & Themes (A11y, Dyslexia Font & High Contrast)
+   ========================================================================== */
+
+.kawa-dyslexia-font,
+.kawa-dyslexia-font .kawa-dialogue-text,
+.kawa-dyslexia-font .kawa-speaker-tag,
+.kawa-dyslexia-font .kawa-choice-btn,
+.kawa-dyslexia-font .kawa-modal-card {
+  font-family: 'OpenDyslexic', 'Comic Sans MS', sans-serif !important;
+  letter-spacing: 0.05em !important;
+  word-spacing: 0.12em !important;
+  line-height: 1.7 !important;
+}
+
+.kawa-high-contrast .kawa-dialogue-box {
+  background: #000000 !important;
+  border: 3px solid #ffffff !important;
+  box-shadow: 0 0 0 2px #000000 !important;
+}
+
+.kawa-high-contrast .kawa-dialogue-text {
+  color: #ffffff !important;
+  font-weight: 700 !important;
+  text-shadow: none !important;
+}
+
+.kawa-high-contrast .kawa-speaker-tag {
+  background: #ffff00 !important;
+  color: #000000 !important;
+  border: 2px solid #ffffff !important;
+  font-weight: 900 !important;
+}
+
+.kawa-high-contrast .kawa-choice-btn {
+  background: #000000 !important;
+  color: #ffffff !important;
+  border: 2px solid #ffff00 !important;
+  font-weight: 700 !important;
+}
+
+.kawa-high-contrast .kawa-choice-btn:hover,
+.kawa-high-contrast .kawa-choice-btn:focus-visible {
+  background: #ffff00 !important;
+  color: #000000 !important;
+}
+
+.kawa-setting-section {
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.kawa-setting-section-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #f8fafc;
+  margin-bottom: 2px;
+}
+
+.kawa-toggle-label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.9rem;
+  color: #cbd5e1;
+  cursor: pointer;
+}
+
+.kawa-toggle-label input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--kawa-primary-accent, #f43f5e);
+  cursor: pointer;
+}
+
+.kawa-select {
+  width: 100%;
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: rgba(15, 23, 42, 0.8);
+  color: #f8fafc;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  font-size: 0.95rem;
+  cursor: pointer;
+  outline: none;
+}
+
+.kawa-select:focus {
+  border-color: var(--kawa-primary-accent, #f43f5e);
+}
+

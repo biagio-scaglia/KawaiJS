@@ -8,9 +8,14 @@ import type {
 } from '@kawaijs/ast';
 import { KawaError } from './diagnostic.js';
 import { closestMatch } from './suggest.js';
+import { Lexer } from './lexer.js';
+import { Parser } from './parser.js';
+
+export type FileResolver = (filePath: string, fromFile: string) => string;
 
 export interface CompilerOptions {
   validateLabels?: boolean;
+  fileResolver?: FileResolver;
 }
 
 export class Compiler {
@@ -29,8 +34,11 @@ export class Compiler {
     const labels: Record<string, Instruction[]> = {};
     this.defines = {};
 
+    const rootFile = this.program.loc?.file ?? '<anonymous>';
+    const flattenedStatements = this.expandStatements(this.program.statements, rootFile, new Set([rootFile]));
+
     // 1. First pass: Collect character / define declarations and label bodies
-    for (const stmt of this.program.statements) {
+    for (const stmt of flattenedStatements) {
       if (stmt.type === 'CharacterDecl') {
         characters[stmt.id] = {
           id: stmt.id,
@@ -75,6 +83,54 @@ export class Compiler {
       defines: { ...this.defines },
       labels
     };
+  }
+
+  private expandStatements(
+    statements: StatementNode[],
+    currentFile: string,
+    visited: Set<string>
+  ): StatementNode[] {
+    const result: StatementNode[] = [];
+    for (const stmt of statements) {
+      if (stmt.type === 'IncludeStmt') {
+        const targetPath = stmt.file;
+        let source: string | undefined;
+
+        if (this.options.fileResolver) {
+          source = this.options.fileResolver(targetPath, currentFile);
+        }
+
+        if (source === undefined) {
+          throw new KawaError({
+            code: 'E0207',
+            message: `Cannot resolve include file '${targetPath}' from '${currentFile}'. Ensure file exists or fileResolver is provided.`,
+            severity: 'error',
+            loc: stmt.loc
+          });
+        }
+
+        if (visited.has(targetPath)) {
+          throw new KawaError({
+            code: 'E0206',
+            message: `Circular include detected: '${targetPath}'`,
+            severity: 'error',
+            loc: stmt.loc
+          });
+        }
+
+        const nextVisited = new Set(visited);
+        nextVisited.add(targetPath);
+
+        const lexer = new Lexer(source, targetPath);
+        const parser = new Parser(lexer.tokenize(), targetPath);
+        const subProgram = parser.parse();
+        const expandedSub = this.expandStatements(subProgram.statements, targetPath, nextVisited);
+        result.push(...expandedSub);
+      } else {
+        result.push(stmt);
+      }
+    }
+    return result;
   }
 
   /** Resolve `define` aliases. Returns `fallback` (or `primary`) when unset. */

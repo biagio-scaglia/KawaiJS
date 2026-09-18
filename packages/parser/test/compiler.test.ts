@@ -46,6 +46,50 @@ label start:
     expect(Object.keys(story.labels).length).toBeGreaterThan(2);
   });
 
+  it('supports multi-file include statements and merges declarations', () => {
+    const mainScript = `include "chapter1.kawa"
+character sensei "Sensei" #38bdf8
+
+label start:
+    jump ch1_start
+`;
+
+    const chapter1Script = `character yumia "Yumia" #f43f5e
+
+label ch1_start:
+    yumia "Welcome to Chapter 1!"
+`;
+
+    const fileMap: Record<string, string> = {
+      'chapter1.kawa': chapter1Script
+    };
+
+    const story = compileScript(mainScript, 'main.kawa', {
+      fileResolver: (target) => fileMap[target]!
+    });
+
+    expect(story.characters['sensei']).toBeDefined();
+    expect(story.characters['yumia']).toBeDefined();
+    expect(story.labels['start']).toBeDefined();
+    expect(story.labels['ch1_start']).toBeDefined();
+  });
+
+  it('detects circular includes and throws a KawaError', () => {
+    const fileA = `include "b.kawa"\nlabel start:\n    "A"\n`;
+    const fileB = `include "a.kawa"\nlabel b_label:\n    "B"\n`;
+
+    const fileMap: Record<string, string> = {
+      'a.kawa': fileA,
+      'b.kawa': fileB
+    };
+
+    expect(() => {
+      compileScript(fileA, 'a.kawa', {
+        fileResolver: (target) => fileMap[target]!
+      });
+    }).toThrow(KawaError);
+  });
+
   it('preserves character hex color definitions', () => {
     const code = `character yumia "Yumia" #f43f5e
 character kaori "Kaori" #0284c7

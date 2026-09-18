@@ -41,6 +41,8 @@ export type TokenType =
   | 'ANIMATE'
   | 'UNLOCK'
   | 'LANG'
+  | 'INCLUDE'
+  | 'IMPORT'
   // Literals & Identifiers
   | 'IDENTIFIER'
   | 'STRING'
@@ -60,6 +62,14 @@ export type TokenType =
   | 'LESS'
   | 'PLUS'
   | 'MINUS'
+  | 'MULTIPLY'
+  | 'DIVIDE'
+  | 'MODULO'
+  | 'LPAREN'
+  | 'RPAREN'
+  | 'AND'
+  | 'OR'
+  | 'NOT'
   | 'COMMA'
   // Layout tokens
   | 'NEWLINE'
@@ -114,6 +124,11 @@ export const KEYWORDS_MAP = new Map<string, TokenType>([
   ['animate', 'ANIMATE'],
   ['unlock', 'UNLOCK'],
   ['lang', 'LANG'],
+  ['include', 'INCLUDE'],
+  ['import', 'IMPORT'],
+  ['and', 'AND'],
+  ['or', 'OR'],
+  ['not', 'NOT'],
   ['true', 'BOOLEAN'],
   ['false', 'BOOLEAN']
 ]);

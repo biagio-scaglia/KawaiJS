@@ -105,6 +105,8 @@ export class DOMRenderer {
 
   private isAutoMode = false;
   private isSkipMode = false;
+  private dyslexiaFont = false;
+  private highContrast = false;
   private autoTimer: number | null = null;
   private skipInterval: number | null = null;
   private pauseTimer: number | null = null;
@@ -154,6 +156,8 @@ export class DOMRenderer {
           const parsed = JSON.parse(saved);
           if (typeof parsed.typewriterSpeed === 'number') this.typewriterSpeed = parsed.typewriterSpeed;
           if (typeof parsed.autoDelayMs === 'number') this.autoDelayMs = parsed.autoDelayMs;
+          if (typeof parsed.dyslexiaFont === 'boolean') this.dyslexiaFont = parsed.dyslexiaFont;
+          if (typeof parsed.highContrast === 'boolean') this.highContrast = parsed.highContrast;
           if (typeof parsed.musicVolume === 'number') {
             this.musicVolume = parsed.musicVolume;
             this.audioManager?.setMusicVolume(this.musicVolume);
@@ -167,6 +171,8 @@ export class DOMRenderer {
     }
 
     this.buildDOM();
+    if (this.dyslexiaFont) this.rootEl.classList.add('kawa-dyslexia-font');
+    if (this.highContrast) this.rootEl.classList.add('kawa-high-contrast');
     this.bindEvents();
 
     this.unsubscribeVMState = this.vm.onStateChange((state) => {
@@ -438,11 +444,16 @@ export class DOMRenderer {
   }
 
   public showSettingsModal(): void {
+    const availableLangs = Object.keys(this.vm.getStory().i18n ?? {});
     showSettingsModal(this.rootEl, {
       typewriterSpeed: this.typewriterSpeed,
       autoDelayMs: this.autoDelayMs,
       musicVolume: this.musicVolume,
       soundVolume: this.soundVolume,
+      dyslexiaFont: this.dyslexiaFont,
+      highContrast: this.highContrast,
+      currentLang: this.vm.getState().lang ?? 'en',
+      availableLangs,
       onSettingsChange: (s) => {
         this.typewriterSpeed = s.typewriterSpeed;
         this.autoDelayMs = s.autoDelayMs;
@@ -453,6 +464,17 @@ export class DOMRenderer {
         if (s.soundVolume !== undefined) {
           this.soundVolume = s.soundVolume;
           this.audioManager?.setSoundVolume(this.soundVolume);
+        }
+        if (s.dyslexiaFont !== undefined) {
+          this.dyslexiaFont = s.dyslexiaFont;
+          this.rootEl.classList.toggle('kawa-dyslexia-font', this.dyslexiaFont);
+        }
+        if (s.highContrast !== undefined) {
+          this.highContrast = s.highContrast;
+          this.rootEl.classList.toggle('kawa-high-contrast', this.highContrast);
+        }
+        if (s.lang !== undefined && s.lang !== this.vm.getState().lang) {
+          this.vm.setLang(s.lang);
         }
         this.dialogueBox.setTypewriterSpeed(this.typewriterSpeed);
         this.saveSettings();
@@ -965,7 +987,9 @@ export class DOMRenderer {
             typewriterSpeed: this.typewriterSpeed,
             autoDelayMs: this.autoDelayMs,
             musicVolume: this.musicVolume,
-            soundVolume: this.soundVolume
+            soundVolume: this.soundVolume,
+            dyslexiaFont: this.dyslexiaFont,
+            highContrast: this.highContrast
           })
         );
       } catch {}

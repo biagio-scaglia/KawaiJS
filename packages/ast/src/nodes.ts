@@ -32,7 +32,8 @@ export type ASTNodeType =
   | 'LayerStmt'
   | 'AnimateStmt'
   | 'UnlockStmt'
-  | 'LangStmt';
+  | 'LangStmt'
+  | 'IncludeStmt';
 
 export interface BaseNode {
   readonly type: ASTNodeType;
@@ -72,7 +73,8 @@ export type StatementNode =
   | LayerStmtNode
   | AnimateStmtNode
   | UnlockStmtNode
-  | LangStmtNode;
+  | LangStmtNode
+  | IncludeStmtNode;
 
 export interface CharacterDeclNode extends BaseNode {
   readonly type: 'CharacterDecl';
@@ -282,5 +284,11 @@ export interface UnlockStmtNode extends BaseNode {
 export interface LangStmtNode extends BaseNode {
   readonly type: 'LangStmt';
   readonly code: string;
+}
+
+/** Include another .kawa script file relative to current file. */
+export interface IncludeStmtNode extends BaseNode {
+  readonly type: 'IncludeStmt';
+  readonly file: string;
 }
 
