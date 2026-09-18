@@ -1,4 +1,5 @@
 import { trapFocus } from '../utils/focus-trap.js';
+import { dismissModalOverlay, registerModalCloser } from '../utils/modal-lifecycle.js';
 
 /**
  * Modal text prompt for the KawaScript `input` directive.
@@ -13,7 +14,7 @@ export function showInputModal(
   }
 ): void {
   const existing = rootEl.querySelector('.kawa-input-overlay');
-  if (existing) existing.remove();
+  if (existing) dismissModalOverlay(existing);
 
   const overlay = document.createElement('div');
   overlay.className = 'kawa-modal-overlay kawa-input-overlay';
@@ -57,6 +58,12 @@ export function showInputModal(
     overlay.remove();
     options.onSubmit(value);
   };
+
+  // Registered for replacement/cleanup — Escape still must not dismiss (soft-lock).
+  registerModalCloser(overlay, () => {
+    releaseFocus();
+    overlay.remove();
+  });
 
   confirmBtn.addEventListener('click', (e) => {
     e.preventDefault();

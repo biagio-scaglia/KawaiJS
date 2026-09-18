@@ -90,6 +90,26 @@ label ch1_start:
     }).toThrow(KawaError);
   });
 
+  it('detects include cycles across path aliases (ch.kawa vs ./ch.kawa)', () => {
+    const main = `include "ch.kawa"
+include "./ch.kawa"
+label start:
+    "x"
+`;
+    const ch = `label ch1:
+    "c"
+`;
+    expect(() => {
+      compileScript(main, 'main.kawa', {
+        fileResolver: (target) => {
+          const key = target.replace(/^\.\//, '');
+          if (key === 'ch.kawa') return ch;
+          return null;
+        }
+      });
+    }).toThrow(/Circular include/);
+  });
+
   it('preserves character hex color definitions', () => {
     const code = `character yumia "Yumia" #f43f5e
 character kaori "Kaori" #0284c7

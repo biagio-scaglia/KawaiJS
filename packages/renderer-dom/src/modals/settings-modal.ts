@@ -1,5 +1,6 @@
 import { SVG_ICONS } from '../icons.js';
 import { trapFocus } from '../utils/focus-trap.js';
+import { dismissExistingModals, registerModalCloser } from '../utils/modal-lifecycle.js';
 import { escapeHtml } from '../utils/rich-text.js';
 
 export interface SettingsModalOptions {
@@ -23,8 +24,7 @@ export interface SettingsModalOptions {
 }
 
 export function showSettingsModal(rootEl: HTMLElement, options: SettingsModalOptions): void {
-  const existing = rootEl.querySelector('.kawa-modal-overlay:not(.kawa-confirm-overlay)');
-  if (existing) existing.remove();
+  dismissExistingModals(rootEl);
 
   let currentSpeed = options.typewriterSpeed;
   let currentDelay = options.autoDelayMs;
@@ -55,6 +55,7 @@ export function showSettingsModal(rootEl: HTMLElement, options: SettingsModalOpt
     releaseFocus();
     overlay.remove();
   };
+  registerModalCloser(overlay, close);
 
   const closeBtn = document.createElement('button');
   closeBtn.type = 'button';

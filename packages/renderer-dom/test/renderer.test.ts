@@ -964,6 +964,35 @@ label start:
     expect(vm.getState().pendingInput?.variable).toBe('name');
     renderer.destroy();
   });
+
+  it('Escape on history modal releases focus trap instead of orphaning focus', () => {
+    const story = compileScript(`label start:
+    "hello"
+`);
+    const vm = new StoryVM(story);
+    const renderer = new DOMRenderer(vm, {
+      container,
+      mainMenu: { enabled: false },
+      typewriterSpeed: 0
+    });
+    vm.start();
+
+    const trigger = document.createElement('button');
+    trigger.textContent = 'focus-me';
+    document.body.appendChild(trigger);
+    trigger.focus();
+    expect(document.activeElement).toBe(trigger);
+
+    renderer.showHistoryModal();
+    expect(container.querySelector('.kawa-modal-overlay')).not.toBeNull();
+
+    window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    expect(container.querySelector('.kawa-modal-overlay')).toBeNull();
+    expect(document.activeElement).toBe(trigger);
+
+    trigger.remove();
+    renderer.destroy();
+  });
 });
 
 

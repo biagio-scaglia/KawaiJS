@@ -25,6 +25,7 @@ import { showAboutModal } from './modals/about-modal.js';
 import { showGalleryModal } from './modals/gallery-modal.js';
 import { showInputModal } from './modals/input-modal.js';
 import { escapeHtml } from './utils/rich-text.js';
+import { dismissModalOverlay } from './utils/modal-lifecycle.js';
 
 import { ViewportAdapter } from './layout/viewport-adapter.js';
 import {
@@ -41,6 +42,7 @@ export * from './types.js';
 export * from './asset-fallbacks.js';
 export * from './utils/rich-text.js';
 export * from './utils/css-url.js';
+export * from './utils/modal-lifecycle.js';
 export * from './utils/focus-trap.js';
 export * from './layout/viewport-adapter.js';
 export * from './modals/save-load-modal.js';
@@ -193,28 +195,36 @@ export class DOMRenderer {
       }
     });
 
-    this.unsubscribeAudio = this.vm.onAudioEvent((event: AudioEvent) => {
-      if (!this.audioManager) return;
-
-      if (event.action === 'play' && event.track) {
-        const url = this.assetResolver(event.track, 'audio');
-        if (event.channel === 'music') {
-          this.audioManager.playMusic?.(url, { fadein: event.fade, loop: event.loop });
-        } else if (event.channel === 'sound') {
-          this.audioManager.playSound?.(url);
-        } else if (event.channel === 'voice') {
-          this.audioManager.playVoice?.(url);
-        }
-      } else if (event.action === 'stop') {
-        if (event.channel === 'music') {
-          this.audioManager.stopMusic?.({ fadeout: event.fade });
-        } else if (event.channel === 'sound') {
-          this.audioManager.stopSound?.();
-        } else if (event.channel === 'voice') {
-          this.audioManager.stopVoice?.();
-        }
+    this.unsubscribeAudio = undefined;
+    if (this.audioManager) {
+      if (typeof this.audioManager.attachToVM === 'function') {
+        // Prefer a single attachment path so attachToVM() + DOMRenderer never double-bind.
+        this.unsubscribeAudio = this.audioManager.attachToVM(this.vm, (track) =>
+          this.assetResolver(track, 'audio')
+        );
+      } else {
+        this.unsubscribeAudio = this.vm.onAudioEvent((event: AudioEvent) => {
+          if (event.action === 'play' && event.track) {
+            const url = this.assetResolver(event.track, 'audio');
+            if (event.channel === 'music') {
+              this.audioManager?.playMusic?.(url, { fadein: event.fade, loop: event.loop });
+            } else if (event.channel === 'sound') {
+              this.audioManager?.playSound?.(url);
+            } else if (event.channel === 'voice') {
+              this.audioManager?.playVoice?.(url);
+            }
+          } else if (event.action === 'stop') {
+            if (event.channel === 'music') {
+              this.audioManager?.stopMusic?.({ fadeout: event.fade });
+            } else if (event.channel === 'sound') {
+              this.audioManager?.stopSound?.();
+            } else if (event.channel === 'voice') {
+              this.audioManager?.stopVoice?.();
+            }
+          }
+        });
       }
-    });
+    }
 
     this.unsubscribeError = this.vm.onError((err) => {
       this.showErrorToast(err.message);
@@ -684,7 +694,7 @@ export class DOMRenderer {
       if (confirm) {
         if (e.key === 'Escape') {
           e.preventDefault();
-          confirm.remove();
+          dismissModalOverlay(confirm);
         }
         return;
       }
@@ -693,7 +703,7 @@ export class DOMRenderer {
       if (lightbox) {
         if (e.key === 'Escape') {
           e.preventDefault();
-          lightbox.remove();
+          dismissModalOverlay(lightbox);
         }
         return;
       }
@@ -706,7 +716,7 @@ export class DOMRenderer {
           if (modal.classList.contains('kawa-input-overlay')) {
             return;
           }
-          modal.remove();
+          dismissModalOverlay(modal);
         }
         return;
       }
@@ -786,12 +796,14 @@ export class DOMRenderer {
         onRollback: () => {
           const confirm = this.rootEl.querySelector('.kawa-confirm-overlay');
           if (confirm) {
-            confirm.remove();
+            dismissModalOverlay(confirm);
             return;
           }
           const modal = this.rootEl.querySelector('.kawa-modal-overlay');
           if (modal) {
-            modal.remove();
+            if (!modal.classList.contains('kawa-input-overlay')) {
+              dismissModalOverlay(modal);
+            }
             return;
           }
           if (this.isMainMenuActive()) return;
@@ -1030,7 +1042,7 @@ export class DOMRenderer {
         });
       }
     } else {
-      this.rootEl.querySelector('.kawa-input-overlay')?.remove();
+      this.rootEl.querySelectorAll('.kawa-input-overlay').forEach((el) => dismissModalOverlay(el));
     }
 
     // 7. Ending Screen if finished

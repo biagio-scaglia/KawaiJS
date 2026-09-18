@@ -3,6 +3,7 @@ import { encodeContinueToken, buildContinueHref } from '@kawaijs/runtime';
 import { SVG_ICONS } from '../icons.js';
 import { showConfirmModal } from './confirm-modal.js';
 import { trapFocus } from '../utils/focus-trap.js';
+import { dismissExistingModals, registerModalCloser } from '../utils/modal-lifecycle.js';
 
 function cleanPreviewText(text: string): string {
   return text
@@ -17,8 +18,7 @@ export async function showSaveLoadModal(
   mode: 'save' | 'load',
   onLoaded?: () => void
 ): Promise<void> {
-  const existing = rootEl.querySelector('.kawa-modal-overlay:not(.kawa-confirm-overlay)');
-  if (existing) existing.remove();
+  dismissExistingModals(rootEl);
 
   const overlay = document.createElement('div');
   overlay.className = 'kawa-modal-overlay';
@@ -41,6 +41,7 @@ export async function showSaveLoadModal(
     releaseFocus();
     overlay.remove();
   };
+  registerModalCloser(overlay, close);
 
   const closeBtn = document.createElement('button');
   closeBtn.type = 'button';

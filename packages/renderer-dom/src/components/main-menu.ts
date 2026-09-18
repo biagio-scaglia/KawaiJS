@@ -36,6 +36,7 @@ export class MainMenuComponent {
 
   private menuEl?: HTMLDivElement;
   private isVisible = false;
+  private refreshGeneration = 0;
 
   constructor(rootEl: HTMLElement, vm: StoryVM, options: MainMenuOptions | undefined, callbacks: MainMenuComponentCallbacks) {
     this.rootEl = rootEl;
@@ -60,6 +61,7 @@ export class MainMenuComponent {
     if (!this.menuEl) return;
 
     this.isVisible = true;
+    this.refreshGeneration++;
     this.refresh();
     this.menuEl.style.display = 'flex';
     this.menuEl.classList.add('active');
@@ -70,6 +72,7 @@ export class MainMenuComponent {
   public hide(): void {
     if (!this.menuEl) return;
     this.isVisible = false;
+    this.refreshGeneration++;
     this.menuEl.classList.remove('active');
     this.menuEl.style.display = 'none';
     this.options?.onClose?.();
@@ -81,10 +84,13 @@ export class MainMenuComponent {
 
   public refresh(): void {
     if (!this.menuEl) return;
-  // Check if saves exist to enable/disable the "Continue" button
     const continueBtn = this.menuEl.querySelector('button[data-action="continue"]') as HTMLButtonElement | null;
     if (continueBtn) {
+      const generation = this.refreshGeneration;
       void this.vm.getSaveManager().listSlots(6).then((slots) => {
+        if (!this.isVisible || generation !== this.refreshGeneration || !continueBtn.isConnected) {
+          return;
+        }
         const hasSaves = slots.some((s) => s !== null);
         if (!hasSaves) {
           continueBtn.classList.add('disabled');
@@ -225,7 +231,11 @@ export class MainMenuComponent {
       btn.innerHTML = `${item.icon ? item.icon + ' ' : ''}<span>${escapeHtml(item.label)}</span>`;
 
       if (item.action === 'continue') {
+        const generation = this.refreshGeneration;
         void this.vm.getSaveManager().listSlots(6).then((slots) => {
+          if (!this.isVisible || generation !== this.refreshGeneration || !btn.isConnected) {
+            return;
+          }
           const hasSaves = slots.some((s) => s !== null);
           if (!hasSaves) {
             btn.classList.add('disabled');

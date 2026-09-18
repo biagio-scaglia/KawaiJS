@@ -2,10 +2,10 @@ import { SVG_ICONS } from '../icons.js';
 import type { MainMenuOptions } from '../types.js';
 import { escapeHtml } from '../utils/rich-text.js';
 import { trapFocus } from '../utils/focus-trap.js';
+import { dismissExistingModals, registerModalCloser } from '../utils/modal-lifecycle.js';
 
 export function showAboutModal(rootEl: HTMLElement, options?: MainMenuOptions): void {
-  const existing = rootEl.querySelector('.kawa-modal-overlay:not(.kawa-confirm-overlay)');
-  if (existing) existing.remove();
+  dismissExistingModals(rootEl);
 
   const overlay = document.createElement('div');
   overlay.className = 'kawa-modal-overlay';
@@ -28,6 +28,7 @@ export function showAboutModal(rootEl: HTMLElement, options?: MainMenuOptions): 
     releaseFocus();
     overlay.remove();
   };
+  registerModalCloser(overlay, close);
 
   const closeBtn = document.createElement('button');
   closeBtn.type = 'button';

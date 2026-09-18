@@ -103,7 +103,8 @@ export class StoryVM {
   }
 
   public getState(): StoryState {
-    return this.state;
+    // Return a deep clone so host/UI mutations cannot corrupt internal VM state.
+    return cloneState(this.state);
   }
 
   public getStory(): StoryPackage {
@@ -1134,7 +1135,7 @@ export class StoryVM {
   }
 
   private notifyStateChanged(): void {
-    const currentState = this.getState();
+    const currentState = cloneState(this.state);
     for (const listener of this.stateChangeListeners) {
       listener(currentState);
     }

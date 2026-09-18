@@ -149,6 +149,14 @@ export interface AudioManagerLike {
   setMasterVolume?(val: number): void;
   getMusicVolume?(): number;
   getSoundVolume?(): number;
+  /**
+   * Prefer this over a second `vm.onAudioEvent` subscription.
+   * Idempotent: re-attaching replaces the previous binding on this manager.
+   */
+  attachToVM?(
+    vm: import('@kawaijs/runtime').StoryVM,
+    assetResolver?: (track: string, channel: 'music' | 'sound' | 'voice') => string
+  ): () => void;
   destroy?(): void;
 }
 

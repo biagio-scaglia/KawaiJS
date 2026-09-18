@@ -3,6 +3,7 @@ import { SVG_ICONS } from '../icons.js';
 import type { AssetType, GalleryItem } from '../types.js';
 import { escapeHtml } from '../utils/rich-text.js';
 import { trapFocus } from '../utils/focus-trap.js';
+import { dismissExistingModals, registerModalCloser } from '../utils/modal-lifecycle.js';
 
 function sanitizeUrl(url: string): string {
   const trimmed = (url || '').trim();
@@ -27,8 +28,7 @@ export function showGalleryModal(
   galleryItems: readonly GalleryItem[] = [],
   assetResolver: (path: string, type: AssetType) => string
 ): void {
-  const existing = rootEl.querySelector('.kawa-modal-overlay:not(.kawa-confirm-overlay)');
-  if (existing) existing.remove();
+  dismissExistingModals(rootEl);
 
   const overlay = document.createElement('div');
   overlay.className = 'kawa-modal-overlay';
@@ -53,10 +53,14 @@ export function showGalleryModal(
   closeBtn.setAttribute('aria-label', 'Close gallery modal');
 
   const releaseFocus = trapFocus(card);
-  closeBtn.addEventListener('click', (e) => {
-    e.preventDefault();
+  const close = (): void => {
     releaseFocus();
     overlay.remove();
+  };
+  registerModalCloser(overlay, close);
+  closeBtn.addEventListener('click', (e) => {
+    e.preventDefault();
+    close();
   });
 
   header.appendChild(title);
@@ -142,6 +146,7 @@ function showLightbox(rootEl: HTMLElement, fullImageUrl: string, titleText: stri
     releaseFocus();
     lightbox.remove();
   };
+  registerModalCloser(lightbox, close);
 
   lightbox.addEventListener('click', (e) => {
     const target = e.target as HTMLElement;

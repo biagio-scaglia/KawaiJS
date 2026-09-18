@@ -38,6 +38,8 @@ export class AudioManager {
   private musicFadeIntervals = new Map<HTMLAudioElement, ReturnType<typeof setInterval>>();
   private voiceStateListeners = new Set<(isPlaying: boolean, track?: string) => void>();
   private unlockHandler: (() => void) | null = null;
+  private vmAudioUnsub: (() => void) | null = null;
+  private vmAudioGeneration = 0;
   private readonly maxSoundPool = 4;
   private readonly preferLightPreload: boolean;
 
@@ -322,6 +324,11 @@ export class AudioManager {
 
   public destroy(): void {
     this.removeUnlockListeners();
+    this.vmAudioGeneration++;
+    if (this.vmAudioUnsub) {
+      this.vmAudioUnsub();
+      this.vmAudioUnsub = null;
+    }
     for (const [audio, interval] of this.musicFadeIntervals) {
       clearInterval(interval);
       try {
@@ -337,12 +344,20 @@ export class AudioManager {
 
   /**
    * Attaches the AudioManager to a StoryVM instance to automatically play/stop tracks.
+   * Idempotent on this manager: a second call detaches the previous subscription first,
+   * so pairing with DOMRenderer (which also calls attachToVM) cannot double-play audio.
    */
   public attachToVM(
     vm: StoryVM,
     assetResolver: (track: string, channel: 'music' | 'sound' | 'voice') => string = (t) => t
   ): () => void {
-    return vm.onAudioEvent((event: AudioEvent) => {
+    if (this.vmAudioUnsub) {
+      this.vmAudioUnsub();
+      this.vmAudioUnsub = null;
+    }
+
+    const generation = ++this.vmAudioGeneration;
+    this.vmAudioUnsub = vm.onAudioEvent((event: AudioEvent) => {
       if (event.action === 'play' && event.track) {
         const url = assetResolver(event.track, event.channel);
         if (event.channel === 'music') {
@@ -362,6 +377,14 @@ export class AudioManager {
         }
       }
     });
+
+    return () => {
+      if (generation !== this.vmAudioGeneration) return;
+      if (this.vmAudioUnsub) {
+        this.vmAudioUnsub();
+        this.vmAudioUnsub = null;
+      }
+    };
   }
 
   private clearFade(audio: HTMLAudioElement): void {

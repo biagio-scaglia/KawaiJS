@@ -771,5 +771,19 @@ label other:
     expect(vm.getExecutionTrace().length).toBe(lenAfterFirst);
     expect(vm.getExecutionTrace()[0]).toMatch(/^START/);
   });
+
+  it('getState() returns a clone so host mutations cannot corrupt the VM', () => {
+    const story = compileScript(`label start:
+    set score = 1
+    "hi"
+`);
+    const vm = new StoryVM(story);
+    vm.start();
+    const snapshot = vm.getState();
+    snapshot.variables['score'] = 999;
+    (snapshot as { dialogue: { text: string } | null }).dialogue = { text: 'hacked' };
+    expect(vm.getState().variables['score']).toBe(1);
+    expect(vm.getState().dialogue?.text).toBe('hi');
+  });
 });
 

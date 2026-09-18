@@ -18,6 +18,30 @@ export interface CompilerOptions {
   fileResolver?: FileResolver;
 }
 
+/** Normalize include paths so `ch.kawa` and `./ch.kawa` share one cycle key. */
+export function normalizeIncludePath(targetPath: string, fromFile: string): string {
+  const from = fromFile.replace(/\\/g, '/');
+  const target = targetPath.replace(/\\/g, '/').trim();
+  const fromDir = from.includes('/') ? from.slice(0, from.lastIndexOf('/') + 1) : '';
+
+  const absolute =
+    target.startsWith('/') || /^[a-zA-Z]:/.test(target) || target.includes('://')
+      ? target
+      : `${fromDir}${target}`;
+
+  const parts = absolute.split('/');
+  const stack: string[] = [];
+  for (const part of parts) {
+    if (!part || part === '.') continue;
+    if (part === '..') {
+      stack.pop();
+      continue;
+    }
+    stack.push(part);
+  }
+  return stack.join('/');
+}
+
 export class Compiler {
   private readonly program: ProgramNode;
   private readonly options: CompilerOptions;
@@ -35,7 +59,8 @@ export class Compiler {
     this.defines = {};
 
     const rootFile = this.program.loc?.file ?? '<anonymous>';
-    const flattenedStatements = this.expandStatements(this.program.statements, rootFile, new Set([rootFile]));
+    const rootKey = normalizeIncludePath(rootFile, rootFile);
+    const flattenedStatements = this.expandStatements(this.program.statements, rootFile, new Set([rootKey]));
 
     // 1. First pass: Collect character / define declarations and label bodies
     for (const stmt of flattenedStatements) {
@@ -116,6 +141,7 @@ export class Compiler {
     for (const stmt of statements) {
       if (stmt.type === 'IncludeStmt') {
         const targetPath = stmt.file;
+        const includeKey = normalizeIncludePath(targetPath, currentFile);
         let source: string | null | undefined;
 
         if (this.options.fileResolver) {
@@ -131,7 +157,7 @@ export class Compiler {
           });
         }
 
-        if (visited.has(targetPath)) {
+        if (visited.has(includeKey)) {
           throw new KawaError({
             code: 'E0206',
             message: `Circular include detected: '${targetPath}'`,
@@ -140,13 +166,14 @@ export class Compiler {
           });
         }
 
+        // Mark in the current set so sibling includes (ch.kawa then ./ch.kawa) are caught.
+        visited.add(includeKey);
         const nextVisited = new Set(visited);
-        nextVisited.add(targetPath);
 
-        const lexer = new Lexer(source, targetPath);
-        const parser = new Parser(lexer.tokenize(), targetPath);
+        const lexer = new Lexer(source, includeKey);
+        const parser = new Parser(lexer.tokenize(), includeKey);
         const subProgram = parser.parse();
-        const expandedSub = this.expandStatements(subProgram.statements, targetPath, nextVisited);
+        const expandedSub = this.expandStatements(subProgram.statements, includeKey, nextVisited);
         result.push(...expandedSub);
       } else {
         result.push(stmt);

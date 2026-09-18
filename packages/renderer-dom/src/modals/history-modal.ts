@@ -2,10 +2,10 @@ import type { StoryVM } from '@kawaijs/runtime';
 import { SVG_ICONS } from '../icons.js';
 import { formatRichText } from '../utils/rich-text.js';
 import { trapFocus } from '../utils/focus-trap.js';
+import { dismissExistingModals, registerModalCloser } from '../utils/modal-lifecycle.js';
 
 export function showHistoryModal(rootEl: HTMLElement, vm: StoryVM): void {
-  const existing = rootEl.querySelector('.kawa-modal-overlay:not(.kawa-confirm-overlay)');
-  if (existing) existing.remove();
+  dismissExistingModals(rootEl);
 
   const overlay = document.createElement('div');
   overlay.className = 'kawa-modal-overlay';
@@ -28,6 +28,7 @@ export function showHistoryModal(rootEl: HTMLElement, vm: StoryVM): void {
     releaseFocus();
     overlay.remove();
   };
+  registerModalCloser(overlay, close);
 
   const closeBtn = document.createElement('button');
   closeBtn.type = 'button';

@@ -1,6 +1,7 @@
 import { SVG_ICONS } from '../icons.js';
 import { escapeHtml } from '../utils/rich-text.js';
 import { trapFocus } from '../utils/focus-trap.js';
+import { registerModalCloser } from '../utils/modal-lifecycle.js';
 
 export function showConfirmModal(
   rootEl: HTMLElement,
@@ -44,6 +45,7 @@ export function showConfirmModal(
     overlay.remove();
     if (cancelled) options.onCancel?.();
   };
+  registerModalCloser(overlay, () => close(true));
 
   closeBtn.addEventListener('click', (e) => {
     e.preventDefault();

@@ -81,4 +81,28 @@ label start:
     audio.destroy();
     globalThis.Audio = OriginalAudio;
   });
+
+  it('attachToVM is idempotent and does not stack duplicate listeners', () => {
+    const story = compileScript(`label start:
+    play music theme
+    "hi"
+`);
+    const vm = new StoryVM(story);
+    const audio = new AudioManager();
+    let plays = 0;
+    const originalPlay = audio.playMusic.bind(audio);
+    audio.playMusic = (src, opts) => {
+      plays++;
+      originalPlay(src, opts);
+    };
+
+    const detach1 = audio.attachToVM(vm);
+    const detach2 = audio.attachToVM(vm);
+    vm.start();
+    expect(plays).toBe(1);
+
+    detach1(); // stale disposer must be a no-op after re-attach
+    detach2();
+    audio.destroy();
+  });
 });

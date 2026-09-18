@@ -2,6 +2,7 @@ import type { StoryVM, AchievementState } from '@kawaijs/runtime';
 import type { AchievementDefinition } from '@kawaijs/ast';
 import { SVG_ICONS } from '../icons.js';
 import { trapFocus } from '../utils/focus-trap.js';
+import { dismissExistingModals, registerModalCloser } from '../utils/modal-lifecycle.js';
 import { escapeHtml } from '../utils/rich-text.js';
 
 export function showAchievementsModal(
@@ -9,8 +10,7 @@ export function showAchievementsModal(
   vm: StoryVM,
   catalog: readonly AchievementDefinition[] = []
 ): void {
-  const existing = rootEl.querySelector('.kawa-modal-overlay:not(.kawa-confirm-overlay)');
-  if (existing) existing.remove();
+  dismissExistingModals(rootEl);
 
   const unlocked = vm.getState().achievements;
   const byId = new Map<string, AchievementDefinition>();
@@ -41,6 +41,7 @@ export function showAchievementsModal(
     releaseFocus();
     overlay.remove();
   };
+  registerModalCloser(overlay, close);
 
   const closeBtn = document.createElement('button');
   closeBtn.type = 'button';
