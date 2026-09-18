@@ -829,7 +829,42 @@ label start:
 
     renderer.destroy();
   });
+
+  it('renders animated rich-text tags ({glitch}, {shake}, {rainbow}, {corrupt}) and glitch scene transitions', () => {
+    const story = compileScript(`label start:
+    scene bg classroom with glitch
+    "This is {glitch}distorted reality{/glitch} and {shake}intense fear{/shake}."
+    "Also {rainbow}colorful magic{/rainbow} and {corrupt}0xDEADBEEF{/corrupt}."
+`);
+    const vm = new StoryVM(story);
+    const renderer = new DOMRenderer(vm, {
+      container,
+      mainMenu: { enabled: false },
+      typewriterSpeed: 0
+    });
+    vm.start();
+
+    const bgEl = container.querySelector('.kawa-background') as HTMLElement;
+    expect(bgEl.dataset.transition).toBe('glitch');
+    const activeLayer = container.querySelector('.kawa-bg-layer.active') as HTMLElement;
+    expect(activeLayer.classList.contains('kawa-glitch-transition')).toBe(true);
+
+    const textEl = container.querySelector('.kawa-dialogue-text') as HTMLElement;
+    expect(textEl.querySelector('.kawa-text-glitch')).not.toBeNull();
+    expect(textEl.querySelector('.kawa-text-glitch')?.textContent).toBe('distorted reality');
+    expect(textEl.querySelector('.kawa-text-shake')).not.toBeNull();
+    expect(textEl.querySelector('.kawa-text-shake')?.textContent).toBe('intense fear');
+
+    vm.next();
+    expect(textEl.querySelector('.kawa-text-rainbow')).not.toBeNull();
+    expect(textEl.querySelector('.kawa-text-rainbow')?.textContent).toBe('colorful magic');
+    expect(textEl.querySelector('.kawa-text-corrupt')).not.toBeNull();
+    expect(textEl.querySelector('.kawa-text-corrupt')?.textContent).toBe('0xDEADBEEF');
+
+    renderer.destroy();
+  });
 });
+
 
 
 

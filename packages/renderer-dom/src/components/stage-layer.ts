@@ -147,7 +147,9 @@ export class StageLayerComponent {
           transitionName === 'pushup' ||
           transitionName === 'pushdown' ||
           transitionName === 'zoom' ||
-          transitionName === 'blur';
+          transitionName === 'blur' ||
+          transitionName === 'glitch' ||
+          transitionName === 'corrupt';
 
         if (crossfade) {
           const nextLayer = this.activeBgLayer === 'A' ? this.bgLayerB : this.bgLayerA;
@@ -166,7 +168,8 @@ export class StageLayerComponent {
             'kawa-push-from-up',
             'kawa-push-from-down',
             'kawa-zoom-in',
-            'kawa-blur-transition'
+            'kawa-blur-transition',
+            'kawa-glitch-transition'
           ];
           nextLayer.classList.remove(...allTransClasses);
           curLayer.classList.remove(...allTransClasses);
@@ -193,6 +196,8 @@ export class StageLayerComponent {
             nextLayer.classList.add('kawa-zoom-in');
           } else if (transitionName === 'blur') {
             nextLayer.classList.add('kawa-blur-transition');
+          } else if (transitionName === 'glitch' || transitionName === 'corrupt') {
+            nextLayer.classList.add('kawa-glitch-transition');
           }
 
           nextLayer.classList.add('active');

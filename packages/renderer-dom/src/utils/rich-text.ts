@@ -18,6 +18,14 @@ export function formatRichText(raw: string): string {
   formatted = formatted.replace(/\{b\}(.*?)\{\/b\}/gi, '<strong class="kawa-bold">$1</strong>');
   // {i}...{/i}
   formatted = formatted.replace(/\{i\}(.*?)\{\/i\}/gi, '<em class="kawa-italic">$1</em>');
+  // {glitch}...{/glitch}
+  formatted = formatted.replace(/\{glitch\}(.*?)\{\/glitch\}/gi, '<span class="kawa-text-glitch" data-text="$1">$1</span>');
+  // {shake}...{/shake}
+  formatted = formatted.replace(/\{shake\}(.*?)\{\/shake\}/gi, '<span class="kawa-text-shake">$1</span>');
+  // {rainbow}...{/rainbow}
+  formatted = formatted.replace(/\{rainbow\}(.*?)\{\/rainbow\}/gi, '<span class="kawa-text-rainbow">$1</span>');
+  // {corrupt}...{/corrupt}
+  formatted = formatted.replace(/\{corrupt\}(.*?)\{\/corrupt\}/gi, '<span class="kawa-text-corrupt" data-text="$1">$1</span>');
   // {color=#hex|name}...{/color} — reject parentheses to reduce CSS injection surface
   formatted = formatted.replace(/\{color=([#a-zA-Z0-9_.,\s-]+)\}(.*?)\{\/color\}/gi, (_match, colorVal, inner) => {
     const cleanColor = colorVal.replace(/[^#a-zA-Z0-9_.,\s-]/g, '').trim();

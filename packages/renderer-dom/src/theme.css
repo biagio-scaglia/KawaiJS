@@ -235,6 +235,136 @@ body.kawa-fullscreen {
   filter: blur(0px);
 }
 
+/* Scene Glitch / Corrupt Transition */
+@keyframes kawa-scene-glitch {
+  0% {
+    filter: none;
+    transform: scale(1) skewX(0deg);
+  }
+  20% {
+    filter: invert(0.8) hue-rotate(90deg) contrast(200%);
+    transform: scale(1.05) skewX(4deg);
+    clip-path: polygon(0 0, 100% 0, 100% 45%, 0 45%, 0 60%, 100% 60%, 100% 100%, 0 100%);
+  }
+  40% {
+    filter: saturate(300%) contrast(150%);
+    transform: scale(0.98) skewX(-3deg);
+  }
+  60% {
+    filter: invert(0.3) drop-shadow(-8px 0 #ef4444) drop-shadow(8px 0 #06b6d4);
+    transform: scale(1.02) skewX(2deg);
+  }
+  80% {
+    filter: contrast(180%) brightness(120%);
+    transform: scale(1) skewX(-1deg);
+  }
+  100% {
+    filter: none;
+    transform: scale(1) skewX(0deg);
+  }
+}
+
+.kawa-bg-layer.kawa-glitch-transition {
+  animation: kawa-scene-glitch 0.6s ease-in-out forwards;
+}
+.kawa-bg-layer.kawa-glitch-transition.active {
+  animation: kawa-scene-glitch 0.6s ease-in-out forwards;
+}
+
+/* Animated Rich Text Effects: Glitch, Shake, Rainbow, Corrupt */
+@keyframes kawa-glitch-anim {
+  0% {
+    transform: translate(0);
+    text-shadow: -2px 0 #ef4444, 2px 0 #06b6d4;
+  }
+  20% {
+    transform: translate(-2px, 2px);
+    text-shadow: 2px 0 #ef4444, -2px 0 #06b6d4;
+  }
+  40% {
+    transform: translate(-2px, -2px);
+    text-shadow: -2px 0 #ec4899, 2px 0 #10b981;
+  }
+  60% {
+    transform: translate(2px, 2px);
+    text-shadow: 2px 0 #3b82f6, -2px 0 #f59e0b;
+  }
+  80% {
+    transform: translate(2px, -2px);
+    text-shadow: -2px 0 #ef4444, 2px 0 #06b6d4;
+  }
+  100% {
+    transform: translate(0);
+    text-shadow: 0 0 transparent;
+  }
+}
+
+.kawa-text-glitch {
+  display: inline-block;
+  position: relative;
+  color: #f8fafc;
+  font-weight: 700;
+  animation: kawa-glitch-anim 0.35s infinite steps(2, start);
+}
+
+@keyframes kawa-shake-anim {
+  0% { transform: translate(1px, 1px) rotate(0deg); }
+  10% { transform: translate(-1px, -2px) rotate(-1deg); }
+  20% { transform: translate(-3px, 0px) rotate(1deg); }
+  30% { transform: translate(3px, 2px) rotate(0deg); }
+  40% { transform: translate(1px, -1px) rotate(1deg); }
+  50% { transform: translate(-1px, 2px) rotate(-1deg); }
+  60% { transform: translate(-3px, 1px) rotate(0deg); }
+  70% { transform: translate(3px, 1px) rotate(-1deg); }
+  80% { transform: translate(-1px, -1px) rotate(1deg); }
+  90% { transform: translate(1px, 2px) rotate(0deg); }
+  100% { transform: translate(1px, -2px) rotate(-1deg); }
+}
+
+.kawa-text-shake {
+  display: inline-block;
+  animation: kawa-shake-anim 0.2s infinite ease-in-out;
+  color: #f43f5e;
+}
+
+@keyframes kawa-rainbow-anim {
+  0% { filter: hue-rotate(0deg); }
+  100% { filter: hue-rotate(360deg); }
+}
+
+.kawa-text-rainbow {
+  display: inline-block;
+  background: linear-gradient(90deg, #ff007f, #ffaa00, #00ff66, #00f0ff, #aa00ff, #ff007f);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: kawa-rainbow-anim 3s linear infinite;
+  font-weight: bold;
+}
+
+.kawa-text-corrupt {
+  display: inline-block;
+  font-family: monospace;
+  letter-spacing: 0.15em;
+  color: #ef4444;
+  text-shadow: 0 0 8px rgba(239, 68, 68, 0.8), 2px 2px 0 rgba(0, 0, 0, 0.9);
+  animation: kawa-glitch-anim 0.2s infinite;
+}
+
+/* Sprite Meta/Horror Glitch Effects */
+.kawa-sprite.kawa-glitch img {
+  animation: kawa-glitch-anim 0.25s infinite steps(2, start);
+  filter: drop-shadow(-4px 0 #ef4444) drop-shadow(4px 0 #06b6d4) contrast(140%);
+}
+
+.kawa-sprite.kawa-invert img {
+  filter: invert(1) hue-rotate(180deg) drop-shadow(0 0 16px rgba(255, 255, 255, 0.8));
+}
+
+.kawa-sprite.kawa-vhs img {
+  filter: saturate(180%) contrast(130%) brightness(110%);
+}
+
 /* Characters Layer */
 .kawa-characters {
   position: absolute;
