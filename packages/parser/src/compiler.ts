@@ -11,7 +11,7 @@ import { closestMatch } from './suggest.js';
 import { Lexer } from './lexer.js';
 import { Parser } from './parser.js';
 
-export type FileResolver = (filePath: string, fromFile: string) => string;
+export type FileResolver = (filePath: string, fromFile: string) => string | undefined | null;
 
 export interface CompilerOptions {
   validateLabels?: boolean;
@@ -94,13 +94,13 @@ export class Compiler {
     for (const stmt of statements) {
       if (stmt.type === 'IncludeStmt') {
         const targetPath = stmt.file;
-        let source: string | undefined;
+        let source: string | null | undefined;
 
         if (this.options.fileResolver) {
           source = this.options.fileResolver(targetPath, currentFile);
         }
 
-        if (source === undefined) {
+        if (source === undefined || source === null) {
           throw new KawaError({
             code: 'E0207',
             message: `Cannot resolve include file '${targetPath}' from '${currentFile}'. Ensure file exists or fileResolver is provided.`,
