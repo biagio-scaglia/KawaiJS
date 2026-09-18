@@ -8,6 +8,7 @@ import { showConfirmModal } from '../modals/confirm-modal.js';
 import { showGalleryModal } from '../modals/gallery-modal.js';
 import { showAchievementsModal } from '../modals/achievements-modal.js';
 import { escapeHtml } from '../utils/rich-text.js';
+import { cssUrl } from '../utils/css-url.js';
 
 export interface MainMenuComponentCallbacks {
   onStartNewGame: () => void;
@@ -169,7 +170,7 @@ export class MainMenuComponent {
 
     if (this.options?.backgroundUrl) {
       const bgUrl = this.callbacks.assetResolver(this.options.backgroundUrl, 'background');
-      this.menuEl.style.backgroundImage = `url("${bgUrl}")`;
+      this.menuEl.style.backgroundImage = cssUrl(bgUrl);
       this.menuEl.style.backgroundSize = 'cover';
       this.menuEl.style.backgroundPosition = 'center';
     }
