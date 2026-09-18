@@ -34,6 +34,7 @@ import {
   type ShareConfig
 } from './share-meta.js';
 import { bindSwipeControls, type BoundTouchControls } from './touch.js';
+import { bindGamepadControls, type BoundGamepadControls } from './gamepad.js';
 
 export * from './icons.js';
 export * from './types.js';
@@ -58,6 +59,7 @@ export * from './components/vfx-layer.js';
 export * from './share-meta.js';
 export * from './embed.js';
 export * from './touch.js';
+export * from './gamepad.js';
 export function extractGalleryItems(story?: StoryPackage): GalleryItem[] {
   if (!story || !story.labels) return [];
   const itemsMap = new Map<string, GalleryItem>();
@@ -120,6 +122,7 @@ export class DOMRenderer {
   private unsubscribeError?: () => void;
   private boundKeyHandler?: (e: KeyboardEvent) => void;
   private touchControls?: BoundTouchControls;
+  private gamepadControls?: BoundGamepadControls;
 
   constructor(vm: StoryVM, options: DOMRendererOptions) {
     this.vm = vm;
@@ -284,6 +287,10 @@ export class DOMRenderer {
     if (this.touchControls) {
       this.touchControls.destroy();
       this.touchControls = undefined;
+    }
+    if (this.gamepadControls) {
+      this.gamepadControls.destroy();
+      this.gamepadControls = undefined;
     }
     this.container.innerHTML = '';
   }
@@ -758,6 +765,96 @@ export class DOMRenderer {
         }
       });
     }
+
+    // Gamepad / Controller navigation & buttons
+    if (this.options.features?.gamepad !== false) {
+      this.gamepadControls = bindGamepadControls({
+        onAdvance: () => {
+          if (this.isMainMenuActive()) return;
+          if (this.isAutoMode) this.toggleAutoMode(false);
+          if (this.isSkipMode) this.toggleSkipMode(false);
+          this.handleUserAdvance();
+        },
+        onRollback: () => {
+          const confirm = this.rootEl.querySelector('.kawa-confirm-overlay');
+          if (confirm) {
+            confirm.remove();
+            return;
+          }
+          const modal = this.rootEl.querySelector('.kawa-modal-overlay');
+          if (modal) {
+            modal.remove();
+            return;
+          }
+          if (this.isMainMenuActive()) return;
+          if (this.isAutoMode) this.toggleAutoMode(false);
+          if (this.isSkipMode) this.toggleSkipMode(false);
+          if (this.vm.canRollback()) this.vm.rollback();
+        },
+        onToggleAuto: () => {
+          if (this.isMainMenuActive()) return;
+          this.toggleAutoMode();
+        },
+        onToggleSkip: () => {
+          if (this.isMainMenuActive()) return;
+          this.toggleSkipMode();
+        },
+        onToggleMenu: () => {
+          if (this.isMainMenuActive()) {
+            this.hideMainMenu();
+          } else {
+            this.showMainMenu();
+          }
+        },
+        onNavigateDown: () => {
+          this.navigateFocus(1);
+        },
+        onNavigateUp: () => {
+          this.navigateFocus(-1);
+        },
+        onConfirm: () => {
+          if (document.activeElement && typeof (document.activeElement as HTMLElement).click === 'function') {
+            const el = document.activeElement as HTMLElement;
+            if (
+              el.tagName === 'BUTTON' ||
+              el.tagName === 'A' ||
+              el.getAttribute('role') === 'button' ||
+              el.classList.contains('kawa-choice-button') ||
+              el.classList.contains('kawa-menu-btn')
+            ) {
+              el.click();
+              return;
+            }
+          }
+          if (this.isMainMenuActive()) return;
+          if (this.isAutoMode) this.toggleAutoMode(false);
+          if (this.isSkipMode) this.toggleSkipMode(false);
+          this.handleUserAdvance();
+        }
+      });
+    }
+  }
+
+  private navigateFocus(direction: 1 | -1): void {
+    const focusableSelectors = 'button:not([disabled]), [tabindex]:not([tabindex="-1"]), a[href], input:not([disabled])';
+    const modal = this.rootEl.querySelector('.kawa-modal-overlay, .kawa-confirm-overlay');
+    const scope = modal || (this.isMainMenuActive() ? this.rootEl.querySelector('.kawa-main-menu') : this.rootEl);
+    if (!scope) return;
+
+    const focusables = Array.from(scope.querySelectorAll<HTMLElement>(focusableSelectors)).filter(
+      (el) => el.offsetParent !== null || el.offsetWidth > 0 || el.offsetHeight > 0 || getComputedStyle(el).display !== 'none'
+    );
+
+    if (focusables.length === 0) return;
+
+    const currentIndex = focusables.indexOf(document.activeElement as HTMLElement);
+    let nextIndex = 0;
+    if (currentIndex === -1) {
+      nextIndex = direction === 1 ? 0 : focusables.length - 1;
+    } else {
+      nextIndex = (currentIndex + direction + focusables.length) % focusables.length;
+    }
+    focusables[nextIndex]?.focus();
   }
 
   private handleUserAdvance(): void {

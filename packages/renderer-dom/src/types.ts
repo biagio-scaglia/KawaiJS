@@ -200,6 +200,8 @@ export interface RendererFeatureOptions {
   advanceDebounceMs?: number;
   /** Horizontal swipe gestures on mobile (default: true). */
   touchGestures?: boolean;
+  /** Controller and Gamepad API navigation support (default: true). */
+  gamepad?: boolean;
 }
 
 export interface DOMRendererOptions {

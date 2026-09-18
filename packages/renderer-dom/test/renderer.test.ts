@@ -718,7 +718,83 @@ label start:
 
     renderer.destroy();
   });
+
+  it('binds gamepad controller events and responds to gamepad input', async () => {
+    let advanced = false;
+    let rollbacked = false;
+    let autoToggled = false;
+    let navDown = false;
+    let confirmed = false;
+
+    let mockButtons = [
+      { pressed: false, value: 0 }, // 0: A/Confirm
+      { pressed: false, value: 0 }, // 1: B/Rollback
+      { pressed: false, value: 0 }, // 2: X/Skip
+      { pressed: false, value: 0 }, // 3: Y/Auto
+      { pressed: false, value: 0 }, // 4
+      { pressed: false, value: 0 }, // 5
+      { pressed: false, value: 0 }, // 6
+      { pressed: false, value: 0 }, // 7
+      { pressed: false, value: 0 }, // 8
+      { pressed: false, value: 0 }, // 9: Menu
+      { pressed: false, value: 0 }, // 10
+      { pressed: false, value: 0 }, // 11
+      { pressed: false, value: 0 }, // 12: D-pad Up
+      { pressed: false, value: 0 }, // 13: D-pad Down
+    ];
+    let mockAxes = [0, 0];
+
+    const originalGetGamepads = navigator.getGamepads;
+    (navigator as any).getGamepads = () => [
+      {
+        connected: true,
+        buttons: mockButtons,
+        axes: mockAxes
+      }
+    ];
+
+    let rafCallback: ((time: number) => void) | null = null;
+    const originalRaf = window.requestAnimationFrame;
+    window.requestAnimationFrame = (cb: any) => {
+      rafCallback = cb;
+      return 123;
+    };
+
+    const { bindGamepadControls } = await import('../src/gamepad.js');
+    const controls = bindGamepadControls({
+      onAdvance: () => { advanced = true; },
+      onRollback: () => { rollbacked = true; },
+      onToggleAuto: () => { autoToggled = true; },
+      onToggleSkip: () => {},
+      onToggleMenu: () => {},
+      onNavigateDown: () => { navDown = true; },
+      onNavigateUp: () => {},
+      onConfirm: () => { confirmed = true; }
+    });
+
+    // Press button 0 (Confirm)
+    mockButtons[0] = { pressed: true, value: 1.0 };
+    if (rafCallback) (rafCallback as (t: number) => void)(0);
+    expect(confirmed).toBe(true);
+
+    // Reset button 0, press button 1 (Rollback)
+    mockButtons[0] = { pressed: false, value: 0 };
+    mockButtons[1] = { pressed: true, value: 1.0 };
+    if (rafCallback) (rafCallback as (t: number) => void)(0);
+    expect(rollbacked).toBe(true);
+
+    // Press D-pad down (btn 13)
+    mockButtons[1] = { pressed: false, value: 0 };
+    mockButtons[13] = { pressed: true, value: 1.0 };
+    if (rafCallback) (rafCallback as (t: number) => void)(0);
+    expect(navDown).toBe(true);
+
+    controls.destroy();
+    window.requestAnimationFrame = originalRaf;
+    (navigator as any).getGamepads = originalGetGamepads;
+  });
 });
+
 
 
 
