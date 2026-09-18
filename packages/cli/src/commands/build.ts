@@ -2,7 +2,7 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { compileScript, formatDiagnostic, KawaError } from '@kawaijs/parser';
 import { getBaseThemeCss, getInlineRuntimeScript } from '../runtime-bundle.js';
-import { loadProjectConfig } from '../config.js';
+import { loadProjectConfig, createCliFileResolver } from '../config.js';
 import { buildPwaAssets, buildPwaIconSvg, renderPwaHeadTags, renderPwaRegisterScript } from '../pwa.js';
 import {
   renderRobotsTxt,
@@ -65,7 +65,9 @@ export function buildProject(projectDir = '.', options: BuildOptions = {}): bool
   let storyPackage;
   try {
     const source = fs.readFileSync(scriptPath, 'utf-8');
-    storyPackage = compileScript(source, path.basename(scriptPath));
+    storyPackage = compileScript(source, path.basename(scriptPath), {
+      fileResolver: createCliFileResolver(rootDir, scriptPath)
+    });
     storyPackage = enrichStoryPackage(storyPackage, rootDir);
     console.log(`✅ Script compiled successfully (${Object.keys(storyPackage.labels).length} labels).`);
   } catch (err: unknown) {

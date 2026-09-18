@@ -1,6 +1,7 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { compileScript, validateStory, formatDiagnostic, KawaError } from '@kawaijs/parser';
+import { createCliFileResolver } from '../config.js';
 import type { StoryPackage } from '@kawaijs/ast';
 
 function resolveAssetPath(assetsDir: string, raw: string, kind: 'background' | 'character' | 'audio'): string {
@@ -93,7 +94,9 @@ export function validateProject(targetPath = '.'): boolean {
 
   try {
     const source = fs.readFileSync(scriptFile, 'utf-8');
-    const story = compileScript(source, path.basename(scriptFile));
+    const story = compileScript(source, path.basename(scriptFile), {
+      fileResolver: createCliFileResolver(projectRoot, scriptFile)
+    });
     const report = validateStory(story);
 
     let assetsDir = path.join(projectRoot, 'game', 'assets');

@@ -1,0 +1,31 @@
+# Chapter 2 included via multi-file scripting
+# Demonstrates: include, math expressions, glitch effects, cinematic transitions
+
+label secret_meta_route:
+    play sound sfx_click
+    camera shake 600
+    scene bg classroom with glitch
+    vfx stop
+
+    show yumia sad at center with invert
+    yumia "{shake}Wait... Sensei! Did the reality matrix just tear?!{/shake}"
+
+    show kaori normal at right with glitch
+    kaori "Look at the console output: {corrupt}0xDEADBEEF :: SYSTEM_ANOMALY{/corrupt}."
+    kaori "This is a live demonstration of {b}glitch transitions{/b} and {color=#38bdf8}meta-horror shaders{/color}."
+
+    yumia "Don't panic! We have {rainbow}full creative control{/rainbow} over the visual novel engine!"
+    
+    set dev_score = dev_score + 3
+    set creative_score = creative_score + 3
+    set glitch_power = (dev_score * 2 + creative_score * 2) * 1.5
+
+    pause 500
+    scene bg sunset_courtyard with zoom
+    vfx sakura
+    show yumia happy at left with bounce
+    show kaori smug at right with nod
+
+    yumia "Whew! A smooth {b}zoom transition{/b} brought us safely to the sunset courtyard."
+    kaori "Calculated glitch power: [glitch_power]. You have mastered multi-file includes and dynamic math."
+    jump evaluate_ending

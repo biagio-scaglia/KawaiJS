@@ -218,3 +218,19 @@ export function loadProjectConfig(projectDir: string): KawaProjectConfig {
 
   return DEFAULT_KAWA_CONFIG;
 }
+
+export function createCliFileResolver(rootDir: string, scriptPath?: string): (target: string, from: string) => string | null {
+  return (target: string, from: string): string | null => {
+    const base = from && from !== '<anonymous>' && path.isAbsolute(from)
+      ? path.dirname(from)
+      : (scriptPath ? path.dirname(scriptPath) : path.join(rootDir, 'game'));
+    const resolved = path.resolve(base, target);
+    if (fs.existsSync(resolved)) return fs.readFileSync(resolved, 'utf-8');
+    const alt = path.resolve(rootDir, 'game', target);
+    if (fs.existsSync(alt)) return fs.readFileSync(alt, 'utf-8');
+    const altRoot = path.resolve(rootDir, target);
+    if (fs.existsSync(altRoot)) return fs.readFileSync(altRoot, 'utf-8');
+    return null;
+  };
+}
+

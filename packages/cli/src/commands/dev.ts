@@ -3,7 +3,7 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { compileScript, formatDiagnostic, KawaError } from '@kawaijs/parser';
 import { getBaseThemeCss, getInlineRuntimeScript } from '../runtime-bundle.js';
-import { loadProjectConfig } from '../config.js';
+import { loadProjectConfig, createCliFileResolver } from '../config.js';
 import { buildPwaAssets, buildPwaIconSvg, renderPwaHeadTags, renderPwaRegisterScript } from '../pwa.js';
 import {
   renderSeoHeadTags,
@@ -104,7 +104,9 @@ export function startDevServer(projectDir = '.', options: DevServerOptions = {})
     if (pathname === '/api/story.json') {
       try {
         const source = fs.readFileSync(scriptPath, 'utf-8');
-        const compiledStory = compileScript(source, path.basename(scriptPath));
+        const compiledStory = compileScript(source, path.basename(scriptPath), {
+          fileResolver: createCliFileResolver(rootDir, scriptPath)
+        });
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify(enrichStoryPackage(compiledStory, rootDir)));
       } catch (err: unknown) {
@@ -256,7 +258,9 @@ export function startDevServer(projectDir = '.', options: DevServerOptions = {})
 
     try {
       const source = fs.readFileSync(scriptPath, 'utf-8');
-      const compiledStory = compileScript(source, path.basename(scriptPath));
+      const compiledStory = compileScript(source, path.basename(scriptPath), {
+        fileResolver: createCliFileResolver(rootDir, scriptPath)
+      });
       storyJson = JSON.stringify(enrichStoryPackage(compiledStory, rootDir));
     } catch (err: unknown) {
       if (err instanceof KawaError) {

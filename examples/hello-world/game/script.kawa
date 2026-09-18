@@ -1,5 +1,5 @@
 # Kawaijs Showcase — "Code of Hearts"
-# Living syntax guide: define, input, transitions, sakura, audio, camera, CG.
+# Living syntax guide: define, include, math, rich text, gamepad, transitions, sakura, audio, camera, CG.
 character yumia "Yumia" #f43f5e
 character kaori "Kaori" #0284c7
 
@@ -9,10 +9,13 @@ define bg sunset_courtyard = "sunset_courtyard.svg"
 define music ambient = "bgm_ambient"
 define music upbeat = "bgm_upbeat"
 
+include "chapter2.kawa"
+
 label start:
     set player_name = "Sensei"
     set dev_score = 0
     set creative_score = 0
+    set mastery_index = 0
 
     play music ambient fade 2
 
@@ -26,77 +29,84 @@ label start:
 
     input player_name "What is your name?"
     yumia "Nice to meet you, [player_name]! Watch the {color=#fda4af}sakura{/color} — that's {b}vfx sakura{/b}."
-    kaori "Scenes use {b}define{/b} aliases and transitions like {b}fade{/b}, {b}dissolve{/b}, or {b}wipeleft{/b}."
+    kaori "Scenes support cinematic transitions like {b}circlewipe{/b}, {b}pushleft{/b}, {b}zoom{/b}, {b}blur{/b}, and {b}glitch{/b}."
 
     window hide
-    pause 700
+    pause 600
     window show
 
-    yumia "We need your help choosing our project's direction, [player_name]! What's your strength?"
+    yumia "We need your help choosing our project's direction, [player_name]! What's your focus?"
 
     menu:
         "High-performance architecture & Web Audio":
             play sound sfx_click
             camera vpunch
-            set dev_score += 2
+            set dev_score = dev_score + 2
             show kaori happy at right with nod
             show yumia normal at left
             kaori "Impressive. An engineer with an eye for modularity and crisp performance."
-            yumia "Hey! Don't forget that great stories need emotional resonance too!"
+            yumia "Great stories need emotional resonance too!"
             jump technical_route
 
         "Rich storytelling, character drama & art":
             play sound sfx_click
             camera shake 500
-            set creative_score += 2
+            set creative_score = creative_score + 2
             show yumia excited at left with bounce
             show kaori thinking at right
-            yumia "Yes!! Players remember characters that touch their hearts."
+            yumia "Yes!! Players remember characters that touch their hearts with {rainbow}vibrant emotion{/rainbow}!"
             kaori "A solid script is essential, provided the memory footprint stays lightweight."
             jump creative_route
 
         "Full-stack mastery: Code, Music, and Narrative":
             play sound sfx_click
             camera flash
-            set dev_score += 1
-            set creative_score += 1
+            set dev_score = dev_score + 1
+            set creative_score = creative_score + 1
             show yumia excited at left with bounce
             show kaori smug at right with nod
             kaori "Ambitious. A true solo-dev Renaissance creator."
             yumia "That means we can make something unforgettable together, [player_name]!"
             jump courtyard_scene
 
+        "Inspect the glitch in the reality matrix (Meta Route)":
+            jump secret_meta_route
+
 label technical_route:
     play music upbeat fade 1
-    scene bg rooftop with wipeleft
+    scene bg rooftop with pushleft
     vfx fog
     show kaori smug at center with dissolve
 
-    kaori "Up here on the misty rooftop — {b}vfx fog{/b} after a wipe transition."
-    kaori "Rollback snapshots, live reload, and a modular audio pipeline come free with the toolchain."
+    kaori "Up here on the misty rooftop — {b}vfx fog{/b} after a smooth {b}pushleft transition{/b}."
+    kaori "Rollback snapshots, Gamepad API, and the headless {b}StorySimulator{/b} come built-in."
+
+    set mastery_index = (dev_score * 3 + creative_score) * 2
 
     play sound sfx_sparkle
     camera flash
     pause 600
     cg "cg_sunset_promise.svg" as "sunset_promise"
-    kaori "Look at the horizon, [player_name]. Dev score: [dev_score]. That's a fullscreen {b}cg{/b}."
+    kaori "Look at the horizon, [player_name]. Computed mastery score: [mastery_index]. Fullscreen {b}cg{/b} unlocked."
     jump evaluate_ending
 
 label creative_route:
     play music upbeat fade 1
-    scene bg sunset_courtyard with dissolve
+    scene bg sunset_courtyard with circlewipe
     vfx sakura
     vfx tint "#fda4af"
     show yumia happy at center with bounce
 
-    yumia "Isn't the sunset courtyard breathtaking, [player_name]?"
+    yumia "Isn't the sunset courtyard breathtaking with a {b}circlewipe transition{/b}, [player_name]?"
     yumia "{b}vfx sakura{/b} plus {b}vfx tint{/b} — pink light over falling petals."
+
+    set mastery_index = (creative_score * 3 + dev_score) * 2
 
     play sound sfx_sparkle
     camera flash
     pause 600
     cg "cg_sunset_promise.svg" as "sunset_promise"
-    yumia "Creative score: [creative_score]. Great stories bloom when imagination meets great tools."
+    yumia "Mastery score: [mastery_index]. Great stories bloom when imagination meets great tools."
     jump evaluate_ending
 
 label courtyard_scene:
@@ -107,7 +117,7 @@ label courtyard_scene:
     show kaori happy at right with nod
 
     yumia "Look at the sunset! Story branches and characters are already outlined."
-    kaori "The bundle is light. The Web Audio controller is ready."
+    kaori "The bundle is ultra-light. The Web Audio and Gamepad controllers are ready."
 
     yumia "Try a web-native {b}theme{/b}, a {b}style{/b} skin, and clickable {b}hotspots{/b}."
     theme "sakura"
@@ -119,22 +129,23 @@ label courtyard_scene:
 
     camera hpunch
     yumia "Let's bring all our talents together, [player_name]!"
+    set mastery_index = (dev_score * 2 + creative_score * 2) + 5
     jump evaluate_ending
 
 label evaluate_ending:
-    if dev_score >= 2:
+    if (dev_score >= 2 and creative_score < 2) or mastery_index > 15:
         jump ending_tech
+    elif creative_score >= 2 and dev_score < 2:
+        jump ending_creative
     else:
-        if creative_score >= 2:
-            jump ending_creative
-        else:
-            jump ending_master
+        jump ending_master
 
 label ending_tech:
     scene bg rooftop with fade
     vfx fog
     show kaori smug at center with dissolve
-    kaori "Engineering mastery with [dev_score] dev points. Our next release will be revolutionary."
+    kaori "Engineering mastery achieved with [dev_score] dev points (Mastery: [mastery_index])."
+    unlock ending_tech "The Master Architect" "Reached the technical engineering ending."
     narrator "{b}Ending 1/3: The Master Architect{/b} — High Performance & Flawless Code."
     stop music fade 2
     return
@@ -143,7 +154,8 @@ label ending_creative:
     scene bg sunset_courtyard with fade
     vfx sakura
     show yumia excited at center with bounce
-    yumia "Creative score [creative_score]! This VN will touch hearts around the world!"
+    yumia "Creative score [creative_score] (Mastery: [mastery_index])! This VN will touch hearts around the world!"
+    unlock ending_creative "The Renowned Storyteller" "Reached the creative narrative ending."
     narrator "{b}Ending 2/3: The Renowned Storyteller{/b} — Emotion, Art & Unforgettable Characters."
     stop music fade 2
     return
@@ -153,8 +165,9 @@ label ending_master:
     camera flash
     pause 800
     cg "cg_celebration.svg" as "celebration"
-    yumia "Code, art, music, and story in harmony! Dev: [dev_score], Creative: [creative_score]!"
+    yumia "Code, art, music, and story in harmony! Dev: [dev_score], Creative: [creative_score], Mastery: [mastery_index]!"
     kaori "You have unlocked the full power of Kawaijs, [player_name]."
+    unlock ending_master "The Renaissance Visionary" "Mastered all aspects of the visual novel engine."
     narrator "{b}Ending 3/3: The Renaissance Visionary{/b} — A True Master of Interactive Fiction."
     stop music fade 2
     return
