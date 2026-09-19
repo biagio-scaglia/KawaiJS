@@ -1,6 +1,6 @@
 {
   "name": "kawaijs",
-  "version": "0.1.15",
+  "version": "1.0.0",
   "description": "Web-native visual novel engine and toolchain inspired by Ren'Py",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -31,12 +31,12 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@kawaijs/ast": "^0.1.15",
-    "@kawaijs/parser": "^0.1.15",
-    "@kawaijs/runtime": "^0.1.15",
-    "@kawaijs/renderer-dom": "^0.1.15",
-    "@kawaijs/audio": "^0.1.15",
-    "@kawaijs/vite-plugin": "^0.1.15",
+    "@kawaijs/ast": "^1.0.0",
+    "@kawaijs/parser": "^1.0.0",
+    "@kawaijs/runtime": "^1.0.0",
+    "@kawaijs/renderer-dom": "^1.0.0",
+    "@kawaijs/audio": "^1.0.0",
+    "@kawaijs/vite-plugin": "^1.0.0",
     "esbuild": "^0.28.2"
   },
   "keywords": [
