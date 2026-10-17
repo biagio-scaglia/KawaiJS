@@ -9,6 +9,6 @@
     "validate": "kawa validate"
   },
   "dependencies": {
-    "kawaijs": "^0.1.0"
+    "kawaijs": "^1.0.0"
   }
 }

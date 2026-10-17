@@ -2,7 +2,7 @@ import * as http from 'node:http';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { compileScript, formatDiagnostic, KawaError } from '@kawaijs/parser';
-import { getBaseThemeCss, getInlineRuntimeScript } from '../runtime-bundle.js';
+import { getBaseThemeCss, getInlineRuntimeScript, serializeJsonForScript } from '../runtime-bundle.js';
 import { loadProjectConfig, createCliFileResolver } from '../config.js';
 import { buildPwaAssets, buildPwaIconSvg, renderPwaHeadTags, renderPwaRegisterScript } from '../pwa.js';
 import {
@@ -261,7 +261,7 @@ export function startDevServer(projectDir = '.', options: DevServerOptions = {})
       const compiledStory = compileScript(source, path.basename(scriptPath), {
         fileResolver: createCliFileResolver(rootDir, scriptPath)
       });
-      storyJson = JSON.stringify(enrichStoryPackage(compiledStory, rootDir));
+      storyJson = serializeJsonForScript(enrichStoryPackage(compiledStory, rootDir));
     } catch (err: unknown) {
       if (err instanceof KawaError) {
         const source = fs.readFileSync(scriptPath, 'utf-8');
@@ -297,7 +297,7 @@ export function startDevServer(projectDir = '.', options: DevServerOptions = {})
       includeIconLinks: true
     });
 
-    const cliStartLabel = options.startLabel ? JSON.stringify(options.startLabel) : 'undefined';
+    const cliStartLabel = options.startLabel ? serializeJsonForScript(options.startLabel) : 'undefined';
     const pwaEnabled = activeConfig.pwa?.enabled !== false;
     const pwaHead = pwaEnabled ? renderPwaHeadTags(activeConfig) : '';
     const pwaRegister = pwaEnabled ? renderPwaRegisterScript() : '';
@@ -371,7 +371,7 @@ ${pwaHead}
           }
         }
 
-        const projectConfig = ${JSON.stringify(activeConfig)};
+        const projectConfig = ${serializeJsonForScript(activeConfig)};
         const cliStartLabel = ${cliStartLabel};
 
         const app = mountKawaApp(story, document.getElementById('app'), {

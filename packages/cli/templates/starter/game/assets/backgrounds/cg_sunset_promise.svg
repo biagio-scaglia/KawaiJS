@@ -1,0 +1,70 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 1080" width="1920" height="1080">
+  <defs>
+    <linearGradient id="promiseSky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#311042"/>
+      <stop offset="30%" stop-color="#701a75"/>
+      <stop offset="60%" stop-color="#c2410c"/>
+      <stop offset="85%" stop-color="#f97316"/>
+      <stop offset="100%" stop-color="#fef08a"/>
+    </linearGradient>
+    <radialGradient id="sunBloom" cx="65%" cy="60%" r="50%">
+      <stop offset="0%" stop-color="#fffbeb" stop-opacity="1"/>
+      <stop offset="25%" stop-color="#fde047" stop-opacity="0.8"/>
+      <stop offset="55%" stop-color="#ea580c" stop-opacity="0.3"/>
+      <stop offset="100%" stop-color="#000000" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="horizonGlow" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#ec4899"/>
+      <stop offset="50%" stop-color="#f59e0b"/>
+      <stop offset="100%" stop-color="#8b5cf6"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Sky -->
+  <rect width="1920" height="1080" fill="url(#promiseSky)"/>
+  <rect width="1920" height="1080" fill="url(#sunBloom)"/>
+
+  <!-- Clouds glowing in sunset -->
+  <path d="M 0,320 Q 300,260 650,330 Q 950,250 1350,340 Q 1650,280 1920,350 L 1920,480 L 0,480 Z" fill="#9d174d" opacity="0.35"/>
+  <path d="M 0,420 Q 400,360 850,430 Q 1250,370 1700,440 L 1920,440 L 1920,540 L 0,540 Z" fill="#c2410c" opacity="0.4"/>
+
+  <!-- Distant City Skyline & Mountains -->
+  <polygon points="0,680 200,580 450,680 700,540 1000,680 1300,590 1600,690 1920,620 1920,800 0,800" fill="#4a044e" opacity="0.75"/>
+
+  <!-- Rooftop Railing & Balcony Platform -->
+  <rect x="0" y="720" width="1920" height="360" fill="#18181b"/>
+  <!-- Glowing Horizon Line -->
+  <rect x="0" y="718" width="1920" height="4" fill="url(#horizonGlow)"/>
+
+  <!-- Railing Bars -->
+  <g stroke="#3f3f46" stroke-width="6" opacity="0.85">
+    <line x1="0" y1="780" x2="1920" y2="780"/>
+    <line x1="0" y1="860" x2="1920" y2="860"/>
+    <!-- Vertical Posts -->
+    <line x1="120" y1="720" x2="120" y2="940"/>
+    <line x1="320" y1="720" x2="320" y2="940"/>
+    <line x1="520" y1="720" x2="520" y2="940"/>
+    <line x1="720" y1="720" x2="720" y2="940"/>
+    <line x1="920" y1="720" x2="920" y2="940"/>
+    <line x1="1120" y1="720" x2="1120" y2="940"/>
+    <line x1="1320" y1="720" x2="1320" y2="940"/>
+    <line x1="1520" y1="720" x2="1520" y2="940"/>
+    <line x1="1720" y1="720" x2="1720" y2="940"/>
+  </g>
+
+  <!-- Atmospheric Cherry Blossom Petals in the Wind -->
+  <g fill="#fda4af" opacity="0.8">
+    <path d="M 280,450 C 270,430 300,420 310,440 C 315,455 295,470 280,450 Z" transform="rotate(25 280 450)"/>
+    <path d="M 520,380 C 510,360 540,350 550,370 C 555,385 535,400 520,380 Z" transform="rotate(-40 520 380)"/>
+    <path d="M 850,520 C 840,500 870,490 880,510 C 885,525 865,540 850,520 Z" transform="rotate(15 850 520)"/>
+    <path d="M 1200,420 C 1190,400 1220,390 1230,410 C 1235,425 1215,440 1200,420 Z" transform="rotate(65 1200 420)"/>
+    <path d="M 1520,490 C 1510,470 1540,460 1550,480 C 1555,495 1535,510 1520,490 Z" transform="rotate(-20 1520 490)"/>
+    <path d="M 1750,380 C 1740,360 1770,350 1780,370 C 1785,385 1765,400 1750,380 Z" transform="rotate(35 1750 380)"/>
+  </g>
+
+  <!-- Title Badge in Top Left -->
+  <g transform="translate(100, 100)">
+    <rect x="0" y="0" width="480" height="70" rx="14" fill="rgba(15, 23, 42, 0.75)" stroke="#fb7185" stroke-width="2"/>
+    <text x="24" y="44" font-family="'Plus Jakarta Sans', 'Segoe UI', sans-serif" font-size="24" font-weight="800" fill="#ffffff" letter-spacing="1">EVENT CG • THE SUNSET PROMISE</text>
+  </g>
+</svg>

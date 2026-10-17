@@ -198,4 +198,30 @@ describe('Kawaijs CLI Commands', () => {
     expect(html).toContain('at=start');
     expect(html).toContain('aspect-ratio:800/450');
   });
+
+  it('safely escapes script closing tags to prevent stored XSS injection in generated HTML', () => {
+    const testDir = path.join(os.tmpdir(), 'kawa_xss_test_' + Date.now());
+    tempDirs.push(testDir);
+    fs.mkdirSync(path.join(testDir, 'game'), { recursive: true });
+
+    // Script containing closing script tag
+    fs.writeFileSync(
+      path.join(testDir, 'game', 'script.kawa'),
+      `label start:
+    "Malicious text </script><script>alert('xss')</script>"
+    return
+`,
+      'utf-8'
+    );
+
+    const outDir = path.join(testDir, 'dist');
+    const built = buildProject(testDir, { outDir });
+    expect(built).toBe(true);
+
+    const html = fs.readFileSync(path.join(outDir, 'index.html'), 'utf-8');
+    // Ensure raw </script> is NOT present inside the story JSON block
+    expect(html).not.toContain("</script><script>alert('xss')</script>");
+    // Should be escaped as unicode escape
+    expect(html).toContain('\\u003c/script>\\u003cscript>alert');
+  });
 });

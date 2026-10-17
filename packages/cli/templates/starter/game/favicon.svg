@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Game icon">
+  <rect width="512" height="512" rx="96" fill="#0f172a"/>
+  <circle cx="256" cy="210" r="110" fill="#f43f5e" opacity="0.95"/>
+  <path d="M120 400c40-70 100-100 136-100s96 30 136 100" fill="none" stroke="#f43f5e" stroke-width="28" stroke-linecap="round"/>
+  <circle cx="210" cy="190" r="14" fill="#0f172a"/>
+  <circle cx="302" cy="190" r="14" fill="#0f172a"/>
+</svg>

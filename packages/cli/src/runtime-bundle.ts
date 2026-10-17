@@ -76,9 +76,14 @@ export function getInlineRuntimeScript(assetPrefix = '/'): string {
 
   const bundle = result.outputFiles[0]!.text;
   const prefix = assetPrefix.endsWith('/') ? assetPrefix : assetPrefix + '/';
+  const safePrefix = prefix.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
   return `
-    const ASSET_PREFIX = '${prefix}';
+    const ASSET_PREFIX = '${safePrefix}';
     ${bundle}
     const { mountKawaApp, DOMRenderer, StoryVM } = KawaiJS;
   `;
+}
+
+export function serializeJsonForScript(data: unknown, space?: number): string {
+  return JSON.stringify(data, null, space).replace(/</g, '\\u003c');
 }

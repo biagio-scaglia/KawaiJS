@@ -19,6 +19,8 @@ function copyDirRecursive(src: string, dest: string): void {
 function resolveStarterGameDir(): string | null {
   const here = path.dirname(fileURLToPath(import.meta.url));
   const candidates = [
+    path.resolve(here, '../../templates/starter/game'),
+    path.resolve(here, '../templates/starter/game'),
     path.resolve(here, '../../../../templates/starter/game'),
     path.resolve(here, '../../../templates/starter/game'),
     path.resolve(process.cwd(), 'templates/starter/game')
@@ -141,7 +143,7 @@ label start:
       validate: 'kawa validate'
     },
     dependencies: {
-      kawaijs: '^0.1.11'
+      kawaijs: '^1.0.0'
     }
   };
   fs.writeFileSync(path.join(targetDir, 'package.json'), JSON.stringify(starterPkg, null, 2), 'utf-8');

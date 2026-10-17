@@ -1,7 +1,7 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { compileScript, formatDiagnostic, KawaError, validateStory } from '@kawaijs/parser';
-import { getBaseThemeCss, getInlineRuntimeScript } from '../runtime-bundle.js';
+import { getBaseThemeCss, getInlineRuntimeScript, serializeJsonForScript } from '../runtime-bundle.js';
 import { loadProjectConfig, createCliFileResolver } from '../config.js';
 import { buildPwaAssets, buildPwaIconSvg, renderPwaHeadTags, renderPwaRegisterScript } from '../pwa.js';
 import {
@@ -153,7 +153,7 @@ export function buildProject(projectDir = '.', options: BuildOptions = {}): bool
     includeIconLinks: true
   });
 
-  const cliStartLabel = options.startLabel ? JSON.stringify(options.startLabel) : 'undefined';
+  const cliStartLabel = options.startLabel ? serializeJsonForScript(options.startLabel) : 'undefined';
   const pwaEnabled = projectConfig.pwa?.enabled !== false;
   const pwaHead = pwaEnabled ? renderPwaHeadTags(projectConfig) : '';
   const pwaRegister = pwaEnabled ? renderPwaRegisterScript() : '';
@@ -240,8 +240,8 @@ ${pwaHead}
 ${noscriptBlock}
 
   <script type="module">
-    const story = ${JSON.stringify(storyPackage, null, 2)};
-    const projectConfig = ${JSON.stringify(projectConfig)};
+    const story = ${serializeJsonForScript(storyPackage, 2)};
+    const projectConfig = ${serializeJsonForScript(projectConfig)};
     const cliStartLabel = ${cliStartLabel};
 
     // Inline runtime VM + DOM Renderer with Start Menu
