@@ -21,3 +21,7 @@ Thumbs.db
 .env
 .env.local
 *.log
+
+# Local custom assets & games
+assets/
+games/
