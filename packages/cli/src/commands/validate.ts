@@ -17,11 +17,27 @@ function resolveAssetPath(assetsDir: string, raw: string, kind: 'background' | '
 
   if (kind === 'background') {
     const clean = raw.replace(/^bg[\s_]+/i, '').trim();
-    return path.join(assetsDir, 'backgrounds', clean.includes('.') ? clean : `${clean}.svg`);
+    if (clean.includes('.')) {
+      return path.join(assetsDir, 'backgrounds', clean);
+    }
+    const exts = ['.svg', '.png', '.webp', '.jpg', '.jpeg'];
+    for (const ext of exts) {
+      const candidate = path.join(assetsDir, 'backgrounds', `${clean}${ext}`);
+      if (fs.existsSync(candidate)) return candidate;
+    }
+    return path.join(assetsDir, 'backgrounds', `${clean}.svg`);
   }
   if (kind === 'character') {
     const clean = raw.replace(/_/g, path.sep).replace(/\s+/g, path.sep).trim();
-    return path.join(assetsDir, 'characters', clean.includes('.') ? clean : `${clean}.svg`);
+    if (clean.includes('.')) {
+      return path.join(assetsDir, 'characters', clean);
+    }
+    const exts = ['.png', '.webp', '.svg', '.jpg'];
+    for (const ext of exts) {
+      const candidate = path.join(assetsDir, 'characters', `${clean}${ext}`);
+      if (fs.existsSync(candidate)) return candidate;
+    }
+    return path.join(assetsDir, 'characters', `${clean}.png`);
   }
   return path.join(assetsDir, 'audio', raw.includes('.') ? raw : `${raw}.mp3`);
 }
