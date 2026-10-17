@@ -197,6 +197,7 @@ export class StoryVM {
     this.recordTrace(`START ${startLabel}`);
     this.state = createInitialState(startLabel);
     this.applyInitialVariables();
+    this.hydrateAchievements();
     this.snapshotStack = [];
     this.virtualTimeMs = 0;
     this.historyManager.clear();

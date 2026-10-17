@@ -55,5 +55,9 @@ label start:
     expect(
       interpolateVariables('{t:hello}', {}, { lang: 'en', i18n: story.i18n })
     ).toBe('Hello!');
+
+    // Restarting the story should rehydrate previously unlocked achievements
+    vm.start();
+    expect(vm.getState().achievements['first_end']?.title).toBe('First Ending');
   });
 });

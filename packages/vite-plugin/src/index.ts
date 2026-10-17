@@ -1,19 +1,51 @@
+import * as fs from 'node:fs';
+import * as path from 'node:path';
 import { compileScript } from '@kawaijs/parser';
 
 export interface KawaijsPluginOptions {
   include?: string | RegExp | (string | RegExp)[];
+  fileResolver?: (target: string, from: string) => string | null;
 }
 
-export function kawaijsPlugin(_options: KawaijsPluginOptions = {}) {
+function matchesFilter(id: string, filter: string | RegExp | (string | RegExp)[]): boolean {
+  if (Array.isArray(filter)) {
+    return filter.some((f) => matchesFilter(id, f));
+  }
+  if (typeof filter === 'string') {
+    return id.includes(filter);
+  }
+  if (filter instanceof RegExp) {
+    return filter.test(id);
+  }
+  return true;
+}
+
+export function kawaijsPlugin(options: KawaijsPluginOptions = {}) {
+  const defaultResolver = (target: string, from: string): string | null => {
+    const dir = from && path.isAbsolute(from) ? path.dirname(from) : process.cwd();
+    const candidate = path.resolve(dir, target);
+    if (fs.existsSync(candidate)) {
+      return fs.readFileSync(candidate, 'utf-8');
+    }
+    return null;
+  };
+
+  const fileResolver = options.fileResolver ?? defaultResolver;
+
   return {
     name: 'vite-plugin-kawaijs',
     transform(code: string, id: string) {
-      if (!id.endsWith('.kawa')) {
+      const cleanId = id.split('?')[0]!.split('#')[0]!;
+      if (!cleanId.endsWith('.kawa')) {
+        return null;
+      }
+
+      if (options.include && !matchesFilter(cleanId, options.include) && !matchesFilter(id, options.include)) {
         return null;
       }
 
       try {
-        const storyPackage = compileScript(code, id);
+        const storyPackage = compileScript(code, cleanId, { fileResolver });
         const jsonStr = JSON.stringify(storyPackage);
 
         return {

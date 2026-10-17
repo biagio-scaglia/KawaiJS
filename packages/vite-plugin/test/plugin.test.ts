@@ -24,4 +24,36 @@ label start:
     const result = (plugin as any).transform('const a = 1;', 'main.ts');
     expect(result).toBeNull();
   });
+
+  it('handles query parameters like ?import', () => {
+    const plugin = kawaijsPlugin();
+    const sourceCode = `label start:\n    "Hello with query"\n`;
+    const result = (plugin as any).transform(sourceCode, 'main.kawa?import');
+    expect(result).toBeDefined();
+    expect(result?.code).toContain('Hello with query');
+  });
+
+  it('supports include filter and fileResolver option', () => {
+    const plugin = kawaijsPlugin({
+      include: /game\/.*\.kawa/,
+      fileResolver: (target) => {
+        if (target === 'extra.kawa') {
+          return 'label extra:\n    "Extra content"\n';
+        }
+        return null;
+      }
+    });
+
+    // Should ignore files not matching include filter
+    const ignored = (plugin as any).transform('label start:\n    "ignored"', 'other/file.kawa');
+    expect(ignored).toBeNull();
+
+    // Should compile matching files and resolve include
+    const matching = (plugin as any).transform(
+      'include "extra.kawa"\nlabel start:\n    call extra\n',
+      'game/main.kawa'
+    );
+    expect(matching).toBeDefined();
+    expect(matching?.code).toContain('Extra content');
+  });
 });

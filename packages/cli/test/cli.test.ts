@@ -5,7 +5,7 @@ import * as os from 'node:os';
 import { validateProject } from '../src/commands/validate.js';
 import { buildProject } from '../src/commands/build.js';
 import { createProject } from '../src/commands/create.js';
-import { loadProjectConfig } from '../src/config.js';
+import { loadProjectConfig, createCliFileResolver } from '../src/config.js';
 import {
   parseBuildCommandArgs,
   parseDevCommandArgs,
@@ -223,5 +223,27 @@ describe('Kawaijs CLI Commands', () => {
     expect(html).not.toContain("</script><script>alert('xss')</script>");
     // Should be escaped as unicode escape
     expect(html).toContain('\\u003c/script>\\u003cscript>alert');
+  });
+
+  it('prevents directory traversal outside rootDir in createCliFileResolver', () => {
+    const testDir = path.join(os.tmpdir(), 'kawa_traversal_test_' + Date.now());
+    tempDirs.push(testDir);
+    fs.mkdirSync(path.join(testDir, 'game'), { recursive: true });
+    fs.writeFileSync(path.join(testDir, 'game', 'valid.kawa'), 'label valid:\n    "Valid"\n', 'utf-8');
+
+    // Create a sensitive-like file outside testDir
+    const outsideDir = path.join(os.tmpdir(), 'kawa_outside_' + Date.now());
+    tempDirs.push(outsideDir);
+    fs.mkdirSync(outsideDir, { recursive: true });
+    fs.writeFileSync(path.join(outsideDir, 'secret.env'), 'SECRET_TOKEN=12345', 'utf-8');
+
+    const resolver = createCliFileResolver(testDir, path.join(testDir, 'game', 'script.kawa'));
+
+    // Valid file within rootDir should resolve
+    expect(resolver('valid.kawa', path.join(testDir, 'game', 'script.kawa'))).toContain('Valid');
+
+    // Relative path attempting to break out of rootDir should return null
+    const relativeAttack = path.relative(path.join(testDir, 'game'), path.join(outsideDir, 'secret.env'));
+    expect(resolver(relativeAttack, path.join(testDir, 'game', 'script.kawa'))).toBeNull();
   });
 });

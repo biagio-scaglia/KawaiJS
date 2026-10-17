@@ -220,16 +220,22 @@ export function loadProjectConfig(projectDir: string): KawaProjectConfig {
 }
 
 export function createCliFileResolver(rootDir: string, scriptPath?: string): (target: string, from: string) => string | null {
+  const resolvedRoot = path.resolve(rootDir);
+  const isInsideRoot = (filePath: string): boolean => {
+    const relative = path.relative(resolvedRoot, filePath);
+    return !relative.startsWith('..') && !path.isAbsolute(relative);
+  };
+
   return (target: string, from: string): string | null => {
     const base = from && from !== '<anonymous>' && path.isAbsolute(from)
       ? path.dirname(from)
       : (scriptPath ? path.dirname(scriptPath) : path.join(rootDir, 'game'));
     const resolved = path.resolve(base, target);
-    if (fs.existsSync(resolved)) return fs.readFileSync(resolved, 'utf-8');
+    if (isInsideRoot(resolved) && fs.existsSync(resolved)) return fs.readFileSync(resolved, 'utf-8');
     const alt = path.resolve(rootDir, 'game', target);
-    if (fs.existsSync(alt)) return fs.readFileSync(alt, 'utf-8');
+    if (isInsideRoot(alt) && fs.existsSync(alt)) return fs.readFileSync(alt, 'utf-8');
     const altRoot = path.resolve(rootDir, target);
-    if (fs.existsSync(altRoot)) return fs.readFileSync(altRoot, 'utf-8');
+    if (isInsideRoot(altRoot) && fs.existsSync(altRoot)) return fs.readFileSync(altRoot, 'utf-8');
     return null;
   };
 }
