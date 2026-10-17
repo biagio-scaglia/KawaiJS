@@ -42,11 +42,11 @@
       "patterns": [
         {
           "name": "keyword.control.kawa",
-          "match": "\\b(jump|return|menu|if|elif|else|set|pause)\\b"
+          "match": "\\b(jump|call|return|menu|if|elif|else|set|pause|include|define|input|window|theme|style|hotspot|layer|animate|unlock|lang|vfx|camera|cg)\\b"
         },
         {
           "name": "keyword.other.position.kawa",
-          "match": "\\b(at|with|fadein|fadeout|fade|loop)\\b"
+          "match": "\\b(at|with|fadein|fadeout|fade|loop|z|as|duration)\\b"
         },
         {
           "name": "support.constant.position.kawa",
@@ -54,7 +54,7 @@
         },
         {
           "name": "support.constant.transition.kawa",
-          "match": "\\b(fade|dissolve|vpunch|hpunch|flash|none)\\b"
+          "match": "\\b(fade|dissolve|vpunch|hpunch|flash|bounce|nod|shake|none)\\b"
         }
       ]
     },
@@ -126,6 +126,10 @@
         {
           "name": "markup.other.size.kawa",
           "match": "\\{size=[^}]+\\}.*?\\{/size\\}"
+        },
+        {
+          "name": "keyword.other.inline-tag.kawa",
+          "match": "\\{(w|w=\\d+(\\.\\d+)?|p|nw|fast|t:[^}]+)\\}"
         }
       ]
     },

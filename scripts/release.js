@@ -72,7 +72,7 @@ execSync('npx tsc -b', { stdio: 'inherit' });
 
 // 4. Git Commit, Tag and Push
 console.log('\n4️⃣ Committing and pushing to GitHub...');
-execSync('git add .', { stdio: 'inherit' });
+execSync('git add package.json package-lock.json packages/*/package.json templates/*/package.json packages/*/dist', { stdio: 'inherit' });
 execSync(`git commit -m "chore(release): v${nextVersion}"`, { stdio: 'inherit' });
 try {
   execSync(`git tag v${nextVersion}`, { stdio: 'inherit' });

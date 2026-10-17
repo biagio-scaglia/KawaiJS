@@ -56,25 +56,39 @@ function resolveRendererDomEntry(): string {
   }
 }
 
-export function getInlineRuntimeScript(assetPrefix = '/'): string {
-  // Always rebuild so CLI picks up renderer-dom source edits without a process restart.
-  // Page loads are infrequent enough that sync esbuild cost is acceptable in dev/build.
-  const entry = resolveRendererDomEntry();
-  const result = esbuild.buildSync({
-    entryPoints: [entry],
-    bundle: true,
-    format: 'iife',
-    globalName: 'KawaiJS',
-    write: false,
-    minify: false,
-    target: 'es2022'
-  });
+let cachedBundleText: string | null = null;
+let cachedMtime = 0;
 
-  if (!result.outputFiles || result.outputFiles.length === 0) {
-    throw new Error('Failed to bundle @kawaijs/renderer-dom with esbuild.');
+export function getInlineRuntimeScript(assetPrefix = '/'): string {
+  const entry = resolveRendererDomEntry();
+  let mtime = 0;
+  try {
+    mtime = fs.statSync(entry).mtimeMs;
+  } catch {}
+
+  let bundle: string;
+  if (cachedBundleText && mtime === cachedMtime) {
+    bundle = cachedBundleText;
+  } else {
+    const result = esbuild.buildSync({
+      entryPoints: [entry],
+      bundle: true,
+      format: 'iife',
+      globalName: 'KawaiJS',
+      write: false,
+      minify: false,
+      target: 'es2022'
+    });
+
+    if (!result.outputFiles || result.outputFiles.length === 0) {
+      throw new Error('Failed to bundle @kawaijs/renderer-dom with esbuild.');
+    }
+
+    bundle = result.outputFiles[0]!.text;
+    cachedBundleText = bundle;
+    cachedMtime = mtime;
   }
 
-  const bundle = result.outputFiles[0]!.text;
   const prefix = assetPrefix.endsWith('/') ? assetPrefix : assetPrefix + '/';
   const safePrefix = prefix.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
   return `

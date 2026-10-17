@@ -168,7 +168,7 @@ label leave_early:
 | **Embed Mode** | URL `?embed=1` | iframe / blog embed (no main menu) |
 | **Dialogue** | `<char> "<text>"` | `yumia "Hello world!"` |
 | **Narration** | `"<text>"` | `"Silence filled the room."` |
-| **Math & Variables** | `set <var> = <expr>` / `+=` / `-=` / `*=` / `/=` | `set karma = (str + agi) * 1.5 - penalty` |
+| **Math & Variables** | `set <var> = <expr>` / `+=` / `-=` | `set karma = (str + agi) * 1.5 - penalty` |
 | **Conditionals** | `if <cond>:` / `elif:` / `else:` | `if (affinity >= 10 and has_key) or is_admin:` |
 | **Choice Menu** | `menu:` with `"Text" [if <cond>]:` | `"Open door" if has_key:` |
 | **Audio - Music (BGM)** | `play music "<file>" [fadein <s>] [loop]` | `play music "bgm.mp3" fadein 1.5` |
