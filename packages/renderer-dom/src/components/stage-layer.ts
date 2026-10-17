@@ -412,10 +412,13 @@ export class StageLayerComponent {
 
   public setSpeakingCharacter(characterId: string | null): void {
     const cleanId = characterId ? characterId.toLowerCase().trim() : null;
+    let hasSpeaker = false;
     for (const [charKey, charObj] of this.activeCharacters.entries()) {
       const matches = cleanId !== null && (charKey.toLowerCase() === cleanId || charKey.toLowerCase().startsWith(`${cleanId}/`));
       charObj.div.classList.toggle('kawa-speaking', matches);
+      if (matches) hasSpeaker = true;
     }
+    this.charactersEl.classList.toggle('kawa-has-speaker', hasSpeaker);
   }
 
   public destroy(): void {
