@@ -14,6 +14,14 @@ describe('Advanced Math & Logical Evaluator', () => {
     expect(evaluateExpression('a / b + c', vars)).toBe(4);
     expect(evaluateExpression('10 % 3', vars)).toBe(1);
     expect(evaluateExpression('2 ^ 3', vars)).toBe(8);
+    expect(evaluateExpression('2 * 3 ^ 2', vars)).toBe(18);
+    expect(evaluateExpression('2 ^ 3 ^ 2', vars)).toBe(512);
+  });
+
+  it('does not coerce missing identifiers into strings on set', () => {
+    const vars: Record<string, unknown> = { score: 1 };
+    const result = applySetOperation(vars['score'], '=', 'missing_flag', vars, true);
+    expect(result).toBeUndefined();
   });
 
   it('evaluates complex RPG stat formulas with decimals and variables', () => {

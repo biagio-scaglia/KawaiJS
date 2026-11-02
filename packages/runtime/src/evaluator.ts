@@ -276,25 +276,32 @@ class ExpressionParser {
   }
 
   private parseMulDiv(): unknown {
-    let left = this.parseUnary();
+    let left = this.parsePower();
     while (true) {
       if (this.match('*')) {
-        const right = this.parseUnary();
+        const right = this.parsePower();
         left = this.toNum(left) * this.toNum(right);
       } else if (this.match('/')) {
-        const right = this.parseUnary();
+        const right = this.parsePower();
         const denom = this.toNum(right);
         left = denom === 0 ? 0 : this.toNum(left) / denom;
       } else if (this.match('%')) {
-        const right = this.parseUnary();
+        const right = this.parsePower();
         const denom = this.toNum(right);
         left = denom === 0 ? 0 : this.toNum(left) % denom;
-      } else if (this.match('^')) {
-        const right = this.parseUnary();
-        left = Math.pow(this.toNum(left), this.toNum(right));
       } else {
         break;
       }
+    }
+    return left;
+  }
+
+  /** Right-associative exponentiation, tighter than * / %. */
+  private parsePower(): unknown {
+    const left = this.parseUnary();
+    if (this.match('^')) {
+      const right = this.parsePower();
+      return Math.pow(this.toNum(left), this.toNum(right));
     }
     return left;
   }
@@ -398,9 +405,9 @@ export function applySetOperation(
     } else if (isVariable === false) {
       resolved = assignedValue;
     } else {
-      // Evaluate as expression (can be identifier, number, or compound expression)
-      const evaluated = evaluateExpression(trimmed, variables);
-      resolved = evaluated !== undefined ? evaluated : trimmed;
+      // Evaluate as expression (can be identifier, number, or compound expression).
+      // Missing identifiers stay undefined — do not coerce the token into a string.
+      resolved = evaluateExpression(trimmed, variables);
     }
   } else {
     resolved = assignedValue;
