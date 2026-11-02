@@ -82,6 +82,84 @@ label start:
     globalThis.Audio = OriginalAudio;
   });
 
+  it('stopMusic clears pendingMusic queued before unlock', () => {
+    const OriginalAudio = globalThis.Audio;
+    let constructed = 0;
+    // @ts-expect-error test stub
+    globalThis.Audio = class {
+      loop = false;
+      volume = 1;
+      paused = true;
+      src = '';
+      preload = '';
+      constructor() {
+        constructed++;
+      }
+      play() {
+        this.paused = false;
+        return Promise.resolve();
+      }
+      pause() {}
+      addEventListener() {}
+      removeEventListener() {}
+    };
+
+    const audio = new AudioManager();
+    const internal = audio as unknown as {
+      isUnlocked: boolean;
+      pendingMusic: { src: string } | null;
+    };
+    internal.isUnlocked = false;
+    audio.playMusic('track.mp3');
+    expect(constructed).toBe(0);
+    expect(internal.pendingMusic?.src).toBe('track.mp3');
+    audio.stopMusic();
+    expect(internal.pendingMusic).toBeNull();
+
+    internal.isUnlocked = true;
+    audio.playMusic('other.mp3');
+    expect(constructed).toBe(1);
+
+    audio.destroy();
+    globalThis.Audio = OriginalAudio;
+  });
+
+  it('respects mute for newly played sound and voice', () => {
+    const OriginalAudio = globalThis.Audio;
+    const volumes: number[] = [];
+    // @ts-expect-error test stub
+    globalThis.Audio = class {
+      loop = false;
+      paused = true;
+      src = '';
+      preload = '';
+      private _volume = 1;
+      get volume() {
+        return this._volume;
+      }
+      set volume(v: number) {
+        this._volume = v;
+        volumes.push(v);
+      }
+      play() {
+        return Promise.resolve();
+      }
+      pause() {}
+      addEventListener() {}
+      removeEventListener() {}
+    };
+
+    const audio = new AudioManager();
+    audio.toggleMute();
+    audio.playSound('sfx.mp3');
+    audio.playVoice('vo.mp3');
+    expect(volumes.length).toBeGreaterThanOrEqual(2);
+    expect(volumes.every((v) => v === 0)).toBe(true);
+
+    audio.destroy();
+    globalThis.Audio = OriginalAudio;
+  });
+
   it('attachToVM is idempotent and does not stack duplicate listeners', () => {
     const story = compileScript(`label start:
     play music theme

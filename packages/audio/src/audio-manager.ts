@@ -32,6 +32,7 @@ export class AudioManager {
   private currentMusicAudio: HTMLAudioElement | null = null;
   private currentMusicTrack: string | null = null;
   private currentVoiceAudio: HTMLAudioElement | null = null;
+  private voiceGeneration = 0;
   private soundPool: HTMLAudioElement[] = [];
   private isUnlocked = false;
   private pendingMusic: { src: string; options: PlayMusicOptions } | null = null;
@@ -188,6 +189,9 @@ export class AudioManager {
   }
 
   public stopMusic(options: StopMusicOptions = {}): void {
+    // Clear queued pre-unlock music so a later gesture cannot revive a stopped track.
+    this.pendingMusic = null;
+
     const fadeout = options.fadeout ?? 0;
     const audio = this.currentMusicAudio;
     if (!audio) return;
@@ -225,7 +229,7 @@ export class AudioManager {
 
     const audio = new Audio(src);
     audio.preload = 'auto';
-    audio.volume = volume * this.masterVolume * this.soundVolume;
+    audio.volume = this.isMuted ? 0 : volume * this.masterVolume * this.soundVolume;
     audio.play().catch(() => {});
 
     this.soundPool.push(audio);
@@ -270,15 +274,20 @@ export class AudioManager {
   public playVoice(src: string, volume = 1): void {
     if (typeof Audio === 'undefined') return;
 
+    const generation = ++this.voiceGeneration;
+
     if (this.currentVoiceAudio) {
       this.currentVoiceAudio.pause();
       this.currentVoiceAudio.src = '';
+      this.currentVoiceAudio = null;
     }
 
     const audio = new Audio(src);
-    audio.volume = volume * this.masterVolume * this.voiceVolume;
+    audio.volume = this.isMuted ? 0 : volume * this.masterVolume * this.voiceVolume;
 
     const onEnded = () => {
+      // Ignore stale ended/error from a voice clip that was interrupted.
+      if (generation !== this.voiceGeneration) return;
       this.unduck();
       this.notifyVoiceState(false);
       if (this.currentVoiceAudio === audio) {
@@ -313,6 +322,7 @@ export class AudioManager {
   }
 
   public stopVoice(): void {
+    this.voiceGeneration++;
     if (this.currentVoiceAudio) {
       this.currentVoiceAudio.pause();
       this.currentVoiceAudio.src = '';
@@ -325,6 +335,7 @@ export class AudioManager {
   public destroy(): void {
     this.removeUnlockListeners();
     this.vmAudioGeneration++;
+    this.pendingMusic = null;
     if (this.vmAudioUnsub) {
       this.vmAudioUnsub();
       this.vmAudioUnsub = null;
