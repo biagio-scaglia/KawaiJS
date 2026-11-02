@@ -14,6 +14,7 @@ import {
 import { buildEmbedSnippet, parseEmbedCommandArgs } from '../src/commands/embed.js';
 import { renderSeoHeadTags, resolveFavicon } from '../src/seo.js';
 import { DEFAULT_KAWA_CONFIG } from '../src/config.js';
+import { buildPwaAssets } from '../src/pwa.js';
 
 describe('Kawaijs CLI Commands', () => {
   const tempDirs: string[] = [];
@@ -134,6 +135,17 @@ describe('Kawaijs CLI Commands', () => {
     });
     expect(tags).toContain('og:title');
     expect(tags).toContain('Blurb');
+  });
+
+  it('precaches the configured PWA icon file instead of a hardcoded icon.svg', () => {
+    const pwa = buildPwaAssets(
+      { ...DEFAULT_KAWA_CONFIG, title: 'PNG Favicon Game' },
+      'kawa-test',
+      { iconFile: 'icon.png', iconMime: 'image/png' }
+    );
+    expect(pwa.serviceWorkerJs).toContain('"./icon.png"');
+    expect(pwa.serviceWorkerJs).not.toContain('"./icon.svg"');
+    expect(pwa.manifestJson).toContain('icon.png');
   });
 
   it('parses dev/build CLI flags for --at and --port/--out', () => {

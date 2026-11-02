@@ -78,14 +78,16 @@ export function buildWebManifest(
 /** App-shell service worker: precache core files, cache-first for assets. */
 export function buildServiceWorkerScript(
   cacheVersion = 'kawa-v1',
-  precacheExtra: string[] = []
+  precacheExtra: string[] = [],
+  iconFile = 'icon.svg'
 ): string {
+  const safeIcon = iconFile.replace(/^\.\//, '').replace(/[<>"']/g, '') || 'icon.svg';
   const precache = [
     './',
     './index.html',
     './style.css',
     './manifest.webmanifest',
-    './icon.svg',
+    `./${safeIcon}`,
     ...precacheExtra
   ];
   const unique = [...new Set(precache)];
@@ -154,7 +156,8 @@ export function buildPwaAssets(
     manifestJson: buildWebManifest(config, options),
     serviceWorkerJs: buildServiceWorkerScript(
       cacheVersion ?? `kawa-${Date.now().toString(36)}`,
-      options.precacheExtra
+      options.precacheExtra,
+      options.iconFile || 'icon.svg'
     ),
     iconSvg: buildPwaIconSvg(accent)
   };
