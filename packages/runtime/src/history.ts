@@ -24,9 +24,8 @@ export class HistoryManager {
     };
 
     this.entries.push(entry);
-    if (this.entries.length > this.maxEntries) {
-      this.entries.shift();
-    }
+    // Do not shift here: rollback snapshots store prefix lengths, and dropping
+    // oldest lines would make trimTo() keep the wrong dialogue after wrap.
 
     return entry;
   }
