@@ -8,12 +8,24 @@ export function trapFocus(container: HTMLElement): () => void {
       ? document.activeElement
       : null;
 
+  const isVisible = (el: HTMLElement): boolean => {
+    // Fixed-position descendants (e.g. gallery lightbox) often have offsetParent === null.
+    if (el === document.activeElement) return true;
+    if (el.offsetParent !== null) return true;
+    if (el.offsetWidth > 0 || el.offsetHeight > 0) return true;
+    try {
+      return getComputedStyle(el).display !== 'none' && getComputedStyle(el).visibility !== 'hidden';
+    } catch {
+      return false;
+    }
+  };
+
   const getFocusable = (): HTMLElement[] =>
     Array.from(
       container.querySelectorAll<HTMLElement>(
         'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
       )
-    ).filter((el) => el.offsetParent !== null || el === document.activeElement);
+    ).filter(isVisible);
 
   const onKeyDown = (e: KeyboardEvent): void => {
     if (e.key !== 'Tab') return;
