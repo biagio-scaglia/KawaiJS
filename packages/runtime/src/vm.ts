@@ -374,6 +374,9 @@ export class StoryVM {
    * Rolls back the story state to the previous snapshot.
    */
   public rollback(): boolean {
+    if (this.isExecuting) {
+      return false;
+    }
     if (this.snapshotStack.length <= 1) {
       return false;
     }
@@ -421,6 +424,9 @@ export class StoryVM {
   }
 
   public async loadWithDetails(slotId: string, validateStoryHash = true): Promise<LoadResult> {
+    if (this.isExecuting) {
+      return { success: false, reason: 'busy' };
+    }
     const res = await this.saveManager.loadSlot(slotId, validateStoryHash ? this.storyHash : undefined);
     if (!res.success || !res.slot) {
       return res;
@@ -434,6 +440,9 @@ export class StoryVM {
    * Validates storyHash when present on the slot.
    */
   public loadFromSlot(slot: SaveSlot, validateStoryHash = true): LoadResult {
+    if (this.isExecuting) {
+      return { success: false, reason: 'busy' };
+    }
     if (validateStoryHash && slot.storyHash && slot.storyHash !== this.storyHash) {
       return { success: false, reason: 'incompatible_story', slot };
     }

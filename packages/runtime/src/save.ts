@@ -17,7 +17,12 @@ export interface SaveSlot {
   readonly historyEntries?: readonly DialogueHistoryEntry[];
 }
 
-export type LoadFailureReason = 'not_found' | 'corrupt' | 'incompatible_schema' | 'incompatible_story';
+export type LoadFailureReason =
+  | 'not_found'
+  | 'corrupt'
+  | 'incompatible_schema'
+  | 'incompatible_story'
+  | 'busy';
 
 export interface LoadResult {
   readonly success: boolean;

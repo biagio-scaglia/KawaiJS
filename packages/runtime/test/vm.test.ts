@@ -130,6 +130,22 @@ label normal_end:
     expect(vm.getHistoryManager().getEntries().map((e) => e.text)).toEqual(['Step 1']);
   });
 
+  it('rejects rollback while an instruction burst is executing', () => {
+    const code = `label start:
+    play music theme
+    "After music"
+`;
+    const story = compileScript(code);
+    const vm = new StoryVM(story);
+    let sawBusyRollback = false;
+    vm.onAudioEvent(() => {
+      sawBusyRollback = vm.rollback() === false;
+    });
+    vm.start();
+    expect(sawBusyRollback).toBe(true);
+    expect(vm.getState().dialogue?.text).toBe('After music');
+  });
+
   it('trims dialogue history on rollback and restores it on save/load', async () => {
     const code = `label start:
     "Alpha"
