@@ -90,7 +90,7 @@ label ch1_start:
     }).toThrow(KawaError);
   });
 
-  it('detects include cycles across path aliases (ch.kawa vs ./ch.kawa)', () => {
+  it('skips duplicate sibling includes that resolve to the same path', () => {
     const main = `include "ch.kawa"
 include "./ch.kawa"
 label start:
@@ -99,15 +99,39 @@ label start:
     const ch = `label ch1:
     "c"
 `;
-    expect(() => {
-      compileScript(main, 'main.kawa', {
-        fileResolver: (target) => {
-          const key = target.replace(/^\.\//, '');
-          if (key === 'ch.kawa') return ch;
-          return null;
-        }
-      });
-    }).toThrow(/Circular include/);
+    const story = compileScript(main, 'main.kawa', {
+      fileResolver: (target) => {
+        const key = target.replace(/^\.\//, '');
+        if (key === 'ch.kawa') return ch;
+        return null;
+      }
+    });
+    expect(story.labels['ch1']).toBeDefined();
+    expect(story.labels['start']).toBeDefined();
+  });
+
+  it('allows diamond includes of a shared helper file', () => {
+    const main = `include "util.kawa"
+include "ch.kawa"
+label start:
+    "main"
+`;
+    const util = `label util_ready:
+    "util"
+`;
+    const ch = `include "util.kawa"
+label chapter:
+    "ch"
+`;
+    const files: Record<string, string> = {
+      'util.kawa': util,
+      'ch.kawa': ch
+    };
+    const story = compileScript(main, 'main.kawa', {
+      fileResolver: (target) => files[target] ?? null
+    });
+    expect(story.labels['util_ready']).toBeDefined();
+    expect(story.labels['chapter']).toBeDefined();
   });
 
   it('preserves character hex color definitions', () => {

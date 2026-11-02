@@ -60,7 +60,12 @@ export class Compiler {
 
     const rootFile = this.program.loc?.file ?? '<anonymous>';
     const rootKey = normalizeIncludePath(rootFile, rootFile);
-    const flattenedStatements = this.expandStatements(this.program.statements, rootFile, new Set([rootKey]));
+    const flattenedStatements = this.expandStatements(
+      this.program.statements,
+      rootFile,
+      new Set([rootKey]),
+      new Set([rootKey])
+    );
 
     // 1. First pass: Collect character / define declarations and label bodies
     for (const stmt of flattenedStatements) {
@@ -132,10 +137,16 @@ export class Compiler {
     };
   }
 
+  /**
+   * Flatten `include` directives.
+   * - `expanding`: DFS stack for true cycles (A→B→A).
+   * - `expanded`: files already fully inlined (diamond / sibling re-include → skip).
+   */
   private expandStatements(
     statements: StatementNode[],
     currentFile: string,
-    visited: Set<string>
+    expanding: Set<string>,
+    expanded: Set<string>
   ): StatementNode[] {
     const result: StatementNode[] = [];
     for (const stmt of statements) {
@@ -157,7 +168,7 @@ export class Compiler {
           });
         }
 
-        if (visited.has(includeKey)) {
+        if (expanding.has(includeKey)) {
           throw new KawaError({
             code: 'E0206',
             message: `Circular include detected: '${targetPath}'`,
@@ -166,14 +177,24 @@ export class Compiler {
           });
         }
 
-        // Mark in the current set so sibling includes (ch.kawa then ./ch.kawa) are caught.
-        visited.add(includeKey);
-        const nextVisited = new Set(visited);
+        // Shared helpers included from multiple parents (diamond) or repeated sibling
+        // includes are skipped after the first successful expansion.
+        if (expanded.has(includeKey)) {
+          continue;
+        }
 
+        expanding.add(includeKey);
         const lexer = new Lexer(source, includeKey);
         const parser = new Parser(lexer.tokenize(), includeKey);
         const subProgram = parser.parse();
-        const expandedSub = this.expandStatements(subProgram.statements, includeKey, nextVisited);
+        const expandedSub = this.expandStatements(
+          subProgram.statements,
+          includeKey,
+          expanding,
+          expanded
+        );
+        expanding.delete(includeKey);
+        expanded.add(includeKey);
         result.push(...expandedSub);
       } else {
         result.push(stmt);
