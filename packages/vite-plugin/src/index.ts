@@ -22,9 +22,14 @@ function matchesFilter(id: string, filter: string | RegExp | (string | RegExp)[]
 
 export function kawaijsPlugin(options: KawaijsPluginOptions = {}) {
   const defaultResolver = (target: string, from: string): string | null => {
-    const dir = from && path.isAbsolute(from) ? path.dirname(from) : process.cwd();
-    const candidate = path.resolve(dir, target);
-    if (fs.existsSync(candidate)) {
+    const rootDir = from && path.isAbsolute(from) ? path.dirname(from) : process.cwd();
+    const resolvedRoot = path.resolve(rootDir);
+    const isInsideRoot = (filePath: string): boolean => {
+      const relative = path.relative(resolvedRoot, filePath);
+      return relative === '' || (!relative.startsWith('..') && !path.isAbsolute(relative));
+    };
+    const candidate = path.resolve(resolvedRoot, target);
+    if (isInsideRoot(candidate) && fs.existsSync(candidate)) {
       return fs.readFileSync(candidate, 'utf-8');
     }
     return null;

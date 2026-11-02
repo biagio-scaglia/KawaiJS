@@ -1,4 +1,7 @@
 import { describe, it, expect } from 'vitest';
+import * as fs from 'node:fs';
+import * as os from 'node:os';
+import * as path from 'node:path';
 import { kawaijsPlugin } from '../src/index.js';
 
 describe('Vite Plugin Kawaijs', () => {
@@ -31,6 +34,26 @@ label start:
     const result = (plugin as any).transform(sourceCode, 'main.kawa?import');
     expect(result).toBeDefined();
     expect(result?.code).toContain('Hello with query');
+  });
+
+  it('rejects default-resolver include paths outside the script directory', () => {
+    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'kawa-vite-jail-'));
+    const scriptPath = path.join(tmp, 'main.kawa');
+    const secretPath = path.join(tmp, '..', `secret_${Date.now()}.txt`);
+    fs.writeFileSync(scriptPath, 'include "../secret.txt"\nlabel start:\n    "x"\n', 'utf-8');
+    fs.writeFileSync(secretPath, 'label leaked:\n    "nope"\n', 'utf-8');
+
+    const plugin = kawaijsPlugin();
+    expect(() => {
+      (plugin as any).transform(fs.readFileSync(scriptPath, 'utf-8'), scriptPath);
+    }).toThrow(/Cannot resolve include|Failed to compile/);
+
+    fs.rmSync(tmp, { recursive: true, force: true });
+    try {
+      fs.unlinkSync(secretPath);
+    } catch {
+      /* ignore */
+    }
   });
 
   it('supports include filter and fileResolver option', () => {
