@@ -286,10 +286,14 @@ export class StageLayerComponent {
       } else {
         const existing = this.activeCharacters.get(id)!;
 
-        // Position change
+        // Position change — toggle only kawa-pos-* so CSS/sprite anim classes survive.
         if (existing.position !== pos) {
-          existing.div.className = `kawa-sprite kawa-pos-${pos}`;
-          // re-apply css anim class if any
+          const toRemove: string[] = [];
+          existing.div.classList.forEach((cls) => {
+            if (cls.startsWith('kawa-pos-')) toRemove.push(cls);
+          });
+          for (const cls of toRemove) existing.div.classList.remove(cls);
+          existing.div.classList.add(`kawa-pos-${pos}`);
           existing.position = pos;
         }
 
