@@ -72,7 +72,25 @@ execSync('npx tsc -b', { stdio: 'inherit' });
 
 // 4. Git Commit, Tag and Push
 console.log('\n4️⃣ Committing and pushing to GitHub...');
-execSync('git add package.json package-lock.json packages/*/package.json templates/*/package.json packages/*/dist', { stdio: 'inherit' });
+// `dist/` is gitignored — never pathspec it (git add fails hard if nothing matches).
+const toPosix = (p) => path.relative(process.cwd(), p).split(path.sep).join('/');
+const releasePaths = [
+  'package.json',
+  'package-lock.json',
+  ...packageDirs
+    .map((dir) => path.join(dir, 'package.json'))
+    .filter((p) => fs.existsSync(p))
+    .map(toPosix)
+];
+const templatesDir = path.resolve(process.cwd(), 'templates');
+if (fs.existsSync(templatesDir)) {
+  for (const entry of fs.readdirSync(templatesDir, { withFileTypes: true })) {
+    if (!entry.isDirectory()) continue;
+    const tplPkg = path.join(templatesDir, entry.name, 'package.json');
+    if (fs.existsSync(tplPkg)) releasePaths.push(toPosix(tplPkg));
+  }
+}
+execSync(`git add -- ${releasePaths.join(' ')}`, { stdio: 'inherit' });
 execSync(`git commit -m "chore(release): v${nextVersion}"`, { stdio: 'inherit' });
 try {
   execSync(`git tag v${nextVersion}`, { stdio: 'inherit' });
